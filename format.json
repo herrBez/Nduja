@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Bitcoin",
+        "symbol": "BTC",
+        "alternative_symbol": "XBT",
+        "wallet_regexp": "[13][0-9A-Za-z]{24,35}"
+    },
+    {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "alternative_symbol": " ",
+        "wallet_regexp": "0x[0-9A-Za-z]{40}"
+    }
+]
