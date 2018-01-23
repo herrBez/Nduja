@@ -36,7 +36,7 @@
         "wallet_regexp": "\\bD[0-9A-Za-z]{33}\\b"
     },
     {
-        "name": "bitcoin cash",
+        "name": "bitcoin-cash",
         "symbol": "BCH",
         "alternative_symbol": " ",
         "wallet_regexp": "\\b([13][0-9A-Za-z]{24,35})|(bitcoincash:[0-9A-Za-z]{43})\\b"
