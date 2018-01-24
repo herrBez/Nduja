@@ -9,4 +9,4 @@ class Parser:
             if res not in noDuplicate:
                 noDuplicate.append(res)
         for res in noDuplicate:
-            print(res["+username"])
+            print(res["username"] + "|" + res["url"])
