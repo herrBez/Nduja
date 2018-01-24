@@ -8,5 +8,11 @@ class AbsAddressChecker:
     @abstractmethod
     def address_check(self, address):
         '''Abstract method that must be redefined, it must return True if the
+        address is valid and findable, False otherwise'''
+        pass
+
+    @abstractmethod
+    def address_valid(self, address):
+        '''Abstract method that must be redefined, it must return True if the
         address is valid, False otherwise'''
         pass

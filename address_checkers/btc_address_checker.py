@@ -3,6 +3,7 @@ import requests
 from hashlib import sha256
 from address_checkers.abs_address_checker import AbsAddressChecker
 
+
 class BtcAddressChecker(AbsAddressChecker):
     DIGITS58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
     # Used for searching the address in the blockchain
@@ -15,7 +16,7 @@ class BtcAddressChecker(AbsAddressChecker):
             n = n * 58 + BtcAddressChecker.DIGITS58.index(char)
         return n.to_bytes(length, 'big')
 
-    def check_bc(self, bc):
+    def address_valid(self, bc):
         '''Checks if the string passed could be a valid address for a bitcoin
         wallet'''
         try:
@@ -37,7 +38,7 @@ class BtcAddressChecker(AbsAddressChecker):
 
     def address_check(self, addr):
         '''Check if the bitcoin address is valid and exists'''
-        if (self.check_bc(addr)):
+        if (self.address_valid(addr)):
             return self.address_search(addr)
         else:
             return False

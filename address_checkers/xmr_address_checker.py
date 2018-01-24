@@ -3,5 +3,7 @@ from address_checkers.abs_address_checker import AbsAddressChecker
 
 class XmrAddressChecker(AbsAddressChecker):
     def address_check(self, addr):
-        '''Check is an Ethereum address is valid using web3'''
+        return False
+
+    def address_valid(self, addr):
         return (addr.startswith('4') and len(addr) == 95)

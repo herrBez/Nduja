@@ -20,7 +20,7 @@ class BchAddressChecker(AbsAddressChecker):
             n = n * 58 + BchAddressChecker.DIGITS58.index(char)
         return n.to_bytes(length, 'big')
 
-    def check_bch(self, bc):
+    def address_valid(self, bc):
         '''Checks if the string passed could be a valid address for a bitcoin
         wallet'''
         try:
@@ -47,7 +47,7 @@ class BchAddressChecker(AbsAddressChecker):
         '''Check if the bitcoin address is valid and exists'''
         if (addr.startswith('bitcoincash:')):
             return True
-        elif (self.check_bc(addr)):
+        elif (self.address_valid(addr)):
             return self.address_search(addr)
         else:
             return True

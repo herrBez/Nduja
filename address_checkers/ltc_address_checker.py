@@ -29,9 +29,12 @@ class LtcAddressChecker(AbsAddressChecker):
             return False
         return True
 
+    def address_valid(self, addr):
+        return ((addr.startswith('L') or addr.startswith('M')) and
+                len(addr) >= 26 and len(addr) <= 36)
+
     def address_check(self, addr):
         '''Check if a litecoin address is valid'''
-        if ((addr.startswith('L') or addr.startswith('M')) and
-                len(addr) >= 26 and len(addr) <= 36):
+        if (self.address_valid(addr)):
             return self.address_search(addr)
         return False
