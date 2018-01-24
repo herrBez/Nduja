@@ -3,6 +3,10 @@ from db_manager import DbManager
 
 
 class Parser:
+    '''
+    exec(open("./parsing_results.py").read())
+    Parser().parse('/home/zanna/Desktop/search-result.json')
+    '''
     dbManager = None
 
     def __init__(self):
@@ -12,12 +16,18 @@ class Parser:
         results = json.load(open(path))
         for res in results["results"]:
             checker = self.retrieveChecker(res["symbol"])
-            valid = self.validWallets(res["wallets"], checker)
+            valid = self.validWallets(res["wallet"], checker)
             if (len(valid) > 0):
+                print(valid)
                 accountId = Parser.dbManager.findAccount(res["username"],
                                                          res["host"])
+                print(accountId)
                 if (accountId == -1):
-                    accountId = Parser.dbManager.insertAccountNoInfo()
+                    print("!")
+                    accountId = Parser.dbManager.insertAccountNoInfo(
+                        res["username"],
+                        res["host"])
+                print(accountId)
                 for w in valid:
                     if (not(Parser.dbManager.findWallet(w))):
                         used = 'OK'
@@ -31,7 +41,7 @@ class Parser:
     def validWallets(self, wallets, checker):
         validWallets = []
         for wallet in wallets:
-            if (checker._address_check(wallet)):
+            if (checker.address_check(wallet)):
                 validWallets.append(wallet)
         return validWallets
 

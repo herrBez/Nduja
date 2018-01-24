@@ -48,8 +48,10 @@ class DbManager:
         c.execute('''INSERT INTO Currency VALUES ("LTC")''')
         c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
         self.conn.commit()
+        self.conn.close()
 
     def insertWallet(self, address, currency, used):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Used)
@@ -57,9 +59,11 @@ class DbManager:
         except Error:
             return False
         self.conn.commit()
+        self.conn.close()
         return True
 
     def insertWalletWithAccount(self, address, currency, used, account, path):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Used)
@@ -67,9 +71,11 @@ class DbManager:
         except Error:
             return False
         self.conn.commit()
+        self.conn.close()
         return self.insertAccountWallet(account, address, path)
 
     def insertInformation(self, name, website, email, json):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
@@ -79,9 +85,11 @@ class DbManager:
         c.execute('SELECT max(_id) FROM Information')
         max_id = c.fetchone()[0]
         self.conn.commit()
+        self.conn.close()
         return max_id
 
     def insertAccount(self, host, username, info):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
@@ -91,21 +99,28 @@ class DbManager:
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
         self.conn.commit()
+        self.conn.close()
         return max_id
 
     def insertAccountNoInfo(self, host, username):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
+        print("!!")
         try:
             c.execute('''INSERT INTO Account(Host, Username)
-                VALUES (?,?,?)''', (host, username,))
+                VALUES (?,?)''', (host, username,))
         except Error:
+            print()
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
+        print("!!" + str(max_id))
         self.conn.commit()
+        self.conn.close()
         return max_id
 
     def insertAccountWallet(self, account, wallet, path):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, PathToFile)
@@ -115,19 +130,24 @@ class DbManager:
         c.execute('SELECT max(_id) FROM AccountWallet')
         max_id = c.fetchone()[0]
         self.conn.commit()
+        self.conn.close()
         return max_id
 
     def findWallet(self, address):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
+        self.conn.close()
         return (data is None)
 
     def findAccount(self, host, username):
+        self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
-        c.execute("SELECT _id FROM Account WHERE Host = ? AND Username",
+        c.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                   (host, username,))
         data = c.fetchone()
+        self.conn.close()
         if data is None:
             return -1
         else:
@@ -174,4 +194,4 @@ class Wallet:
 # x = [Wallet('bbb21', 'BTC', 'path21', 'NA'),
 #      Wallet('bbb22', 'BCH', 'path22', 'NO')]
 # manager.insertMultipleAddresses(acc2, x)
-# 
+#
