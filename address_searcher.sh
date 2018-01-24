@@ -29,23 +29,25 @@ codesearch_for_each_page() {
     touch $RESULT_FILE
     touch $FINAL_RESULT_FILE
     
+    echo "https://searchcode.com/api/codesearch_I/?q=${SEARCH_STRING}&p=${p}&per_page100&loc=0"
 
     # Download the json file containing the infos
-    echo "https://searchcode.com/api/codesearch_I/?q=${SEARCH_STRING}&p=${p}&per_page=100&loc=0"
-    until $(curl -s -o $OUTPUT_FILE https://searchcode.com/api/codesearch_I/?q=$SEARCH_STRING&p=p&per_page=100&loc=0); do
+    until $(curl -s -o $OUTPUT_FILE "https://searchcode.com/api/codesearch_I/?q=${SEARCH_STRING}&p=${p}&per_page100&loc=0"); do
         sleep 0.1
     done
     
     
     # Extract the "result" key from the json file and store it in $TMP_RESULT_FILE
     cat $OUTPUT_FILE | jq '.' |  jq '.["results"]' > $RESULT_FILE
-        
+    
+    
+    
     # Extract the indices of the result_file
     local readonly KEYS=$(cat $RESULT_FILE | jq 'keys' | jq '.[]')
+    echo $KEYS
     for k in $KEYS; do
         local readonly TMP=$(cat $RESULT_FILE | jq ".[$k]")
-        local readonly MATCH=$(echo $TMP | jq "." | jq --raw-output ".lines" | egrep -o "$REGEXP")
-        
+        local readonly MATCH=$(echo $TMP | jq --raw-output ".lines" | egrep -o "$REGEXP")
         
         
         if [ "$MATCH" != "" ]; then # at least a match is found
