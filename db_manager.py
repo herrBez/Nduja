@@ -105,7 +105,6 @@ class DbManager:
     def insertAccountNoInfo(self, host, username):
         self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
-        print("!!")
         try:
             c.execute('''INSERT INTO Account(Host, Username)
                 VALUES (?,?)''', (host, username,))
@@ -114,7 +113,6 @@ class DbManager:
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
-        print("!!" + str(max_id))
         self.conn.commit()
         self.conn.close()
         return max_id
