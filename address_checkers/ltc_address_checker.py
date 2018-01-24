@@ -1,7 +1,7 @@
 import json
 import requests
 from time import sleep
-from abs_address_checker import AbsAddressChecker
+from address_checkers.abs_address_checker import AbsAddressChecker
 
 
 class LtcAddressChecker(AbsAddressChecker):

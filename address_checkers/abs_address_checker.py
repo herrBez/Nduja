@@ -6,7 +6,7 @@ class AbsAddressChecker:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def addressCheck(self, address):
+    def address_check(self, address):
         '''Abstract method that must be redefined, it must return True if the
         address is valid, False otherwise'''
         pass

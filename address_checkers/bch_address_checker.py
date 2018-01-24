@@ -1,7 +1,7 @@
 import json
 import requests
 from hashlib import sha256
-from abs_address_checker import AbsAddressChecker
+from address_checkers.abs_address_checker import AbsAddressChecker
 
 
 class BchAddressChecker(AbsAddressChecker):
@@ -50,5 +50,4 @@ class BchAddressChecker(AbsAddressChecker):
         elif (self.check_bc(addr)):
             return self.address_search(addr)
         else:
-            return False
-
+            return True

@@ -1,5 +1,5 @@
 from web3 import Web3
-from abs_address_checker import AbsAddressChecker
+from address_checkers.abs_address_checker import AbsAddressChecker
 
 
 class EthereumAddressChecker(AbsAddressChecker):

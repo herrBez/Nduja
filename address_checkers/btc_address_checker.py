@@ -1,8 +1,7 @@
 import json
 import requests
 from hashlib import sha256
-from abs_address_checker import AbsAddressChecker
-
+from address_checkers.abs_address_checker import AbsAddressChecker
 
 class BtcAddressChecker(AbsAddressChecker):
     DIGITS58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
