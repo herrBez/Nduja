@@ -93,6 +93,18 @@ class DbManager:
         self.conn.commit()
         return max_id
 
+    def insertAccountNoInfo(self, host, username):
+        c = self.conn.cursor()
+        try:
+            c.execute('''INSERT INTO Account(Host, Username)
+                VALUES (?,?,?)''', (host, username,))
+        except Error:
+            return -1
+        c.execute('SELECT max(_id) FROM Account')
+        max_id = c.fetchone()[0]
+        self.conn.commit()
+        return max_id
+
     def insertAccountWallet(self, account, wallet, path):
         c = self.conn.cursor()
         try:
@@ -110,6 +122,16 @@ class DbManager:
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
         return (data is None)
+
+    def findAccount(self, host, username):
+        c = self.conn.cursor()
+        c.execute("SELECT _id FROM Account WHERE Host = ? AND Username",
+                  (host, username,))
+        data = c.fetchone()
+        if data is None:
+            return -1
+        else:
+            return data[0]
 
     def insertNewInfo(self, address, currency, used, name, website, email,
                       json, host, username, path):
