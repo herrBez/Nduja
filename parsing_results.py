@@ -18,12 +18,12 @@ class Parser:
             checker = self.retrieveChecker(res["symbol"])
             valid = self.validWallets(res["wallet"], checker)
             if (len(valid) > 0):
-                accountId = Parser.dbManager.findAccount(res["username"],
-                                                         res["host"])
+                accountId = Parser.dbManager.findAccount(res["host"],
+                                                         res["username"])
                 if (accountId == -1):
                     accountId = Parser.dbManager.insertAccountNoInfo(
-                        res["username"],
-                        res["host"])
+                        res["host"],
+                        res["username"])
                 for w in valid:
                     if (not(Parser.dbManager.findWallet(w))):
                         status = 0
