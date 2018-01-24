@@ -16,7 +16,6 @@ codesearch_for_each_page() {
     local readonly SEARCH_STRING=$4
     local readonly p=$5
     printf "$p\n"
-    sleep 1
     
     local readonly OUTPUT_FILE="$BASE_OUTPUT_FILE-$SYMBOL-$p.json"
     local readonly RESULT_FILE="$BASE_RESULT_FILE-$SYMBOL-$p.json"
@@ -30,19 +29,25 @@ codesearch_for_each_page() {
     touch $RESULT_FILE
     touch $FINAL_RESULT_FILE
     
+
     # Download the json file containing the infos
     echo "https://searchcode.com/api/codesearch_I/?q=${SEARCH_STRING}&p=${p}&per_page=100&loc=0"
-    curl -s -o $OUTPUT_FILE https://searchcode.com/api/codesearch_I/?q=${SEARCH_STRING}&p=${p}&per_page=100&loc=0
+    until $(curl -s -o $OUTPUT_FILE https://searchcode.com/api/codesearch_I/?q=$SEARCH_STRING&p=p&per_page=100&loc=0); do
+        sleep 0.1
+    done
+    
+    
     # Extract the "result" key from the json file and store it in $TMP_RESULT_FILE
     cat $OUTPUT_FILE | jq '.' |  jq '.["results"]' > $RESULT_FILE
-    
-    cat $OUTPUT_FILE
+        
     # Extract the indices of the result_file
     local readonly KEYS=$(cat $RESULT_FILE | jq 'keys' | jq '.[]')
     for k in $KEYS; do
         local readonly TMP=$(cat $RESULT_FILE | jq ".[$k]")
         local readonly MATCH=$(echo $TMP | jq "." | jq --raw-output ".lines" | egrep -o "$REGEXP")
-
+        
+        
+        
         if [ "$MATCH" != "" ]; then # at least a match is found
             local readonly REPOSITORY=$(echo $TMP | jq --raw-output ".repo" | sed 's/\.[^.]*$//')
             local readonly RAW_REPOSITORY=$(echo $REPOSITORY | sed 's/github.com/raw.githubusercontent.com/')
@@ -64,12 +69,7 @@ codesearch_for_each_page() {
             )
             WALLET_LIST=$(echo $WALLET_LIST | sed 's/.$//')
             
-            local readonly WALLETS=$(
-                printf "["
-                printf $WALLET_LIST
-                printf "]"
-            )
-            
+
             local readonly HOST=$(printf "$REPOSITORY" | egrep -o "https?://[^/]*" | sed -r "s/https?:\/\///")
             local readonly USERNAME=$(printf "$REPOSITORY" | sed -r "s/https?:\/\/[^/]*\/([^/]*)\/.*/\1/")
             printf ",\n" >> $FINAL_RESULT_FILE
@@ -80,7 +80,7 @@ codesearch_for_each_page() {
             \"url\": \"$URL\",\
             \"known_raw_url\": \"$RAW_URL\",\
             \"pathToFile\": \"$DIRECTORY/$FILENAME\",\
-            \"wallet\": \"$WALLETS\"\
+            \"wallet\": [$WALLET_LIST]\
             }\n" >> $FINAL_RESULT_FILE
             counter=$((counter+1))
         fi
@@ -93,7 +93,7 @@ codesearch_for_each_page() {
 codesearch_search() {
 
     export -f codesearch_for_each_page
-    parallel codesearch_for_each_page ::: "$1" ::: "$2" ::: "$3" ::: "$4" ::: $(seq 0 1)
+    parallel codesearch_for_each_page ::: "$1" ::: "$2" ::: "$3" ::: "$4" ::: $(seq 0 49)
 
 }
 
@@ -125,7 +125,7 @@ main() {
         local readonly REGEXP=$(echo "$FORMAT_ENTRY"  | jq --raw-output ".wallet_regexp")
         local readonly NAME=$(echo "$FORMAT_ENTRY"   | jq --raw-output ".name")
         local readonly SYMBOL=$(echo "$FORMAT_ENTRY" | jq --raw-output ".symbol")
-        local readonly SEARCH_STRING="$SYMBOL+$NAME+Donation"
+        local readonly SEARCH_STRING="$SYMBOL"
         
         codesearch_search "$NAME" "$SYMBOL" "$REGEXP" "$SEARCH_STRING" 
         
