@@ -1,6 +1,6 @@
 import sqlite3
 from sqlite3 import Error
-import os
+# import os
 
 
 class DbManager:
@@ -15,7 +15,7 @@ class DbManager:
         c.execute('''CREATE TABLE IF NOT EXISTS Wallet(
             Address VARCHAR(128) PRIMARY KEY,
             Currency VARCHAR(4),
-            Used VARCHAR(2),
+            Status INTEGER,
             FOREIGN KEY (Currency) REFERENCES Currency(Name)
         )''')
         c.execute('''CREATE TABLE IF NOT EXISTS Information(
@@ -40,35 +40,41 @@ class DbManager:
             FOREIGN KEY (Account) REFERENCES Account(ID),
             FOREIGN KEY (Wallet) REFERENCES Wallet(Address)
         )''')
-        c.execute('''INSERT INTO Currency VALUES ("BTC")''')
-        c.execute('''INSERT INTO Currency VALUES ("ETH")''')
-        c.execute('''INSERT INTO Currency VALUES ("ETC")''')
-        c.execute('''INSERT INTO Currency VALUES ("XMR")''')
-        c.execute('''INSERT INTO Currency VALUES ("BCH")''')
-        c.execute('''INSERT INTO Currency VALUES ("LTC")''')
-        c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
+        try:
+            c.execute('''INSERT INTO Currency VALUES ("BTC")''')
+            c.execute('''INSERT INTO Currency VALUES ("ETH")''')
+            c.execute('''INSERT INTO Currency VALUES ("ETC")''')
+            c.execute('''INSERT INTO Currency VALUES ("XMR")''')
+            c.execute('''INSERT INTO Currency VALUES ("BCH")''')
+            c.execute('''INSERT INTO Currency VALUES ("LTC")''')
+            c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
+        except Error:
+            print()
         self.conn.commit()
         self.conn.close()
 
-    def insertWallet(self, address, currency, used):
+    def insertWallet(self, address, currency, status):
         self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
-            c.execute('''INSERT INTO Wallet(Address, Currency, Used)
-                VALUES (?,?,?)''', (address, currency, used,))
+            c.execute('''INSERT INTO Wallet(Address, Currency, Status)
+                VALUES (?,?,?)''', (address, currency, status,))
         except Error:
+            print()
             return False
         self.conn.commit()
         self.conn.close()
         return True
 
-    def insertWalletWithAccount(self, address, currency, used, account, path):
+    def insertWalletWithAccount(self, address, currency, status, account,
+                                path):
         self.conn = sqlite3.connect('db.db')
         c = self.conn.cursor()
         try:
-            c.execute('''INSERT INTO Wallet(Address, Currency, Used)
-                VALUES (?,?,?)''', (address, currency, used,))
+            c.execute('''INSERT INTO Wallet(Address, Currency, Status)
+                VALUES (?,?,?)''', (address, currency, status,))
         except Error:
+            print()
             return False
         self.conn.commit()
         self.conn.close()
@@ -81,6 +87,7 @@ class DbManager:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
                 VALUES (?,?,?,?)''', (name, website, email, json,))
         except Error:
+            print()
             return -1
         c.execute('SELECT max(_id) FROM Information')
         max_id = c.fetchone()[0]
@@ -95,6 +102,7 @@ class DbManager:
             c.execute('''INSERT INTO Account(Host, Username, Info)
                 VALUES (?,?,?)''', (host, username, info,))
         except Error:
+            print()
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
@@ -124,6 +132,7 @@ class DbManager:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, PathToFile)
                 VALUES (?,?,?)''', (account, wallet, path,))
         except Error:
+            print()
             return -1
         c.execute('SELECT max(_id) FROM AccountWallet')
         max_id = c.fetchone()[0]
@@ -137,7 +146,7 @@ class DbManager:
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
         self.conn.close()
-        return (data is None)
+        return (data is not None)
 
     def findAccount(self, host, username):
         self.conn = sqlite3.connect('db.db')
@@ -151,9 +160,9 @@ class DbManager:
         else:
             return data[0]
 
-    def insertNewInfo(self, address, currency, used, name, website, email,
+    def insertNewInfo(self, address, currency, status, name, website, email,
                       json, host, username, path):
-        self.insertWallet(address, currency, used)
+        self.insertWallet(address, currency, status)
         info = self.insertInformation(name, website, email, json)
         acc = self.insertAccount(host, username, info)
         self.insertAccountWallet(acc, address, path)
@@ -161,21 +170,21 @@ class DbManager:
 
     def insertMultipleAddresses(self, acc, wallets):
         for wallet in wallets:
-            self.insertWallet(wallet.address, wallet.currency, wallet.used)
+            self.insertWallet(wallet.address, wallet.currency, wallet.status)
             self.insertAccountWallet(acc, wallet.address, wallet.file)
 
 
 class Wallet:
     address = None
     currency = None
-    used = None
+    status = None
     file = None
 
     def __init__(self, add, curr, f, u):
         self.address = add
         self.currency = curr
         self.file = f
-        self.used = u
+        self.status = u
 
 
 # try:
@@ -187,8 +196,9 @@ class Wallet:
 # info = manager.insertInformation("nome", "sito", "email", "json")
 # acc = manager.insertAccount("host", "user", info)
 # manager.insertAccountWallet(acc, "aaa", "file")
-# acc2 = manager.insertNewInfo('bbb2', 'ETH', 'SI', 'nome cognome2', 'sito.com2',
-#                              'email2', 'json2', 'host2', 'username2', 'path2')
+# acc2 = manager.insertNewInfo('bbb2', 'ETH', 'SI', 'nome cognome2',
+#                                'sito.com2', 'email2', 'json2', 'host2',
+#                                'username2', 'path2')
 # x = [Wallet('bbb21', 'BTC', 'path21', 'NA'),
 #      Wallet('bbb22', 'BCH', 'path22', 'NO')]
 # manager.insertMultipleAddresses(acc2, x)

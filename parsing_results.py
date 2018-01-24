@@ -21,24 +21,24 @@ class Parser:
                 accountId = Parser.dbManager.findAccount(res["username"],
                                                          res["host"])
                 if (accountId == -1):
-                    print("!")
                     accountId = Parser.dbManager.insertAccountNoInfo(
                         res["username"],
                         res["host"])
                 for w in valid:
                     if (not(Parser.dbManager.findWallet(w))):
-                        used = 'OK'
+                        status = 0
+                        if (checker.address_check(w)):
+                            status = 1
                         if (res["symbol"] in ['XMR', 'BCH', 'ETH', 'ETC']):
-                            used = 'NA'
-                        Parser.insertWalletWithAccount(w, res["symbol"],
-                                                       used,
-                                                       accountId,
-                                                       res["pathToFile"])
+                            status = 0
+                        (Parser.dbManager.
+                         insertWalletWithAccount(w, res["symbol"], status,
+                                                 accountId, res["pathToFile"]))
 
     def validWallets(self, wallets, checker):
         validWallets = []
         for wallet in wallets:
-            if (checker.address_check(wallet)):
+            if (checker.address_valid(wallet)):
                 validWallets.append(wallet)
         return validWallets
 
