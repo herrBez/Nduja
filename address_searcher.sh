@@ -72,8 +72,9 @@ codesearch_for_each_page() {
             WALLET_LIST=$(echo $WALLET_LIST | sed 's/.$//')
             
 
-            local readonly HOST=$(printf "$REPOSITORY" | egrep -o "https?://[^/]*" | sed -r "s/https?:\/\///")
-            local readonly USERNAME=$(printf "$REPOSITORY" | sed -r "s/https?:\/\/[^/]*\/([^/]*)\/.*/\1/")
+            local readonly HOST=$(printf "$URL" | egrep -o "(https?|git)://[^/]*" | sed -r "s/https?:\/\///")
+            echo $URL
+            local readonly USERNAME=$(printf "$URL" | sed -r "s/(https?|git){1}:\/\/[^/]*\/([^/]*)\/.*/\2/")
             printf ",\n" >> $FINAL_RESULT_FILE
             printf "{\
             \"username\": \"$USERNAME\",\
