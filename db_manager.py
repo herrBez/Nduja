@@ -15,7 +15,7 @@ class DbManager:
         c.execute('''CREATE TABLE IF NOT EXISTS Wallet(
             Address VARCHAR(128) PRIMARY KEY,
             Currency VARCHAR(4),
-            Status INTEGER,
+            Status NUMERIC,
             FOREIGN KEY (Currency) REFERENCES Currency(Name)
         )''')
         c.execute('''CREATE TABLE IF NOT EXISTS Information(
