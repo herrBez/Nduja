@@ -5,9 +5,13 @@ from sqlite3 import Error
 
 class DbManager:
     conn = None
+    db = 'db.db'
+
+    def setDBFileName(filename):
+        DbManager.db = filename
 
     def __init__(self):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS Currency(
             Name VARCHAR(4) PRIMARY KEY
