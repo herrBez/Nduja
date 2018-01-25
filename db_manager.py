@@ -58,7 +58,7 @@ class DbManager:
         self.conn.close()
 
     def insertWallet(self, address, currency, status):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
@@ -72,7 +72,7 @@ class DbManager:
 
     def insertWalletWithAccount(self, address, currency, status, account,
                                 path):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
@@ -85,7 +85,7 @@ class DbManager:
         return self.insertAccountWallet(account, address, path)
 
     def insertInformation(self, name, website, email, json):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
@@ -100,7 +100,7 @@ class DbManager:
         return max_id
 
     def insertAccount(self, host, username, info):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
@@ -115,7 +115,7 @@ class DbManager:
         return max_id
 
     def insertAccountNoInfo(self, host, username):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username)
@@ -130,7 +130,7 @@ class DbManager:
         return max_id
 
     def insertAccountWallet(self, account, wallet, path):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, PathToFile)
@@ -145,7 +145,7 @@ class DbManager:
         return max_id
 
     def findWallet(self, address):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
@@ -153,7 +153,7 @@ class DbManager:
         return (data is not None)
 
     def findAccount(self, host, username):
-        self.conn = sqlite3.connect('db.db')
+        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         c.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                   (host, username,))
