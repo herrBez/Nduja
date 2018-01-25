@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 
+
 def main():
     config = configparser.ConfigParser()
     if (Path('./Nduja/conf.ini')).is_file():
