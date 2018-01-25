@@ -3,6 +3,11 @@ import requests
 from abs_wallet_collector import AbsWalletCollector
 import sys
 import re
+from time import sleep
+
+
+def print_json(s):
+        print(json.dumps(s, indent=2))
 
 class GithubWalletCollector(AbsWalletCollector):    
     base_url="https://api.github.com/search/code?q=$SYMBOL&page=$p&per_page=30"
@@ -11,18 +16,16 @@ class GithubWalletCollector(AbsWalletCollector):
         self.format_object = json.loads(open(format_file).read())
         if not (login_file is None):
             self.login_object = json.loads(open(login_file).read())
-    
-    
-    def print_json(self, s):
-        print(json.dumps(s, indent=2))
+        
     
     
     def collect_address(self):
+        final_json = []
         for f in self.format_object:
             currency_regexp = f["wallet_regexp"]
             currency_name = f["name"]
             currency_symbol = f["symbol"]
-            result = []
+            raw_result = []
             for page in range(20,21):
                 res = json.loads(
                         self.request_url(
@@ -35,16 +38,10 @@ class GithubWalletCollector(AbsWalletCollector):
                             self.login_object["token"]
                     )
                 )
-                result = result + res["items"]
+                raw_result = raw_result + res["items"]
+                sleep(0.5)
                 
-            for item in result:
-                res_owner = json.loads(
-                    self.request_url(
-                        item["repository"]["owner"]["url"],
-                        self.login_object["token"]
-                    )
-                )
-                
+            for item in raw_result:
                 res_url = json.loads(
                     self.request_url(
                         item["url"],
@@ -59,18 +56,22 @@ class GithubWalletCollector(AbsWalletCollector):
                         self.login_object["token"]
                 )
                 pattern = re.compile(currency_regexp)
-                if pattern.search(file_content):
-                    print ("Yes")
-                    print(item["html_url"])
-                    print(item["repository"]["html_url"])
-                    print(download_url)
+                matches = re.findall(pattern, file_content)
+                if len(matches) > 0:
                     
-                else:
-                    print("No")
-                # ~ self.print_json(res_owner)
-                # ~ self.print_json(res_url)
-                print(file_content)
-        
+                    final_json_element = {
+                        "hostname" : "github.com",
+                        "username_id" : item["repository"]["owner"]["id"],
+                        "username" : item["repository"]["owner"]["login"],
+                        "symbol" : currency_symbol,
+                        "repo" : item["repository"]["name"],
+                        "repo_id" : item["repository"]["id"],
+                        "url" : download_url,
+                        "wallet_list" : list(set(matches))
+                    }
+                    final_json = final_json + [final_json_element]
+        print_json(final_json)
+                    
         return True
 pass
 
