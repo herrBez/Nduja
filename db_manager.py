@@ -40,7 +40,7 @@ class DbManager:
             _id INTEGER PRIMARY KEY,
             Account INT,
             Wallet VARCHAR(128),
-            PathToFile VARCHAR(255),
+            RawURL VARCHAR(500),
             FOREIGN KEY (Account) REFERENCES Account(ID),
             FOREIGN KEY (Wallet) REFERENCES Wallet(Address)
         )''')
@@ -70,8 +70,7 @@ class DbManager:
         self.conn.close()
         return True
 
-    def insertWalletWithAccount(self, address, currency, status, account,
-                                path):
+    def insertWalletWithAccount(self, address, currency, status, account, url):
         self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
@@ -82,7 +81,7 @@ class DbManager:
             return False
         self.conn.commit()
         self.conn.close()
-        return self.insertAccountWallet(account, address, path)
+        return self.insertAccountWallet(account, address, url)
 
     def insertInformation(self, name, website, email, json):
         self.conn = sqlite3.connect(DbManager.db)
@@ -129,12 +128,12 @@ class DbManager:
         self.conn.close()
         return max_id
 
-    def insertAccountWallet(self, account, wallet, path):
+    def insertAccountWallet(self, account, wallet, url):
         self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
-            c.execute('''INSERT INTO AccountWallet(Account, Wallet, PathToFile)
-                VALUES (?,?,?)''', (account, wallet, path,))
+            c.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
+                VALUES (?,?,?)''', (account, wallet, url,))
         except Error:
             print()
             return -1
@@ -165,11 +164,11 @@ class DbManager:
             return data[0]
 
     def insertNewInfo(self, address, currency, status, name, website, email,
-                      json, host, username, path):
+                      json, host, username, url):
         self.insertWallet(address, currency, status)
         info = self.insertInformation(name, website, email, json)
         acc = self.insertAccount(host, username, info)
-        self.insertAccountWallet(acc, address, path)
+        self.insertAccountWallet(acc, address, url)
         return acc
 
     def insertMultipleAddresses(self, acc, wallets):

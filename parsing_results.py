@@ -32,8 +32,9 @@ class Parser:
                         if (res["symbol"] in ['XMR', 'BCH', 'ETH', 'ETC']):
                             status = 0
                         (Parser.dbManager.
-                         insertWalletWithAccount(w, res["symbol"], status,
-                                                 accountId, res["pathToFile"]))
+                         insertWalletWithAccount(w, res["symbol"],
+                                                 status, accountId,
+                                                 res["known_raw_url"]))
 
     def validWallets(self, wallets, checker):
         validWallets = []
