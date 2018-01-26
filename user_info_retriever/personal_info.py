@@ -23,9 +23,8 @@ class PersonalInfo:
             emailstr = self.email
         if self.json is not None:
             jsonstr = self.json
-        toPrint = '{\n\t"name":"' + namestr + \
+        return '{\n\t"name":"' + namestr + \
             '",\n\t"website":"' + websitestr + \
             '",\n\t"email":"' + emailstr + \
             '",\n\t"json":' + jsonstr + \
             '}'
-        return toPrint
