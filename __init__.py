@@ -4,6 +4,7 @@ from parsing_results import Parser
 from pathlib import Path
 import subprocess
 import sys
+from info_retriever import InfoRetriever
 
 
 def main():
@@ -17,3 +18,9 @@ def main():
     process = subprocess.Popen(command, shell=True, stdout=sys.stdout)
     process.wait()
     Parser().parse(config.get('file_names', 'result_file'))
+    try:
+        tokens = {'github': config.get('tokens', 'github')}
+        InfoRetriever.setTokens(tokens)
+    except KeyError:
+        print()
+    InfoRetriever().retrieveInfoForAccountSaved()
