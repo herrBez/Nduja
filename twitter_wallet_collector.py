@@ -27,57 +27,64 @@ class TwitterWalletCollector(AbsWalletCollector):
         
     def collect_address(self):
         final_result = []
+        count = 0
+        count_tweet = 0
         for f in self.format_object:
             currency_regexp = f["wallet_regexp"]
             currency_name = f["name"]
             currency_symbol = f["symbol"]
             regexp_group = int(f["group"]) # Which group of the regexp should be stored
             
-            result = self.twitter.search(
-                q = '%23' + currency_symbol + '%23Donation', # The query: search for hashtags
-                count = '30', # Results per page 
-                result_type = 'mixed' # search for both popular and not popular content
-            )
-            
-            pattern = re.compile(currency_regexp)
-            for r in result["statuses"]:
-                content = r["text"]
-                try:
-                    if pattern.search(content):
-                        matches_iterator = pattern.finditer(content)
-
-                        matches = map(
-                            lambda x : x.group(regexp_group),
-                            matches_iterator
-                        )
-                        
-                        known_raw_url = ''
-                        if len(r["entities"]["urls"]) > 0:
-                            known_raw_url = r["entities"]["urls"][0]["url"]
-
-                        final_json_element = {
-                            "hostname" : "twitter.com",
-                            "username_id" : r["user"]["id"],
-                            "username" : r["user"]["screen_name"], # not sure if screen_name = username or not, but username is not a field
-                            "symbol" : currency_symbol, 
-                            "repo" : "",
-                            "repo_id" : "",
-                            "known_raw_url": known_raw_url,
-                            "wallet_list" : list(set(matches))
-                        }
-                        final_result = final_result + [final_json_element]
-                    sleep(0.1)
-
-                except Exception:
-                    traceback.print_exc()
-                    print("Error on: ", file=sys.stderr)
-
+            for rt in ['mixed', 'popular', 'recent']:
+                result = self.twitter.search(
+                    q = currency_symbol + ' ' + name + ' Donation', # The query: search for hashtags
+                    count = '100', # Results per page 
+                    result_type = rt, # search for both popular and not popular content
+                    tweet_mode='extended',
+                )
+               
                 
-            
-            print_json(final_result)
-            return final_result
+                pattern = re.compile(currency_regexp)
+           
+                for r in result["statuses"]:
+                    content = r["full_text"]
+                    try:
+                        if pattern.search(content):
+                            matches_iterator = pattern.finditer(content)
+
+                            matches = map(
+                                lambda x : x.group(regexp_group),
+                                matches_iterator
+                            )
+                            
+                            known_raw_url = ''
+                            if len(r["entities"]["urls"]) > 0:
+                                known_raw_url = r["entities"]["urls"][0]["url"]
+
+                            final_json_element = {
+                                "hostname" : "twitter.com",
+                                "username_id" : r["user"]["id"],
+                                "username" : r["user"]["screen_name"], # not sure if screen_name = username or not, but username is not a field
+                                "symbol" : currency_symbol, 
+                                "repo" : "",
+                                "repo_id" : "",
+                                "known_raw_url": known_raw_url,
+                                "wallet_list" : list(set(matches))
+                            }
+                            final_result = final_result + [final_json_element]
+                        sleep(0.1)
+
+                    except Exception:
+                        traceback.print_exc()
+                        print("Error on: ", file=sys.stderr)
+
+        return final_result
 
 pass
 
+
+
+
 twc = TwitterWalletCollector("format.json", "API_KEYS/twitter.json")
-twc.collect_address()
+result = twc.collect_address()
+print_json(result)
