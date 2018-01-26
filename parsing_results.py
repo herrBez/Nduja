@@ -10,7 +10,7 @@ class Parser:
     dbManager = None
 
     def __init__(self):
-        Parser.dbManager = DbManager()
+        Parser.dbManager = DbManager.getInstance()
 
     def parse(self, path):
         results = json.load(open(path))
