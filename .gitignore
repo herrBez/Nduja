@@ -100,5 +100,11 @@ ENV/
 # mypy
 .mypy_cache/
 
+# Do not keep track of personal config files
 conf.ini
+
+# Do not keep track of the db
 nduja.db
+
+# Do not keep track of API_KEYS directory content
+API_KEYS/*
