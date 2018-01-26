@@ -1,7 +1,7 @@
 import requests
 import json
 from personal_info import PersonalInfo
-from personal_info_retriever import PersonalInfoRetriever
+from abs_personal_info_retriever import PersonalInfoRetriever
 
 
 class GithubInfoRetriever(PersonalInfoRetriever):
