@@ -99,3 +99,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Do not keep track of API_KEYS directory content
+API_KEYS/*
