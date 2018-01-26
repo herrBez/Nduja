@@ -88,13 +88,10 @@ class GithubWalletCollector(AbsWalletCollector):
                 except Exception:
                     print("Error on: " + download_url, file=sys.stderr)
 
-
         return final_result
 pass
 
-gwc = GithubWalletCollector("format.json", "login.json")
-result=gwc.collect_address()
-print_json(result)
-
-
+# ~ gwc = GithubWalletCollector("format.json", "API_KEYS/login.json")
+# ~ result=gwc.collect_address()
+# ~ print_json(result)
 # ~ print(gwc.request_url("http://google.com"))
