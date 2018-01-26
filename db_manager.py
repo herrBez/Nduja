@@ -6,9 +6,15 @@ from sqlite3 import Error
 class DbManager:
     conn = None
     db = 'db.db'
+    instance = None
 
     def setDBFileName(filename):
         DbManager.db = filename
+
+    def getInstance():
+        if DbManager.instance is None:
+            DbManager.instance = DbManager()
+        return DbManager.instance
 
     def __init__(self):
         self.conn = sqlite3.connect(DbManager.db)
@@ -176,6 +182,33 @@ class DbManager:
             self.insertWallet(wallet.address, wallet.currency, wallet.status)
             self.insertAccountWallet(acc, wallet.address, wallet.file)
 
+    def getAllAccounts(self):
+        self.conn = sqlite3.connect(DbManager.db)
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT * FROM Account''')
+            for row in c:
+                accounts.append(Account(row[0], row[1], row[2], row[3]))
+        except Error:
+            print()
+        self.conn.commit()
+        self.conn.close()
+        return accounts
+
+    def addInfoToAccount(self, accountId, infoId):
+        self.conn = sqlite3.connect(DbManager.db)
+        c = self.conn.cursor()
+        try:
+            c.execute('''UPDATE Account SET Info = ? WHERE _id = ?''',
+                      (infoId, accountId,))
+        except Error:
+            print()
+            return False
+        self.conn.commit()
+        self.conn.close()
+        return True
+
 
 class Wallet:
     address = None
@@ -188,6 +221,38 @@ class Wallet:
         self.currency = curr
         self.file = f
         self.status = u
+
+
+class Account:
+    ID = None
+    host = None
+    username = None
+    info = None
+
+    def __init__(self, ID, host, username, info):
+        self.ID = ID
+        self.host = host
+        self.username = username
+        self.info = info
+
+    def __str__(self):
+        idstr = ' '
+        hoststr = ' '
+        usernamestr = ' '
+        infostr = ' '
+        if self.ID is not None:
+            idstr = str(self.ID)
+        if self.host is not None:
+            hoststr = str(self.host)
+        if self.username is not None:
+            usernamestr = str(self.username)
+        if self.info is not None:
+            infostr = str(self.info)
+        return '{\n\t"id":"' + idstr + \
+            '",\n\t"host":"' + hoststr + \
+            '",\n\t"username":"' + usernamestr + \
+            '",\n\t"info":"' + infostr + \
+            '"\n}'
 
 # try:
 #     os.remove('./db.db')
