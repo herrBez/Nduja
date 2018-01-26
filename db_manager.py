@@ -190,6 +190,18 @@ class Wallet:
         self.status = u
 
 
+class PersonalInfo:
+    name = ""
+    website = ""
+    email = ""
+    json = ""
+
+    def __init__(self, name, website, email, json):
+        self.name = name
+        self.website = website
+        self.email = email
+        self.json = json
+
 # try:
 #     os.remove('./db.db')
 # except OSError:
