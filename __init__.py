@@ -19,7 +19,15 @@ def main():
     process.wait()
     Parser().parse(config.get('file_names', 'result_file'))
     try:
-        tokens = {'github': config.get('tokens', 'github')}
+        tokens = {'github': config.get('tokens', 'github'),
+                  'twitter_app_key': config.get('tokens', 'twitter_app_key'),
+                  'twitter_app_secret': config.get('tokens',
+                                                   'twitter_app_secret'),
+                  'twitter_oauth_token': config.get('tokens',
+                                                    'twitter_oauth_token'),
+                  'twitter_oauth_token_secret': config.get('tokens',
+                                                           'twitter_oauth' +
+                                                           '_token_secret')}
         InfoRetriever.setTokens(tokens)
     except KeyError:
         print()
