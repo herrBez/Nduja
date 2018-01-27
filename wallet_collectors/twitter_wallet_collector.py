@@ -121,8 +121,8 @@ pass
 
 
 
-twc = TwitterWalletCollector("format.json", "API_KEYS/twitter.json")
-result = twc.collect_address()
+# ~ twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
+# ~ result = twc.collect_address()
 
 
-print_json([dict(t) for t in set([tuple(d.items()) for d in result])])
+# ~ print_json([dict(t) for t in set([tuple(d.items()) for d in result])])
