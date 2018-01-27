@@ -1,12 +1,12 @@
-from twython import Twython
 import json
-import time
-from abs_wallet_collector import AbsWalletCollector
-import sys
 import re
-from time import sleep
+import sys
 import traceback
+from functools import reduce
+from time import sleep
+from abs_wallet_collector import AbsWalletCollector
 from furl import furl
+from twython import Twython
 
 
 def print_json(s):
@@ -28,10 +28,11 @@ class Pattern:
             matches = list(
                 map(
                     lambda x:
-                        (self.symbol, x.group()),
+                    (self.symbol, x.group()),
                     matches_iterator
                 )
             )
+
         return matches
 
 
@@ -48,7 +49,6 @@ class TwitterWalletCollector(AbsWalletCollector):
         )
         self.patterns = []
         for f in self.format_object:
-            print_json(f)
             self.patterns.append(Pattern(f))
 
     def collect_raw_result(self, query):
@@ -86,18 +86,12 @@ class TwitterWalletCollector(AbsWalletCollector):
         final_result = []
 
         for f in self.format_object:
-            currency_regexp = f["wallet_regexp"]
-            # currency_name = f["name"]
-            currency_symbol = f["symbol"]
-            # Which group of the regexp should be stored
-            regexp_group = int(f["group"])
-            pattern = re.compile(currency_regexp)
 
+            currency_symbol = f["symbol"]
             statuses = []
 
             for query_filter in ["-filter:retweets AND -filter:replies",
                                  "filter:replies"]:
-
                 query = (currency_symbol.lower()
                          + " AND donation AND "
                          + query_filter)
@@ -106,47 +100,39 @@ class TwitterWalletCollector(AbsWalletCollector):
             for r in statuses:
                 content = r["full_text"]
                 try:
-                    if pattern.search(content):
-                        print("===\n")
-                        for p in self.patterns:
-                            print(p.match(content))
+                    # Retrieve the list of matches
+                    match_list = list(
+                        map(lambda x: x.match(content), self.patterns)
+                    )
+                    # Reduce the list of lists to a single list
+                    match_list = reduce(
+                        lambda x, y: x + y,
+                        match_list,
+                        []
+                    )
 
-                        match_list = list(
-                            map(lambda x: x.match(content), self.patterns))
-                        for ml in match_list:
-                            print(ml)
+                    if len(match_list) > 0:
 
-
-                    # match_list = list(map(lambda x: x.match(content), self.patterns))
-                    # print(match_list)
-                    # print("===\n")
-
-                        matches_iterator = pattern.finditer(content)
-
-                        matches = map(
-                            lambda x: x.group(regexp_group),
-                            matches_iterator
-                        )
+                        symbol_list, wallet_list = map(list, zip(*match_list))
 
                         known_raw_url = ''
                         if len(r["entities"]["urls"]) > 0:
                             known_raw_url = r["entities"]["urls"][0]["url"]
-                        # ~ else:
-                        # ~ print_json(r)
-                        # ~ sleep(2)
+
                         final_json_element = {
                             "hostname": "twitter.com",
                             "text": r["full_text"],
                             "username_id": r["user"]["id"],
                             "username": r["user"]["screen_name"],
                             # not sure if screen_name = username or not, but username is not a field
-                            "symbol": currency_symbol,
+                            "symbol": symbol_list,
                             "repo": "",
                             "repo_id": "",
                             "known_raw_url": known_raw_url,
-                            "wallet_list": tuple(list(set(matches)))
+                            "wallet_list": wallet_list
                         }
                         final_result = final_result + [final_json_element]
+
                     sleep(0.1)
 
                 except Exception:
@@ -160,4 +146,4 @@ pass
 
 twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
 result1 = twc.collect_address()
-print_json([dict(t) for t in set([tuple(d.items()) for d in result1])])
+print_json(result1)
