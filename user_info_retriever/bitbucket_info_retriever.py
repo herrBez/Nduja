@@ -1,6 +1,6 @@
 import requests
 import json
-from user_info_retriever.personal_info import PersonalInfo
+from dao.personal_info import PersonalInfo
 from user_info_retriever.abs_personal_info_retriever \
     import PersonalInfoRetriever
 
@@ -23,5 +23,4 @@ class BitbucketInfoRetriever(PersonalInfoRetriever):
                 return None
         return None
 
-
-#print(BitbucketInfoRetriever().retrieveInfo('briomkez'))
+# print(BitbucketInfoRetriever().retrieveInfo('briomkez'))

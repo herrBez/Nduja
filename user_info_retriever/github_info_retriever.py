@@ -1,6 +1,6 @@
 import requests
 import json
-from user_info_retriever.personal_info import PersonalInfo
+from dao.personal_info import PersonalInfo
 from user_info_retriever.abs_personal_info_retriever \
     import PersonalInfoRetriever
 
@@ -23,9 +23,7 @@ class GithubInfoRetriever(PersonalInfoRetriever):
             r = requests.get(GithubInfoRetriever.formatURL(username))
             resp = r.text
             try:
-                print("username: " + username)
                 user = json.loads(resp)
-                print(user)
                 return PersonalInfo(user["name"], user["blog"],
                                     user["email"], resp)
             except ValueError:

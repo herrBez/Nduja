@@ -1,4 +1,4 @@
-from db_manager import DbManager
+from db.db_manager import DbManager
 from user_info_retriever.bitbucket_info_retriever import BitbucketInfoRetriever
 from user_info_retriever.github_info_retriever import GithubInfoRetriever
 

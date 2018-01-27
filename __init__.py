@@ -1,10 +1,10 @@
 import configparser
-from db_manager import DbManager
-from parsing_results import Parser
+from db.db_manager import DbManager
+from result_parser.parsing_results import Parser
 from pathlib import Path
 import subprocess
 import sys
-from info_retriever import InfoRetriever
+from user_info_retriever.info_retriever import InfoRetriever
 
 
 def main():

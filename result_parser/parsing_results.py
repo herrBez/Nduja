@@ -1,5 +1,5 @@
 import json
-from db_manager import DbManager
+from db.db_manager import DbManager
 
 
 class Parser:
