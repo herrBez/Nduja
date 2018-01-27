@@ -1,5 +1,5 @@
 import json
-from db_manager import DbManager
+from db.db_manager import DbManager
 
 
 class Parser:
@@ -10,7 +10,7 @@ class Parser:
     dbManager = None
 
     def __init__(self):
-        Parser.dbManager = DbManager()
+        Parser.dbManager = DbManager.getInstance()
 
     def parse(self, path):
         results = json.load(open(path))
@@ -32,8 +32,9 @@ class Parser:
                         if (res["symbol"] in ['XMR', 'BCH', 'ETH', 'ETC']):
                             status = 0
                         (Parser.dbManager.
-                         insertWalletWithAccount(w, res["symbol"], status,
-                                                 accountId, res["pathToFile"]))
+                         insertWalletWithAccount(w, res["symbol"],
+                                                 status, accountId,
+                                                 res["known_raw_url"]))
 
     def validWallets(self, wallets, checker):
         validWallets = []
