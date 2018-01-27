@@ -89,7 +89,7 @@ class GithubWalletCollector(AbsWalletCollector):
 
 pass
 
-# ~ gwc = GithubWalletCollector("format.json", "API_KEYS/login.json")
+# ~ gwc = GithubWalletCollector("../format.json", "../API_KEYS/login.json")
 # ~ result=gwc.collect_address()
 # ~ print_json(result)
 # ~ print(gwc.request_url("http://google.com"))
