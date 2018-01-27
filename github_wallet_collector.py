@@ -10,8 +10,8 @@ def print_json(s):
 
 
 class GithubWalletCollector(AbsWalletCollector):
-    base_url = "https://api.github.com/search/code"
-    + "?q=$SYMBOL&page=$p&per_page=30"
+    base_url = ("https://api.github.com/search/code" +
+                "?q=$SYMBOL&page=$p&per_page=30")
 
     def __init__(self, format_file, login_file):
         self.format_object = json.loads(open(format_file).read())

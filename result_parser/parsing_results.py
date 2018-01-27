@@ -12,8 +12,13 @@ class Parser:
     def __init__(self):
         Parser.dbManager = DbManager.getInstance()
 
-    def parse(self, path):
-        results = json.load(open(path))
+    def parseString(self, string):
+        return self.parse(json.loads(string))
+
+    def parseFile(self, path):
+        return self.parse(json.load(open(path)))
+
+    def parse(self, results):
         for res in results["results"]:
             checker = self.retrieveChecker(res["symbol"])
             valid = self.validWallets(res["wallet"], checker)
@@ -50,8 +55,7 @@ class Parser:
                                  currency.lower() + "_address_checker." +
                                  currency.lower().title() + "AddressChecker")()
         elif (currency in ['ETH', 'ETC']):
-            return self.getClass('address_checkers.' +
-                                 currency.lower() + "_address_checker." +
+            return self.getClass('address_checkers.ethereum_address_checker.' +
                                  "EthereumAddressChecker")()
         else:
             return None
