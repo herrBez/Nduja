@@ -1,5 +1,5 @@
 import json
-from abs_wallet_collector import AbsWalletCollector
+from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
 
@@ -56,16 +56,17 @@ class TwitterWalletCollector(AbsWalletCollector):
         queries = []
         for query_filter in ["-filter:retweets AND -filter:replies",
                              "filter:replies"]:
-            query = (p.symbol.lower()
-                     + " AND donation AND "
-                     + query_filter)
+            query = (p.symbol.lower() +
+                     " AND donation AND " +
+                     query_filter)
             queries = queries + [query]
         return queries
 
     def extract_content(self, response) -> str:
         return response["full_text"]
 
-    def build_answer_json(self, raw_response, content, symbol_list, wallet_list):
+    def build_answer_json(self, raw_response, content, symbol_list,
+                          wallet_list):
         known_raw_url = ''
         if len(raw_response["entities"]["urls"]) > 0:
             known_raw_url = raw_response["entities"]["urls"][0]["url"]
@@ -86,6 +87,8 @@ class TwitterWalletCollector(AbsWalletCollector):
 
 pass
 
-twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
-result1 = twc.collect_address()
-print_json(result1)
+# twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
+# result1 = json.dumps(twc.collect_address())
+# results = '{"results" : ' + result1 + '}'
+# with open("scr.txt", mode='a') as file:
+#     file.write(results)
