@@ -7,6 +7,7 @@ import subprocess
 import sys
 from user_info_retriever.info_retriever import InfoRetriever
 from threading import Thread
+import json
 
 
 def main():
@@ -48,7 +49,9 @@ def searchSearchCode(resultPath):
 
 
 def searchTwitter():
-    results = str(TwitterWalletCollector('./Nduja/format.json',
-                                         './Nduja/API_KEYS/twitter.json')
-                  .collect_address())
+    results = (TwitterWalletCollector('./Nduja/format.json',
+                                      './Nduja/API_KEYS/twitter.json')
+               .collect_address())
+    results = str(json.dumps(results))
+    results = '{"results" : ' + results + '}'
     Parser().parseString(results)
