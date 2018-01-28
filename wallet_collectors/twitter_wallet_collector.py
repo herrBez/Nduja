@@ -4,7 +4,7 @@ import sys
 import traceback
 from functools import reduce
 from time import sleep
-from abs_wallet_collector import AbsWalletCollector
+from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
 
@@ -139,11 +139,13 @@ class TwitterWalletCollector(AbsWalletCollector):
                     traceback.print_exc()
                     print("Error on: ", file=sys.stderr)
 
-        return final_result
+        return '{"results" : ' + json.dumps(final_result) + '}'
 
 
 pass
 
-twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
-result1 = twc.collect_address()
-print_json(result1)
+# twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
+# result1 = json.dumps(twc.collect_address())
+# results = '{"results" : ' + result1 + '}'
+# with open("scr.txt", mode='a') as file:
+#     file.write(results)
