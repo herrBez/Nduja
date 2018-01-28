@@ -86,10 +86,6 @@ class AbsWalletCollector:
         final_result = []
 
         for p in list(self.patterns):
-            print("Ok")
-            print(p)
-
-        for p in list(self.patterns):
 
             queries = self.construct_queries(p)
             list_of_raw_result = map(
