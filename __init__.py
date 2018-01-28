@@ -6,7 +6,7 @@ from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
 import subprocess
 import sys
 from user_info_retriever.info_retriever import InfoRetriever
-from github_wallet_collector import GithubWalletCollector
+from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from threading import Thread
 
 
@@ -52,8 +52,8 @@ def searchSearchCode(resultPath):
 
 
 def searchGithub():
-    results = (GithubWalletCollector(('./Nduja/format.json',
-                                      './Nduja/API_KEYS//login.json'))
+    results = (GithubWalletCollector('./Nduja/format.json',
+                                     './Nduja/API_KEYS//login.json')
                .collect_address())
     Parser().parseString(results)
 

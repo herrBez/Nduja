@@ -1,6 +1,6 @@
 import json
-from abs_wallet_collector import AbsWalletCollector
-from abs_wallet_collector import Pattern
+from wallet_collectors.abs_wallet_collector import AbsWalletCollector
+from wallet_collectors.abs_wallet_collector import Pattern
 
 
 def print_json(s):
@@ -22,7 +22,6 @@ class GithubWalletCollector(AbsWalletCollector):
                 self.login_object["token"]
             )
         )
-
         return a["items"]
 
     def construct_queries(self, pattern) -> list:
