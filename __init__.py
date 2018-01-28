@@ -2,10 +2,14 @@ import configparser
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
 from pathlib import Path
+from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
 import subprocess
 import sys
 from user_info_retriever.info_retriever import InfoRetriever
+<<<<<<< HEAD
 from github_wallet_collector import GithubWalletCollector
+=======
+>>>>>>> twitter-wallet-collector
 from threading import Thread
 
 
@@ -20,12 +24,23 @@ def main():
         Thread(target=searchSearchCode(
             config.get('file_names', 'result_file')))
     t2 = Thread(target=searchGithub)
+    t3 = Thread(target=searchTwitter)
     t1.start()
     t2.start()
+    t3.start()
     t1.join()
     t2.join()
+    t3.join()
     try:
-        tokens = {'github': config.get('tokens', 'github')}
+        tokens = {'github': config.get('tokens', 'github'),
+                  'twitter_app_key': config.get('tokens', 'twitter_app_key'),
+                  'twitter_app_secret': config.get('tokens',
+                                                   'twitter_app_secret'),
+                  'twitter_oauth_token': config.get('tokens',
+                                                    'twitter_oauth_token'),
+                  'twitter_oauth_token_secret': config.get('tokens',
+                                                           'twitter_oauth' +
+                                                           '_token_secret')}
         InfoRetriever.setTokens(tokens)
     except KeyError:
         print()
@@ -40,10 +55,14 @@ def searchSearchCode(resultPath):
 
 
 def searchGithub():
-    results = str(GithubWalletCollector(("/mnt/3C013B4060E799D6/Desktop/cns/Nduja/format.json"),
-                                        ("/mnt/3C013B4060E799D6/Desktop/cns/Nduja/API_KEYS/login.json"))
+    results = str(GithubWalletCollector(('./Nduja/format.json',
+                                         './Nduja/API_KEYS//login.json'))
                   .collect_address())
-    results = results.replace("'", '"').replace(
-        "wallet_list", "wallet").replace("hostname", "host")
-    results = '{"results" : ' + results + '}'
+    Parser().parseString(results)
+
+
+def searchTwitter():
+    results = str(TwitterWalletCollector('./Nduja/format.json',
+                                         './Nduja/API_KEYS/twitter.json')
+                  .collect_address())
     Parser().parseString(results)
