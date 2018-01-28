@@ -15,19 +15,18 @@ class Pattern:
         self.group = format_object["group"]
         self.symbol = format_object["symbol"]
 
-    def match(self, content):
-        matches = []
-        if self.pattern.search(content):
-            matches_iterator = self.pattern.finditer(content)
+    def __str__(self):
+        return self.symbol + " Pattern "
 
-            matches = list(
+    def match(self, content):
+        matches_iterator = self.pattern.finditer(content)
+        matches = list(
                 map(
                     lambda x:
                     (self.symbol, x.group()),
                     matches_iterator
                 )
             )
-
         return matches
 
 
@@ -51,7 +50,7 @@ class AbsWalletCollector:
     @abstractmethod
     def __init__(self, format_file):
         self.format_object = json.loads(open(format_file).read())
-        self.patterns = map(lambda f: Pattern(f), self.format_object)
+        self.patterns = list(map(lambda f: Pattern(f), self.format_object))
 
     def request_url(self, url, token = None):
         """ Request an url synchronously and returns the json response"""
@@ -64,7 +63,7 @@ class AbsWalletCollector:
         return resp
 
     @abstractmethod
-    def collect_raw_address(self):
+    def collect_raw_result(self) -> list:
         '''Abstract method that must be returns a json '''
 
     @abstractmethod
@@ -78,31 +77,36 @@ class AbsWalletCollector:
         patterns'''
 
     @abstractmethod
-    def build_answer_json(self, raw_response, match_list, symbol_list, wallet_list):
+    def build_answer_json(self, raw_response, content,
+                          match_list, symbol_list, wallet_list):
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
 
     def collect_address(self):
         final_result = []
 
-        for p in self.patterns:
+        for p in list(self.patterns):
+            print("Ok")
+            print(p)
+
+        for p in list(self.patterns):
 
             queries = self.construct_queries(p)
             list_of_raw_result = map(
                 lambda query: self.collect_raw_result(query),
                 queries
             )
-            statuses = flatten(list_of_raw_result)
+            raw_result = flatten(list_of_raw_result)
 
-            for r in statuses:
+            for r in raw_result:
 
                 content = self.extract_content(r)
-
 
                 try:
                     # Retrieve the list of matches
                     match_list = list(
-                        map(lambda x: x.match(content), self.patterns)
+                        map(lambda x:
+                            x.match(content), self.patterns)
                     )
                     # Reduce the list of lists to a single list
                     match_list = reduce(
@@ -112,9 +116,9 @@ class AbsWalletCollector:
                     )
                     # A match was found
                     if len(match_list) > 0:
-                        print("ok\n")
                         symbol_list, wallet_list = map(list, zip(*match_list))
                         element = self.build_answer_json(r,
+                                                         content,
                                                          symbol_list,
                                                          wallet_list)
 
