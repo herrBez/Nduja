@@ -1,9 +1,4 @@
 import json
-import re
-import sys
-import traceback
-from functools import reduce
-from time import sleep
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
@@ -13,33 +8,10 @@ def print_json(s):
     print(json.dumps(s, indent=2))
 
 
-class Pattern:
-    def __init__(self, format_object):
-        self.pattern = re.compile(format_object["wallet_regexp"])
-        self.name = format_object["name"]
-        self.group = format_object["group"]
-        self.symbol = format_object["symbol"]
-
-    def match(self, content):
-        matches = []
-        if self.pattern.search(content):
-            matches_iterator = self.pattern.finditer(content)
-
-            matches = list(
-                map(
-                    lambda x:
-                    (self.symbol, x.group()),
-                    matches_iterator
-                )
-            )
-
-        return matches
-
-
 class TwitterWalletCollector(AbsWalletCollector):
 
     def __init__(self, format_file, login_file):
-        self.format_object = json.loads(open(format_file).read())
+        super().__init__(format_file)
         login_object = json.loads(open(login_file).read())
         self.twitter = Twython(
             login_object["APP_KEY"],
@@ -47,9 +19,7 @@ class TwitterWalletCollector(AbsWalletCollector):
             login_object["OAUTH_TOKEN"],
             login_object["OAUTH_TOKEN_SECRET"]
         )
-        self.patterns = []
-        for f in self.format_object:
-            self.patterns.append(Pattern(f))
+        self.max_count = 100
 
     def collect_raw_result(self, query):
         statuses = []
@@ -58,7 +28,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         for rt in ["mixed", "popular", "recent"]:
             result = self.twitter.search(
                 q=query,  # The query: search for hashtags
-                count='100',  # Results per page
+                count=str(self.max_count),  # Results per page
                 result_type=rt,
                 # search for both popular and not popular content
                 tweet_mode='extended',
@@ -71,7 +41,7 @@ class TwitterWalletCollector(AbsWalletCollector):
 
                 result = self.twitter.search(
                     q=f.args["q"],
-                    count='100',  # Results per page
+                    count=str(self.max_count),  # Results per page
                     # result_type='recent',
                     # search for both popular and not popular content
                     tweet_mode='extended',
@@ -82,64 +52,37 @@ class TwitterWalletCollector(AbsWalletCollector):
 
         return statuses
 
-    def collect_address(self):
-        final_result = []
+    def construct_queries(self, p) -> list:
+        queries = []
+        for query_filter in ["-filter:retweets AND -filter:replies",
+                             "filter:replies"]:
+            query = (p.symbol.lower() +
+                     " AND donation AND " +
+                     query_filter)
+            queries = queries + [query]
+        return queries
 
-        for f in self.format_object:
+    def extract_content(self, response) -> str:
+        return response["full_text"]
 
-            currency_symbol = f["symbol"]
-            statuses = []
+    def build_answer_json(self, raw_response, content, symbol_list,
+                          wallet_list):
+        known_raw_url = ''
+        if len(raw_response["entities"]["urls"]) > 0:
+            known_raw_url = raw_response["entities"]["urls"][0]["url"]
 
-            for query_filter in ["-filter:retweets AND -filter:replies",
-                                 "filter:replies"]:
-                query = (currency_symbol.lower()
-                         + " AND donation AND "
-                         + query_filter)
-                statuses = statuses + self.collect_raw_result(query)
-
-            for r in statuses:
-                content = r["full_text"]
-                try:
-                    # Retrieve the list of matches
-                    match_list = list(
-                        map(lambda x: x.match(content), self.patterns)
-                    )
-                    # Reduce the list of lists to a single list
-                    match_list = reduce(
-                        lambda x, y: x + y,
-                        match_list,
-                        []
-                    )
-
-                    if len(match_list) > 0:
-
-                        symbol_list, wallet_list = map(list, zip(*match_list))
-
-                        known_raw_url = ''
-                        if len(r["entities"]["urls"]) > 0:
-                            known_raw_url = r["entities"]["urls"][0]["url"]
-
-                        final_json_element = {
-                            "hostname": "twitter.com",
-                            "text": r["full_text"],
-                            "username_id": r["user"]["id"],
-                            "username": r["user"]["screen_name"],
-                            # not sure if screen_name = username or not, but username is not a field
-                            "symbol": symbol_list,
-                            "repo": "",
-                            "repo_id": "",
-                            "known_raw_url": known_raw_url,
-                            "wallet_list": wallet_list
-                        }
-                        final_result = final_result + [final_json_element]
-
-                    sleep(0.1)
-
-                except Exception:
-                    traceback.print_exc()
-                    print("Error on: ", file=sys.stderr)
-
-        return '{"results" : ' + json.dumps(final_result) + '}'
+        final_json_element = {
+            "hostname": "twitter.com",
+            "text": content,
+            "username_id": raw_response["user"]["id"],
+            "username": raw_response["user"]["screen_name"],
+            "symbol": symbol_list,
+            "repo": "",
+            "repo_id": "",
+            "known_raw_url": known_raw_url,
+            "wallet_list": wallet_list
+        }
+        return final_json_element
 
 
 pass
