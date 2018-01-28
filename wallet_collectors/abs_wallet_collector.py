@@ -21,12 +21,12 @@ class Pattern:
     def match(self, content):
         matches_iterator = self.pattern.finditer(content)
         matches = list(
-                map(
-                    lambda x:
-                    (self.symbol, x.group()),
-                    matches_iterator
-                )
+            map(
+                lambda x:
+                (self.symbol, x.group()),
+                matches_iterator
             )
+        )
         return matches
 
 
@@ -52,10 +52,10 @@ class AbsWalletCollector:
         self.format_object = json.loads(open(format_file).read())
         self.patterns = list(map(lambda f: Pattern(f), self.format_object))
 
-    def request_url(self, url, token = None):
+    def request_url(self, url, token=None):
         """ Request an url synchronously and returns the json response"""
         data = None
-        if not token is None:
+        if token is not None:
             data = {'Authorization': 'token ' + token}
         r = requests.get(url, headers=data)
         resp = r.text
@@ -125,8 +125,7 @@ class AbsWalletCollector:
                 except Exception:
                     traceback.print_exc()
                     print("Error on: ", file=sys.stderr)
-
-        return final_result
+        return '{"results" : ' + str(json.dumps(final_result)) + '}'
 
 
 pass

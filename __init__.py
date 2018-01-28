@@ -6,12 +6,8 @@ from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
 import subprocess
 import sys
 from user_info_retriever.info_retriever import InfoRetriever
-<<<<<<< HEAD
 from github_wallet_collector import GithubWalletCollector
-=======
->>>>>>> twitter-wallet-collector
 from threading import Thread
-import json
 
 
 def main():
@@ -21,15 +17,15 @@ def main():
     else:
         config.read('./Nduja/default-conf.ini')
     DbManager.setDBFileName(config.get('file_names', 'dbname'))
-    t1 = \
-        Thread(target=searchSearchCode(
-            config.get('file_names', 'result_file')))
+    # t1 = \
+    #     Thread(target=searchSearchCode(
+    #         config.get('file_names', 'result_file')))
+    # t1.start()
+    # t1.join()
     t2 = Thread(target=searchGithub)
     t3 = Thread(target=searchTwitter)
-    t1.start()
     t2.start()
     t3.start()
-    t1.join()
     t2.join()
     t3.join()
     try:
@@ -56,9 +52,9 @@ def searchSearchCode(resultPath):
 
 
 def searchGithub():
-    results = str(GithubWalletCollector(('./Nduja/format.json',
-                                         './Nduja/API_KEYS//login.json'))
-                  .collect_address())
+    results = (GithubWalletCollector(('./Nduja/format.json',
+                                      './Nduja/API_KEYS//login.json'))
+               .collect_address())
     Parser().parseString(results)
 
 
@@ -66,6 +62,4 @@ def searchTwitter():
     results = (TwitterWalletCollector('./Nduja/format.json',
                                       './Nduja/API_KEYS/twitter.json')
                .collect_address())
-    results = str(json.dumps(results))
-    results = '{"results" : ' + results + '}'
     Parser().parseString(results)
