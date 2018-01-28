@@ -38,7 +38,7 @@ class BchAddressChecker(AbsAddressChecker):
             jresp = json.loads(resp)
             return ((jresp[BchAddressChecker.ERRNO] ==
                      BchAddressChecker.NOERRORS) and
-                    (BchAddressChecker.jresp[BchAddressChecker.DATA]
+                    (jresp[BchAddressChecker.DATA]
                      is not None))
         except ValueError:
             return False

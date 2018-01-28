@@ -6,6 +6,10 @@ from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
 import subprocess
 import sys
 from user_info_retriever.info_retriever import InfoRetriever
+<<<<<<< HEAD
+from github_wallet_collector import GithubWalletCollector
+=======
+>>>>>>> twitter-wallet-collector
 from threading import Thread
 import json
 
@@ -17,14 +21,17 @@ def main():
     else:
         config.read('./Nduja/default-conf.ini')
     DbManager.setDBFileName(config.get('file_names', 'dbname'))
-    # t1 = \
-    #     Thread(target=searchSearchCode(
-    #         config.get('file_names', 'result_file')))
-    t2 = Thread(target=searchTwitter)
-    # t1.start()
+    t1 = \
+        Thread(target=searchSearchCode(
+            config.get('file_names', 'result_file')))
+    t2 = Thread(target=searchGithub)
+    t3 = Thread(target=searchTwitter)
+    t1.start()
     t2.start()
-    # t1.join()
+    t3.start()
+    t1.join()
     t2.join()
+    t3.join()
     try:
         tokens = {'github': config.get('tokens', 'github'),
                   'twitter_app_key': config.get('tokens', 'twitter_app_key'),
@@ -46,6 +53,13 @@ def searchSearchCode(resultPath):
     process = subprocess.Popen(command, shell=True, stdout=sys.stdout)
     process.wait()
     Parser().parseFile(resultPath)
+
+
+def searchGithub():
+    results = str(GithubWalletCollector(('./Nduja/format.json',
+                                         './Nduja/API_KEYS//login.json'))
+                  .collect_address())
+    Parser().parseString(results)
 
 
 def searchTwitter():
