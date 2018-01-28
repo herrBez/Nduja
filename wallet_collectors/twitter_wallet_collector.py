@@ -5,6 +5,7 @@ import traceback
 from functools import reduce
 from time import sleep
 from abs_wallet_collector import AbsWalletCollector
+from abs_wallet_collector import Pattern
 from furl import furl
 from twython import Twython
 
@@ -13,33 +14,10 @@ def print_json(s):
     print(json.dumps(s, indent=2))
 
 
-class Pattern:
-    def __init__(self, format_object):
-        self.pattern = re.compile(format_object["wallet_regexp"])
-        self.name = format_object["name"]
-        self.group = format_object["group"]
-        self.symbol = format_object["symbol"]
-
-    def match(self, content):
-        matches = []
-        if self.pattern.search(content):
-            matches_iterator = self.pattern.finditer(content)
-
-            matches = list(
-                map(
-                    lambda x:
-                    (self.symbol, x.group()),
-                    matches_iterator
-                )
-            )
-
-        return matches
-
-
 class TwitterWalletCollector(AbsWalletCollector):
 
     def __init__(self, format_file, login_file):
-        self.format_object = json.loads(open(format_file).read())
+        super().__init__(format_file)
         login_object = json.loads(open(login_file).read())
         self.twitter = Twython(
             login_object["APP_KEY"],
@@ -47,9 +25,6 @@ class TwitterWalletCollector(AbsWalletCollector):
             login_object["OAUTH_TOKEN"],
             login_object["OAUTH_TOKEN_SECRET"]
         )
-        self.patterns = []
-        for f in self.format_object:
-            self.patterns.append(Pattern(f))
 
     def collect_raw_result(self, query):
         statuses = []

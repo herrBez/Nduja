@@ -1,5 +1,6 @@
 import json
 from abs_wallet_collector import AbsWalletCollector
+from abs_wallet_collector import Pattern
 import sys
 import re
 from time import sleep
@@ -10,10 +11,9 @@ def print_json(s):
 
 
 class GithubWalletCollector(AbsWalletCollector):
-    base_url = "https://api.github.com/search/code"
-    + "?q=$SYMBOL&page=$p&per_page=30"
 
     def __init__(self, format_file, login_file):
+        super().__init__(format_file)
         self.format_object = json.loads(open(format_file).read())
         if not (login_file is None):
             self.login_object = json.loads(open(login_file).read())
@@ -89,7 +89,6 @@ class GithubWalletCollector(AbsWalletCollector):
 
 pass
 
-# ~ gwc = GithubWalletCollector("../format.json", "../API_KEYS/login.json")
-# ~ result=gwc.collect_address()
-# ~ print_json(result)
-# ~ print(gwc.request_url("http://google.com"))
+gwc = GithubWalletCollector("../format.json", "../API_KEYS/login.json")
+result = gwc.collect_address()
+print_json(result)
