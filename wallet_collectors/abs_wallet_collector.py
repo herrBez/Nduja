@@ -34,10 +34,8 @@ class AbsWalletCollector:
     @abstractmethod
     def __init__(self, format_file):
         self.format_object = json.loads(open(format_file).read())
-        self.patterns = []
-        for f in self.format_object:
-            self.patterns.append(Pattern(f))
-
+        self.patterns = map(lambda f: Pattern(f), self.format_object)
+    
     @abstractmethod
     def collect_address(self):
         '''Abstract method that must be returns a json '''
