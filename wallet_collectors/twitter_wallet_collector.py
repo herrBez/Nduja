@@ -60,6 +60,9 @@ class TwitterWalletCollector(AbsWalletCollector):
                      " AND donation AND " +
                      query_filter)
             queries = queries + [query]
+        query = ("#" + p.symbol.lower() + "GiveAway" +
+                 " AND filter:replies")
+        queries = queries + [query]
         return queries
 
     def extract_content(self, response) -> str:
