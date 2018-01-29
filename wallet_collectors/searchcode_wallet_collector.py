@@ -14,7 +14,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
     def __init__(self, format_file):
         super().__init__(format_file)
         self.max_page = 10
-        self.per_page = 1
+        self.per_page = 10
 
     def collect_raw_result(self, query):
         tmp = json.loads(
@@ -25,6 +25,11 @@ class SearchcodeWalletCollector(AbsWalletCollector):
         return tmp["results"]
 
     def construct_queries(self, pattern) -> list:
+        # src=1 --> code.google.com
+        # src=2 --> github.com
+        # src=3 -->
+        # src=4 -->
+        # src=5 -->
         pages = range(0, self.max_page)
         return list(
             map(lambda page:
@@ -34,7 +39,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
                 + "+Donation"
                 + "&p="
                 + str(page)
-                + "&per_page="
+                + "&per_page"
                 + str(self.per_page)
                 + "&loc=0",
                 pages
@@ -49,56 +54,44 @@ class SearchcodeWalletCollector(AbsWalletCollector):
         return res
 
     def build_answer_json(self, item, content, symbol_list, wallet_list):
+        repo = item["repo"]
+        username_pattern = re.compile("(https?|git)://([^/]*)/([^/]*)/([^/]*)")
+        mymatch = username_pattern.search(repo)
 
 
-
-        repo_url = item["url"]
-        repository = item["name"]
-        print("repo " + repository)
-        filename = item["filename"]
-        print("filename " + filename)
-        directory = item["location"]
-        print("directory " + directory)
-
-        url = ""
-
-        if directory == "" or directory == "/":
-            url = repo_url + "/" + filename
+        if "bitbucket" in repo:
+            hostname = "bitbucket.org"
+            username = mymatch.group(4)
+        elif "github" in repo:
+            hostname = "github.com"
+            username = mymatch.group(3)
+        elif "google.code" in repo:
+            hostname = "google.code.com"
+            username = mymatch.group(3)
+        elif "gitlab" in repo:
+            hostname = "gitlab.com"
+            username = mymatch.group(3)
         else:
-            url = repo_url + directory + "/" + filename
-        print(wallet_list)
-        print(url)
-
-        re.compile("(https?|git)://([^/]*)")
-
-        hostname = ""
-
-        if "github.com" in repo_url:
-            hostname = "github.com",
-            re.compile("")
-
-
+            # Not known source
+            hostname = ""
+            username = ""
 
         final_json_element = {
-            "hostname": "github.com",
+            "hostname": hostname,
             "text": content,
             "username_id": "",
-            "username": ,
+            "username": username,
             "symbol": symbol_list,
-            "repo": item["repository"]["name"],
-            "repo_id": item["repository"]["id"],
-            "known_raw_url": "",
+            "repo": repo,
+            "repo_id": "",
+            "known_raw_url": item["url"],
             "wallet_list": wallet_list
         }
 
-
-
         return final_json_element
-
-
 
 pass
 
 swc = SearchcodeWalletCollector("../format.json")
 result = swc.collect_address()
-print_json(result)
+print(result)
