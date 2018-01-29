@@ -91,19 +91,18 @@ class AbsWalletCollector:
 
         queries = self.construct_queries()
 
-        list_of_raw_result = self.collect_raw_result(queries)
+        list_of_raw_results = self.collect_raw_result(queries)
 
-        raw_result = flatten(list_of_raw_result)
+        raw_results = flatten(list_of_raw_results)
 
-        for r in raw_result:
+        contents = self.extract_content(raw_results)
 
-            content = self.extract_content(r)
-
+        for i in range(0, len(contents)):
             try:
                 # Retrieve the list of matches
                 match_list = list(
                     map(lambda x:
-                        x.match(content), self.patterns)
+                        x.match(contents[i]), self.patterns)
                 )
                 # Reduce the list of lists to a single list
                 match_list = reduce(
@@ -114,8 +113,8 @@ class AbsWalletCollector:
                 # A match was found
                 if len(match_list) > 0:
                     symbol_list, wallet_list = map(list, zip(*match_list))
-                    element = self.build_answer_json(r,
-                                                     content,
+                    element = self.build_answer_json(raw_results[i],
+                                                     contents[i],
                                                      symbol_list,
                                                      wallet_list)
 
