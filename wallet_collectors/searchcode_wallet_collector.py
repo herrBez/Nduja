@@ -25,11 +25,6 @@ class SearchcodeWalletCollector(AbsWalletCollector):
         return tmp["results"]
 
     def construct_queries(self, pattern) -> list:
-        # src=1 --> code.google.com
-        # src=2 --> github.com
-        # src=3 -->
-        # src=4 -->
-        # src=5 -->
         pages = range(0, self.max_page)
         return list(
             map(lambda page:
