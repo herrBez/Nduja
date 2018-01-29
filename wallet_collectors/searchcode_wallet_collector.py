@@ -85,6 +85,6 @@ class SearchcodeWalletCollector(AbsWalletCollector):
 
 pass
 
-swc = SearchcodeWalletCollector("../format.json")
-result = swc.collect_address()
-print(result)
+# swc = SearchcodeWalletCollector("../format.json")
+# result = swc.collect_address()
+# print(result)
