@@ -3,61 +3,76 @@ from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
 from pathlib import Path
 from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
-import subprocess
+from wallet_collectors.searchcode_wallet_collector import SearchcodeWalletCollector
 import sys
 from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from multiprocessing import Pool
+import json
 
 
-def main():
-    config = configparser.ConfigParser()
-    if (Path('./Nduja/conf.ini')).is_file():
-        config.read('./Nduja/conf.ini')
-    else:
-        config.read('./Nduja/default-conf.ini')
-    DbManager.setDBFileName(config.get('file_names', 'dbname'))
-    pool = Pool(processes=3)
-    p1 = pool.apply_async(searchGithub, [])
-    p2 = pool.apply_async(searchTwitter, [])
-    # c = pool.apply_async(printNum3, [])
-    pool.close()
-    pool.join()
-    # t1 = \
-    #     Thread(target=searchSearchCode(
-    #         config.get('file_names', 'result_file')))
-    try:
-        tokens = {'github': config.get('tokens', 'github'),
-                  'twitter_app_key': config.get('tokens', 'twitter_app_key'),
-                  'twitter_app_secret': config.get('tokens',
-                                                   'twitter_app_secret'),
-                  'twitter_oauth_token': config.get('tokens',
-                                                    'twitter_oauth_token'),
-                  'twitter_oauth_token_secret': config.get('tokens',
-                                                           'twitter_oauth' +
-                                                           '_token_secret')}
-        InfoRetriever.setTokens(tokens)
-    except KeyError:
-        print()
-    InfoRetriever().retrieveInfoForAccountSaved()
-
-
-def searchSearchCode(resultPath):
-    command = 'cd Nduja && ./address_searcher.sh'
-    process = subprocess.Popen(command, shell=True, stdout=sys.stdout)
-    process.wait()
-    Parser().parseFile(resultPath)
-
-
-def searchGithub():
-    results = (GithubWalletCollector('./Nduja/format.json',
-                                     './Nduja/API_KEYS//login.json')
-               .collect_address())
-    Parser().parseString(results)
-
-
-def searchTwitter():
-    results = (TwitterWalletCollector('./Nduja/format.json',
-                                      './Nduja/API_KEYS/twitter.json')
-               .collect_address())
-    Parser().parseString(results)
+# def main():
+#     config = None
+#     if (Path('./Nduja/conf.json')).is_file():
+#         config = json.load(open('./Nduja/conf.json'))
+#     else:
+#         sys.exit(1)
+#         # config.read('./Nduja/default-conf.ini')
+#
+#     tokens = {'github': config["tokens"]["github"],
+#               'twitter_app_key': config["tokens"]["twitter_app_key"],
+#               'twitter_app_secret': config["tokens"]["twitter_app_secret"],
+#               'twitter_oauth_token': config["tokens"]["twitter_oauth_token"],
+#               'twitter_oauth_token_secret': config["tokens"][
+#                   'twitter_oauth_token_secret']
+#               }
+#
+#
+#     DbManager.setDBFileName(config["dbname"])
+#     pool = Pool(processes=3)
+#     p1 = pool.apply_async(search_github(tokens["github"]))
+#     # p2 = pool.apply_async(search_twitter(tokens))
+#     p3 = pool.apply_async(search_searchcode())
+#     print("ciao")
+#     # pool.close()
+#     pool.join()
+#     # t1 = \
+#     #     Thread(target=searchSearchCode(
+#     #         config.get('file_names', 'result_file')))
+#     try:
+#         tokens = {'github': config["tokens"]["github"],
+#                   'twitter_app_key': config["tokens"]["twitter_app_key"],
+#                   'twitter_app_secret': config["tokens"]["twitter_app_secret"],
+#                   'twitter_oauth_token': config["tokens"]["twitter_oauth_token"],
+#                   'twitter_oauth_token_secret': config["tokens"][
+#                                                            'twitter_oauth' +
+#                                                            '_token_secret']
+#                   }
+#         InfoRetriever.setTokens(tokens)
+#     except KeyError:
+#         print()
+#     InfoRetriever().retrieveInfoForAccountSaved()
+#
+#
+# def search_searchcode():
+#     print("Search Code")
+#     results = (SearchcodeWalletCollector('./Nduja/format.json')
+#                .collect_address())
+#     Parser().parseString(results)
+#
+#
+# def search_github(tokens):
+#     print("Search Github")
+#     results = (GithubWalletCollector('./Nduja/format.json',
+#                                      tokens
+#                                      )
+#                .collect_address())
+#     Parser().parseString(results)
+#
+#
+# def search_twitter(tokens):
+#
+#     results = (TwitterWalletCollector('./Nduja/format.json',
+#                                       './Nduja/API_KEYS/twitter.json')
+#                .collect_address())
+#     Parser().parseString(results)
