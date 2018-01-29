@@ -1,7 +1,5 @@
 import json
-from abs_wallet_collector import AbsWalletCollector
-from abs_wallet_collector import Pattern
-import sys
+from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 import re
 from time import sleep
 
