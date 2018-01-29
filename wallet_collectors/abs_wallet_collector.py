@@ -1,9 +1,13 @@
 from abc import ABCMeta, abstractmethod
 import json
+# N.B. According to this issue we should import grequests before! requests
+# otherwise grequets does not work
+# https://github.com/kennethreitz/grequests/issues/103
+
+import grequests
 import requests
 import re
 from functools import reduce
-from time import sleep
 import traceback
 import sys
 
@@ -63,7 +67,7 @@ class AbsWalletCollector:
         return resp
 
     @abstractmethod
-    def collect_raw_result(self) -> list:
+    def collect_raw_result(self, queries) -> list:
         '''Abstract method that must be returns a json '''
 
     @abstractmethod
@@ -85,46 +89,42 @@ class AbsWalletCollector:
     def collect_address(self):
         final_result = []
 
-        for p in list(self.patterns):
+        queries = self.construct_queries()
 
-            queries = self.construct_queries(p)
-            list_of_raw_result = map(
-                lambda query: self.collect_raw_result(query),
-                queries
-            )
-            raw_result = flatten(list_of_raw_result)
+        list_of_raw_result = self.collect_raw_result(queries)
 
-            for r in raw_result:
+        raw_result = flatten(list_of_raw_result)
 
-                content = self.extract_content(r)
+        for r in raw_result:
 
-                try:
-                    # Retrieve the list of matches
-                    match_list = list(
-                        map(lambda x:
-                            x.match(content), self.patterns)
-                    )
-                    # Reduce the list of lists to a single list
-                    match_list = reduce(
-                        lambda x, y: x + y,
-                        match_list,
-                        []
-                    )
-                    # A match was found
-                    if len(match_list) > 0:
-                        symbol_list, wallet_list = map(list, zip(*match_list))
-                        element = self.build_answer_json(r,
-                                                         content,
-                                                         symbol_list,
-                                                         wallet_list)
+            content = self.extract_content(r)
 
-                        final_result = final_result + [element]
+            try:
+                # Retrieve the list of matches
+                match_list = list(
+                    map(lambda x:
+                        x.match(content), self.patterns)
+                )
+                # Reduce the list of lists to a single list
+                match_list = reduce(
+                    lambda x, y: x + y,
+                    match_list,
+                    []
+                )
+                # A match was found
+                if len(match_list) > 0:
+                    symbol_list, wallet_list = map(list, zip(*match_list))
+                    element = self.build_answer_json(r,
+                                                     content,
+                                                     symbol_list,
+                                                     wallet_list)
 
-                    sleep(0.1)
+                    final_result = final_result + [element]
 
-                except Exception:
-                    traceback.print_exc()
-                    print("Error on: ", file=sys.stderr)
+
+            except Exception:
+                traceback.print_exc()
+                print("Error on: ", file=sys.stderr)
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
 
 
