@@ -8,6 +8,7 @@ from user_info_retriever.abs_personal_info_retriever \
 class GithubInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.github.com/users/"
     token = None
+    current_token = 0
 
     def setToken(token):
         GithubInfoRetriever.token = token
@@ -15,7 +16,11 @@ class GithubInfoRetriever(PersonalInfoRetriever):
     def formatURL(username):
         toReturn = GithubInfoRetriever.URL + username
         if GithubInfoRetriever.token is not None:
-            toReturn = toReturn + '?access_token=' + GithubInfoRetriever.token
+            toReturn = toReturn + '?access_token=' \
+                       + GithubInfoRetriever.token[GithubInfoRetriever.current_token]
+            GithubInfoRetriever.current_token = \
+                                    (GithubInfoRetriever.current_token + 1) \
+                                    % len(GithubInfoRetriever.token)
         return toReturn
 
     def retrieveInfo(self, username):

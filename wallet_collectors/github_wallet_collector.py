@@ -1,31 +1,36 @@
 import json
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from wallet_collectors.abs_wallet_collector import Pattern
-
+import sys
 
 def print_json(s):
     print(json.dumps(s, indent=2))
 
 
 class GithubWalletCollector(AbsWalletCollector):
-    def __init__(self, format_file, login_file):
+
+    def __init__(self, format_file, tokens):
         super().__init__(format_file)
-        self.format_object = json.loads(open(format_file).read())
-        if not (login_file is None):
-            self.login_object = json.loads(open(login_file).read())
-        self.max_page = 1
+        self.format_object = json.load(open(format_file))
+        self.max_page = 2
+        self.current_token = 0
+        self.tokens = tokens
+
+    def request_url(self, url, token=None):
+        r = super().request_url(url, self.tokens[self.current_token])
+        self.current_token = (self.current_token + 1) % len(self.tokens)
+        return r
 
     def collect_raw_result(self, query):
         a = json.loads(
             self.request_url(
-                query,
-                self.login_object["token"]
+                query
             )
         )
         return a["items"]
 
     def construct_queries(self, pattern) -> list:
-        pages = [0]
+        pages = range(0, self.max_page)
         return list(
             map(lambda page:
                 "https://api.github.com/search/code?q=" +
@@ -41,15 +46,17 @@ class GithubWalletCollector(AbsWalletCollector):
     def extract_content(self, response) -> str:
         res_url = json.loads(
             self.request_url(
-                response["url"],
-                self.login_object["token"]
+                response["url"]
             )
         )
+        if "message" in res_url:
+            print_json(res_url)
+            return ""
 
         download_url = res_url["download_url"]
+
         file_content = self.request_url(
-            download_url,
-            self.login_object["token"]
+            download_url
         )
         return file_content
 
