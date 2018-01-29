@@ -8,6 +8,7 @@ import sys
 from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from multiprocessing import Pool
+from address_checker.eth_address_checker import EthAddressChecker
 
 
 def main():
@@ -27,6 +28,7 @@ def main():
     #     Thread(target=searchSearchCode(
     #         config.get('file_names', 'result_file')))
     try:
+        EthAddressChecker.setToken(config.get('tokens', 'etherscan'))
         tokens = {'github': config.get('tokens', 'github'),
                   'twitter_app_key': config.get('tokens', 'twitter_app_key'),
                   'twitter_app_secret': config.get('tokens',
