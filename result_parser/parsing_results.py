@@ -41,13 +41,14 @@ class Parser:
                                 res[Parser.HOST],
                                 res[Parser.USERNAME])
                     if (not(Parser.dbManager.findWallet(w))):
+                        status = 0
+                        if (checker.address_check(w)):
                             status = 1
-                            if (s in Parser.NOT_SURE_CHECK):
+                        if (s in Parser.NOT_SURE_CHECK):
                                 status = 0
-                            (Parser.dbManager.
-                             insertWalletWithAccount(w, s,
-                                                     status, accountId,
-                                                     res[Parser.URL]))
+                        (Parser.dbManager.
+                         insertWalletWithAccount(w, s, status, accountId,
+                                                 res[Parser.URL]))
 
     def validWallets(self, wallets, checker):
         validWallets = []
