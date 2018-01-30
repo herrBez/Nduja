@@ -19,7 +19,7 @@ class BitbucketInfoRetriever(PersonalInfoRetriever):
         for rx in results:
             if rx is not None:
                 infos.append(PersonalInfo(rx.json()["display_name"],
-                                          rx.json()["website"], "",
+                                          rx.json()["website"], None,
                                           rx.json()))
             else:
                 infos.append(None)

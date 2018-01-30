@@ -29,14 +29,8 @@ class GithubInfoRetriever(PersonalInfoRetriever):
         infos = []
         for rx in results:
             if rx is not None:
-                name = rx.json()["name"]
-                website = rx.json()["blog"]
-                email = rx.json()["email"]
-                if (email is None):
-                    email = ''
-                else:
-                    email = str(email)
-                infos.append(PersonalInfo(name, website, email, rx.json()))
+                infos.append(PersonalInfo(rx.json()["name"], rx.json()["blog"],
+                                          rx.json()["email"], rx.json()))
             else:
                 infos.append(None)
         return infos

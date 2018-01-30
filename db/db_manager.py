@@ -69,7 +69,7 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                VALUES (?,?,?)''', (address, currency, status,))
+                VALUES (?,?,?)''', (str(address), str(currency), status,))
         except Error:
             traceback.print_exc()
             return False
@@ -82,7 +82,7 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                VALUES (?,?,?)''', (address, currency, status,))
+                VALUES (?,?,?)''', (str(address), str(currency), status,))
         except Error:
             traceback.print_exc()
             return False
@@ -93,13 +93,12 @@ class DbManager:
     def insertInformation(self, name, website, email, json):
         self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
-        print(name)
-        print(website)
-        print(email)
-        print(json)
+        if (email is None or email.isspace()):
+            email = " "
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
-                VALUES (?,?,?,?)''', (str(name), str(website), str(email), str(json),))
+                VALUES (?,?,?,?)''', (str(name), str(website),
+                                      str(email), str(json),))
         except Error:
             traceback.print_exc()
             return -1
@@ -114,7 +113,7 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
-                VALUES (?,?,?)''', (host, username, info,))
+                VALUES (?,?,?)''', (str(host), str(username), info,))
         except Error:
             traceback.print_exc()
             return -1
@@ -129,7 +128,7 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username)
-                VALUES (?,?)''', (host, username,))
+                VALUES (?,?)''', (str(host), str(username),))
         except Error:
             traceback.print_exc()
             return -1
@@ -144,7 +143,7 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
-                VALUES (?,?,?)''', (account, wallet, url,))
+                VALUES (?,?,?)''', (account, str(wallet), url,))
         except Error:
             traceback.print_exc()
             return -1

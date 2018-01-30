@@ -5,10 +5,18 @@ class PersonalInfo:
     json = ""
 
     def __init__(self, name, website, email, json):
-        self.name = name
-        self.website = website
-        self.email = email
-        self.json = json
+        self.name = ' '
+        self.website = ' '
+        self.email = ' '
+        self.json = ' '
+        if self.name is not None:
+            self.name = name
+        if self.website is not None:
+            self.website = website
+        if self.email is not None:
+            self.email = email
+        if self.json is not None:
+            self.json = json
 
     def __str__(self):
         namestr = ' '
