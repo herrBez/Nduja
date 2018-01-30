@@ -4,6 +4,8 @@ import re
 from time import sleep
 import grequests
 import requests
+from wallet_collectors.abs_wallet_collector import flatten
+
 
 def print_json(s):
     print(json.dumps(s, indent=2))
@@ -16,7 +18,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
     def __init__(self, format_file):
         super().__init__(format_file)
         self.max_page = 10
-        self.per_page = 10
+        self.per_page = 20
 
     def collect_raw_result(self, queries):
         rs = (grequests.get(q) for q in queries)
@@ -28,7 +30,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
                 )
         )
 
-        return raw_results
+        return flatten(raw_results)
 
     def construct_queries(self) -> list:
         return [
@@ -45,12 +47,19 @@ class SearchcodeWalletCollector(AbsWalletCollector):
             for page in range(0, self.max_page)
         ]
 
-    def extract_content(self, response) -> str:
+    def extract_content_single(self, response) -> str:
         res = ""
         lines = response["lines"]
         for key in lines:
             res += "\n" + lines[key]
         return res
+
+    def extract_content(self, responses):
+        return list(map(
+            lambda r:
+            self.extract_content_single(r),
+            responses
+        ))
 
     def build_answer_json(self, item, content, symbol_list, wallet_list):
         repo = item["repo"]
