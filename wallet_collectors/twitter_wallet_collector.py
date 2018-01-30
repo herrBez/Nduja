@@ -27,7 +27,7 @@ class TwitterWalletCollector(AbsWalletCollector):
                 tokens_dictionary["twitter_oauth_token"][i],
                 tokens_dictionary["twitter_oauth_token_secret"][i]
             ))
-        self.max_pages = 10
+        self.max_pages = 3
         self.max_count = 100
 
     def getTwython(self):
