@@ -95,7 +95,7 @@ class AbsWalletCollector:
 
         contents = self.extract_content(raw_results)
 
-        non_empty_list = (c for c in contents if c != "")
+        non_empty_list = [c for c in contents if c != ""]
 
         print("Result fetched" + str(len(non_empty_list)))
 
