@@ -100,31 +100,32 @@ class AbsWalletCollector:
         print("Result fetched" + str(len(non_empty_list)))
 
         for i in range(0, len(contents)):
-            try:
-                # Retrieve the list of matches
-                match_list = list(
-                    map(lambda x:
-                        x.match(contents[i]), self.patterns)
-                )
-                # Reduce the list of lists to a single list
-                match_list = reduce(
-                    lambda x, y: x + y,
-                    match_list,
-                    []
-                )
-                # A match was found
-                if len(match_list) > 0:
-                    symbol_list, wallet_list = map(list, zip(*match_list))
-                    element = self.build_answer_json(raw_results[i],
-                                                     contents[i],
-                                                     symbol_list,
-                                                     wallet_list)
+            if contents[i] == "":
+                try:
+                    # Retrieve the list of matches
+                    match_list = list(
+                        map(lambda x:
+                            x.match(contents[i]), self.patterns)
+                    )
+                    # Reduce the list of lists to a single list
+                    match_list = reduce(
+                        lambda x, y: x + y,
+                        match_list,
+                        []
+                    )
+                    # A match was found
+                    if len(match_list) > 0:
+                        symbol_list, wallet_list = map(list, zip(*match_list))
+                        element = self.build_answer_json(raw_results[i],
+                                                         contents[i],
+                                                         symbol_list,
+                                                         wallet_list)
 
-                    final_result = final_result + [element]
+                        final_result = final_result + [element]
 
-            except Exception:
-                traceback.print_exc()
-                print("Error on: ", file=sys.stderr)
+                except Exception:
+                    traceback.print_exc()
+                    print("Error on: ", file=sys.stderr)
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
 
 
