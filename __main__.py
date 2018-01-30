@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import configparser
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
 from pathlib import Path
@@ -11,26 +10,28 @@ from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from multiprocessing import Pool
 import json
 import twython
+from address_checkers.eth_address_checker import EthAddressChecker
 
-def search_searchcode():
+
+def search_searchcode(formatfile):
     print("Search Code")
-    results = (SearchcodeWalletCollector('./Nduja/format.json')
+    results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
     Parser().parseString(results)
 
 
-def search_github(tokens):
+def search_github(formatfile, tokens):
     print("Search Github")
-    results = (GithubWalletCollector('./Nduja/format.json',
-                                     tokens["github"]
+    results = (GithubWalletCollector(formatfile,
+                                     tokens
                                      )
                .collect_address())
     Parser().parseString(results)
 
 
-def search_twitter(tokens):
+def search_twitter(formatfile, tokens):
     try:
-        results = (TwitterWalletCollector('./Nduja/format.json',
+        results = (TwitterWalletCollector(formatfile,
                                           tokens)
                    .collect_address())
         print("Twitter gave " + len(results) + " results")
@@ -38,7 +39,6 @@ def search_twitter(tokens):
 
     except twython.exceptions.TwythonRateLimitError:
         print("Twython rate limit exceed!. Exiting without crash")
-
 
 
 if __name__ == "__main__":
@@ -49,44 +49,22 @@ if __name__ == "__main__":
     else:
         print("Error config file not found")
         sys.exit(1)
-        # config.read('./Nduja/default-conf.ini')
-
-    # tokens = {'github': config["tokens"]["github"],
-    #           'twitter_app_key': config["tokens"]["twitter_app_key"],
-    #           'twitter_app_secret': config["tokens"]["twitter_app_secret"],
-    #           'twitter_oauth_token': config["tokens"][
-    #               "twitter_oauth_token"],
-    #           'twitter_oauth_token_secret': config["tokens"][
-    #               'twitter_oauth_token_secret']
-    #           }
 
     DbManager.setDBFileName(config["dbname"])
+    EthAddressChecker.setToken(config["tokens"]["etherscan"])
     pool = Pool(processes=3)
-    p1 = pool.apply_async(search_github(config["tokens"]), [])
-    p2 = pool.apply_async(search_twitter(config["tokens"]), [])
-    p3 = pool.apply_async(search_searchcode(), [])
 
-    print("ciao")
+    p1 = pool.apply_async(search_github(config["format"],
+                                        config["tokens"]["github"]), [])
+    p2 = pool.apply_async(search_twitter(config["format"],
+                                         config["tokens"]), [])
+    p3 = pool.apply_async(search_searchcode(config["format"]), [])
+
+
     pool.close()
     pool.join()
-
-    # t1 = \
-    #     Thread(target=searchSearchCode(
-    #         config.get('file_names', 'result_file')))
-    # try:
-    #     # tokens = {'github': config["tokens"]["github"],
-    #     #           'twitter_app_key': config["tokens"]["twitter_app_key"],
-    #     #           'twitter_app_secret': config["tokens"][
-    #     #               "twitter_app_secret"],
-    #     #           'twitter_oauth_token': config["tokens"][
-    #     #               "twitter_oauth_token"],
-    #     #           'twitter_oauth_token_secret': config["tokens"][
-    #     #               'twitter_oauth' +
-    #     #               '_token_secret']
-    #     #           }
-    #     # InfoRetriever.setTokens(tokens)
-    # except KeyError:
-    #     print()
-    # InfoRetriever().retrieveInfoForAccountSaved()
-
-
+    try:
+        InfoRetriever.setTokens(config)
+    except KeyError:
+        print()
+    InfoRetriever().retrieveInfoForAccountSaved()

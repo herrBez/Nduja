@@ -31,10 +31,11 @@ class BtcAddressChecker(AbsAddressChecker):
         r = requests.get(BtcAddressChecker.BITCOININFO + addr)
         resp = r.text
         try:
-            json.loads(resp)
+            resp = json.loads(resp)
+            nTx = resp["n_tx"]
+            return (nTx > 0)
         except ValueError:
             return False
-        return True
 
     def address_check(self, addr):
         '''Check if the bitcoin address is valid and exists'''

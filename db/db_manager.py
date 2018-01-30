@@ -1,6 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 from dao.account import Account
+import traceback
 
 
 class DbManager:
@@ -30,9 +31,9 @@ class DbManager:
         )''')
         c.execute('''CREATE TABLE IF NOT EXISTS Information(
             _id INTEGER PRIMARY KEY,
-            Name VARCHAR(255),
-            Website VARCHAR(255),
-            Email VARCHAR(255),
+            Name TEXT,
+            Website TEXT,
+            Email TEXT,
             Json LONGTEXT
         )''')
         c.execute('''CREATE TABLE IF NOT EXISTS Account(
@@ -59,7 +60,7 @@ class DbManager:
             c.execute('''INSERT INTO Currency VALUES ("LTC")''')
             c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
         except Error:
-            print()
+            traceback.print_exc()
         self.conn.commit()
         self.conn.close()
 
@@ -68,9 +69,9 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                VALUES (?,?,?)''', (address, currency, status,))
+                VALUES (?,?,?)''', (str(address), str(currency), status,))
         except Error:
-            print()
+            traceback.print_exc()
             return False
         self.conn.commit()
         self.conn.close()
@@ -81,9 +82,9 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                VALUES (?,?,?)''', (address, currency, status,))
+                VALUES (?,?,?)''', (str(address), str(currency), status,))
         except Error:
-            print()
+            traceback.print_exc()
             return False
         self.conn.commit()
         self.conn.close()
@@ -92,11 +93,14 @@ class DbManager:
     def insertInformation(self, name, website, email, json):
         self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
+        if (email is None or email.isspace()):
+            email = " "
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
-                VALUES (?,?,?,?)''', (name, website, email, json,))
+                VALUES (?,?,?,?)''', (str(name), str(website),
+                                      str(email), str(json),))
         except Error:
-            print()
+            traceback.print_exc()
             return -1
         c.execute('SELECT max(_id) FROM Information')
         max_id = c.fetchone()[0]
@@ -109,9 +113,9 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
-                VALUES (?,?,?)''', (host, username, info,))
+                VALUES (?,?,?)''', (str(host), str(username), info,))
         except Error:
-            print()
+            traceback.print_exc()
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
@@ -124,9 +128,9 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username)
-                VALUES (?,?)''', (host, username,))
+                VALUES (?,?)''', (str(host), str(username),))
         except Error:
-            print()
+            traceback.print_exc()
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
@@ -139,9 +143,9 @@ class DbManager:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
-                VALUES (?,?,?)''', (account, wallet, url,))
+                VALUES (?,?,?)''', (account, str(wallet), url,))
         except Error:
-            print()
+            traceback.print_exc()
             return -1
         c.execute('SELECT max(_id) FROM AccountWallet')
         max_id = c.fetchone()[0]
@@ -191,7 +195,7 @@ class DbManager:
             for row in c:
                 accounts.append(Account(row[0], row[1], row[2], row[3]))
         except Error:
-            print()
+            traceback.print_exc()
         self.conn.commit()
         self.conn.close()
         return accounts
@@ -203,7 +207,7 @@ class DbManager:
             c.execute('''UPDATE Account SET Info = ? WHERE _id = ?''',
                       (infoId, accountId,))
         except Error:
-            print()
+            traceback.print_exc()
             return False
         self.conn.commit()
         self.conn.close()

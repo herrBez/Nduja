@@ -6,25 +6,45 @@ from twython import Twython
 
 
 class TwitterInfoRetriever(PersonalInfoRetriever):
-    twitter = None
+    twitter_index = 0
+    twitters = []
 
-    def setToken(app_key, app_secret, oauth_token, oauth_token_secret):
-        if TwitterInfoRetriever.twitter is None:
-            TwitterInfoRetriever.twitter = Twython(app_key, app_secret,
-                                                   oauth_token,
-                                                   oauth_token_secret)
+    def getTwython():
+        resTwhython = (TwitterInfoRetriever.
+                       twitters[TwitterInfoRetriever.twitter_index])
+        TwitterInfoRetriever.twitter_index = \
+            ((TwitterInfoRetriever.twitter_index + 1) %
+             len(TwitterInfoRetriever.twitters))
+        return resTwhython
 
-    def retrieveInfo(self, username):
-        if not username.isspace():
-            user = TwitterInfoRetriever.twitter.show_user(screen_name=username)
-            try:
-                return PersonalInfo(user["name"], user["url"],
-                                    None, json.dumps(user))
-            except ValueError:
-                print()
-                return None
+    def setToken(tokens):
+        for i in range(len(tokens["twitter_app_key"])):
+            TwitterInfoRetriever.twitters.append(Twython(
+                tokens["twitter_app_key"][i],
+                tokens["twitter_app_secret"][i],
+                tokens["twitter_oauth_token"][i],
+                tokens["twitter_oauth_token_secret"][i]))
+
+    def formatURL(self, username):
+        if (username is not None):
+            TwitterInfoRetriever.getTwython().show_user(screen_name=username)
+        else:
+            return None
+
+    def retrieveInfo(self, usernames):
+        results = []
+        [results.append(self.formatURL(username)) for username in usernames]
         return None
 
+    def parseResults(self, results):
+        infos = []
+        for rx in results:
+            if rx is not None:
+                infos.append(PersonalInfo(rx["name"], rx["url"], "",
+                                          json.dumps(rx)))
+            else:
+                infos.append(None)
+        return infos
 
 # TwitterInfoRetriever.setToken(
 #     app_key="",

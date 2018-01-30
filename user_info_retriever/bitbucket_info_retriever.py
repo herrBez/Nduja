@@ -8,19 +8,21 @@ from user_info_retriever.abs_personal_info_retriever \
 class BitbucketInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.bitbucket.org/2.0/users/"
 
-    def retrieveInfo(self, username):
-        if not username.isspace():
-            r = requests.get(BitbucketInfoRetriever.URL + username)
-            resp = r.text
-            try:
-                user = json.loads(resp)
-                if user["type"] == 'error':
-                    return None
-                return PersonalInfo(user["display_name"], user["website"],
-                                    None, resp)
-            except ValueError:
-                print()
-                return None
-        return None
+    def formatURL(self, username):
+        if (username is None or username.isspace()):
+            return None
+        else:
+            return (BitbucketInfoRetriever.URL + username)
+
+    def parseResults(self, results):
+        infos = []
+        for rx in results:
+            if rx is not None:
+                infos.append(PersonalInfo(rx.json()["display_name"],
+                                          rx.json()["website"], None,
+                                          rx.json()))
+            else:
+                infos.append(None)
+        return infos
 
 # print(BitbucketInfoRetriever().retrieveInfo('briomkez'))
