@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     DbManager.setDBFileName(config["dbname"])
     pool = Pool(processes=3)
-    p1 = pool.apply_async(search_github(tokens["github"]), [])
+    p1 = pool.apply_async(search_github(config["github"]), [])
     p2 = pool.apply_async(search_twitter(config["tokens"]), [])
     p3 = pool.apply_async(search_searchcode(), [])
 
