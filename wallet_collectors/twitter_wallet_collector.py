@@ -2,7 +2,7 @@ import json
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
-
+from wallet_collectors.abs_wallet_collector import flatten
 
 def print_json(s):
     print(json.dumps(s, indent=2))
@@ -10,63 +10,81 @@ def print_json(s):
 
 class TwitterWalletCollector(AbsWalletCollector):
 
-    def __init__(self, format_file, login_file):
+    def __init__(self, format_file, tokens_dictionary):
         super().__init__(format_file)
-        login_object = json.loads(open(login_file).read())
-        self.twitter = Twython(
-            login_object["APP_KEY"],
-            login_object["APP_SECRET"],
-            login_object["OAUTH_TOKEN"],
-            login_object["OAUTH_TOKEN_SECRET"]
-        )
+
+        print_json(tokens_dictionary)
+
+        self.twitter_index = 0
+        self.twitters = []
+
+        for i in range(len(tokens_dictionary["twitter_app_key"])):
+            self.twitters.append(Twython(
+                tokens_dictionary["twitter_app_key"][i],
+                tokens_dictionary["twitter_app_secret"][i],
+                tokens_dictionary["twitter_oauth_token"][i],
+                tokens_dictionary["twitter_oauth_token_secret"][i]
+            ))
+
         self.max_count = 100
 
-    def collect_raw_result(self, query):
+    def getTwython(self):
+        resTwhython = self.twitters[self.twitter_index]
+        self.twitter_index = (self.twitter_index + 1) % len(self.twitters)
+        return resTwhython
+
+    def collect_raw_result(self, queries):
         statuses = []
-        count_pages = 0
 
-        for rt in ["mixed", "popular", "recent"]:
-            result = self.twitter.search(
-                q=query,  # The query: search for hashtags
-                count=str(self.max_count),  # Results per page
-                result_type=rt,
-                # search for both popular and not popular content
-                tweet_mode='extended',
-            )
-            statuses = statuses + result["statuses"]
+        print("How many queries?" + len(queries))
 
-            # When you no longer receive new results --> stop
-            while "next_results" in result["search_metadata"]:
-                f = furl(result["search_metadata"]["next_results"])
+        for query in queries:
+            for rt in ["mixed", "popular", "recent"]:
+                mytwitter = self.getTwython()
 
-                result = self.twitter.search(
-                    q=f.args["q"],
+                results = mytwitter.cursor(
+                    mytwitter.search,
+                    q=query,  # The query: search for hashtags
                     count=str(self.max_count),  # Results per page
-                    # result_type='recent',
+                    result_type=rt,
                     # search for both popular and not popular content
                     tweet_mode='extended',
-                    max_id=f.args["max_id"]
                 )
-                statuses = statuses + result["statuses"]
-                count_pages = count_pages + 1
+                for result in results:
+                    statuses = statuses + result["statuses"]
 
-        return statuses
+        return flatten(statuses)
 
-    def construct_queries(self, p) -> list:
+    def construct_queries(self) -> list:
         queries = []
-        for query_filter in ["-filter:retweets AND -filter:replies",
-                             "filter:replies"]:
-            query = (p.symbol.lower() +
-                     " AND donation AND " +
-                     query_filter)
-            queries = queries + [query]
+        for p in self.patterns:
+            for query_filter in ["-filter:retweets AND -filter:replies",
+                                 "filter:replies"]:
+                query = ("(" + p.symbol.lower() +
+                         " OR "
+                         + p.name + ")"
+                         + "AND ("
+                         + "donation OR donate OR donating OR "
+                         + "give OR giving"
+                         + "contribution OR contribute OR contributing"
+                         + "OR providing"
+                         + ") AND "
+                         + query_filter)
+                queries = queries + [query]
         query = ("#" + p.symbol.lower() + "GiveAway" +
                  " AND filter:replies")
         queries = queries + [query]
         return queries
 
-    def extract_content(self, response) -> str:
+    def extract_content_single(self, response) -> str:
         return response["full_text"]
+
+    def extract_content(self, responses):
+        return list(map(
+            lambda r:
+            self.extract_content_single(r),
+            responses
+        ))
 
     def build_answer_json(self, raw_response, content, symbol_list,
                           wallet_list):
