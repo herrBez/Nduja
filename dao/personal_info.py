@@ -26,5 +26,5 @@ class PersonalInfo:
         return '{\n\t"name":"' + namestr + \
             '",\n\t"website":"' + websitestr + \
             '",\n\t"email":"' + emailstr + \
-            '",\n\t"json":' + jsonstr + \
+            '",\n\t"json":' + str(jsonstr) + \
             '}'

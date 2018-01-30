@@ -41,6 +41,7 @@ if __name__ == "__main__":
     if (Path('./Nduja/conf.json')).is_file():
         config = json.load(open('./Nduja/conf.json'))
     else:
+        print("ciao")
         sys.exit(1)
         # config.read('./Nduja/default-conf.ini')
 
@@ -54,16 +55,7 @@ if __name__ == "__main__":
               }
 
     DbManager.setDBFileName(config["dbname"])
-    pool = Pool(processes=3)
-    p1 = pool.apply_async(search_github(tokens["github"]), [])
-    # p2 = pool.apply_async(search_twitter(tokens))
-    p3 = pool.apply_async(search_searchcode(), [])
-    print("ciao")
-    pool.close()
-    pool.join()
-    # t1 = \
-    #     Thread(target=searchSearchCode(
-    #         config.get('file_names', 'result_file')))
+    search_searchcode()
     try:
         tokens = {'github': config["tokens"]["github"],
                   'twitter_app_key': config["tokens"]["twitter_app_key"],
@@ -79,5 +71,3 @@ if __name__ == "__main__":
     except KeyError:
         print()
     InfoRetriever().retrieveInfoForAccountSaved()
-
-

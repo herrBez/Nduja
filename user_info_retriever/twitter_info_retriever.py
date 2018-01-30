@@ -14,17 +14,26 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
                                                    oauth_token,
                                                    oauth_token_secret)
 
-    def retrieveInfo(self, username):
-        if not username.isspace():
-            user = TwitterInfoRetriever.twitter.show_user(screen_name=username)
-            try:
-                return PersonalInfo(user["name"], user["url"],
-                                    None, json.dumps(user))
-            except ValueError:
-                print()
-                return None
+    def formatURL(self, username):
+        if (username is None):
+            TwitterInfoRetriever.twitter.show_user(screen_name=username)
+        else:
+            return None
+
+    def retrieveInfo(self, usernames):
+        results = []
+        [results.append(self.formatURL(username)) for username in usernames]
         return None
 
+    def parseResults(self, results):
+        infos = []
+        for rx in results:
+            if rx is not None:
+                infos.append(PersonalInfo(rx["name"], rx["url"], "",
+                                          json.dumps(rx)))
+            else:
+                infos.append(None)
+        return infos
 
 # TwitterInfoRetriever.setToken(
 #     app_key="",

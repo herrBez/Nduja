@@ -23,20 +23,28 @@ class InfoRetriever:
     def retrieveInfoForAccountSaved(self):
         db = DbManager.getInstance()
         accounts = db.getAllAccounts()
+        githubs = []
+        bitbuckets = []
+        twitters = []
         for account in accounts:
             if account.info is None:
-                info = None
                 if "github" in account.host:
-                    info = GithubInfoRetriever().retrieveInfo(
-                        account.username)
+                    githubs.append(account)
                 elif "bitbucket" in account.host:
-                    info = \
-                        BitbucketInfoRetriever().retrieveInfo(
-                            account.username)
+                    bitbuckets.append(account)
                 elif "twitter" in account.host:
-                    info = TwitterInfoRetriever().retrieveInfo(
-                        account.username)
-                if info is not None:
-                    infoId = (db.insertInformation(info.name, info.website,
-                                                   info.email, info.json))
-                    db.addInfoToAccount(account.ID, infoId)
+                    twitters.append(account)
+        infos = []
+        infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
+        #(((infos.append(GithubInfoRetriever().retrieveInfo(githubs)))
+        #  .append(BitbucketInfoRetriever().retrieveInfo(bitbuckets)))
+        # .append(TwitterInfoRetriever().retrieveInfo(twitters)))
+        accounts = []
+        accounts = accounts + githubs
+        #accounts = githubs.append(bitbuckets).append(twitters)
+        accInfo = zip(accounts, infos)
+        for (account, info) in accInfo:
+            if info is not None:
+                infoId = (db.insertInformation(info.name, info.website,
+                                               info.email, info.json))
+                db.addInfoToAccount(account.ID, infoId)
