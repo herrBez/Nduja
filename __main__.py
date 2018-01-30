@@ -34,7 +34,7 @@ def search_twitter(formatfile, tokens):
         results = (TwitterWalletCollector(formatfile,
                                           tokens)
                    .collect_address())
-        print("Twitter gave " + len(results) + " results")
+        print("Twitter gave " + str(len(results)) + " results")
         Parser().parseString(results)
 
     except twython.exceptions.TwythonRateLimitError:
