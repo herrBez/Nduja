@@ -95,6 +95,10 @@ class AbsWalletCollector:
 
         contents = self.extract_content(raw_results)
 
+        non_empty_list = (c for c in contents if c != "")
+
+        print("Result fetched" + str(len(non_empty_list)))
+
         for i in range(0, len(contents)):
             try:
                 # Retrieve the list of matches
@@ -117,7 +121,6 @@ class AbsWalletCollector:
                                                      wallet_list)
 
                     final_result = final_result + [element]
-
 
             except Exception:
                 traceback.print_exc()
