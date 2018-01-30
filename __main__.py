@@ -11,7 +11,7 @@ from multiprocessing import Pool
 import json
 import twython
 from address_checkers.eth_address_checker import EthAddressChecker
-
+from time import sleep
 
 def search_searchcode(formatfile):
     print("Search Code")
@@ -69,4 +69,5 @@ if __name__ == "__main__":
         print()
     print("Finish to fetch the data. Sleep 15 minutes to let the api ")
     sleep(15*62)
+    print("Finish the sleep for the twitter api -.-")
     InfoRetriever().retrieveInfoForAccountSaved()
