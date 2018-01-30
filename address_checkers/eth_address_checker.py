@@ -8,14 +8,18 @@ class EthAddressChecker(AbsAddressChecker):
     P1 = 'https://api.etherscan.io/api?module=account&action=balance&address='
     P2 = '&tag=latest&apikey='
     token = None
+    token_index = 0
     RESULT = "result"
 
     def setToken(token):
         EthAddressChecker.token = token
 
     def createURL(self, addr):
-        return (EthAddressChecker.P1 + addr + EthAddressChecker.P2 +
-                EthAddressChecker.token)
+        url = (EthAddressChecker.P1 + addr + EthAddressChecker.P2 +
+               (EthAddressChecker.token[EthAddressChecker.token_index]))
+        EthAddressChecker.token_index = ((EthAddressChecker.token_index + 1) %
+                                         len(EthAddressChecker.token))
+        return url
 
     def address_check(self, addr):
         return False

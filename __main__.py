@@ -10,6 +10,7 @@ from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from multiprocessing import Pool
 import json
 import twython
+from address_checkers.eth_address_checker import EthAddressChecker
 
 
 def search_searchcode(formatfile):
@@ -50,6 +51,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     DbManager.setDBFileName(config["dbname"])
+    EthAddressChecker.setToken(config["tokens"]["etherscan"])
     pool = Pool(processes=3)
     p1 = pool.apply_async(search_github(config["format"],
                                         config["tokens"]["github"]), [])
