@@ -3,6 +3,8 @@ from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
 from wallet_collectors.abs_wallet_collector import flatten
+from time import sleep
+
 
 def print_json(s):
     print(json.dumps(s, indent=2))
@@ -25,7 +27,7 @@ class TwitterWalletCollector(AbsWalletCollector):
                 tokens_dictionary["twitter_oauth_token"][i],
                 tokens_dictionary["twitter_oauth_token_secret"][i]
             ))
-
+        self.max_pages = 10
         self.max_count = 100
 
     def getTwython(self):
@@ -36,7 +38,7 @@ class TwitterWalletCollector(AbsWalletCollector):
     def collect_raw_result(self, queries):
         statuses = []
 
-        print("How many queries?" + len(queries))
+        print("How many queries?" + str(len(queries)))
 
         for query in queries:
             for rt in ["mixed", "popular", "recent"]:
@@ -44,16 +46,19 @@ class TwitterWalletCollector(AbsWalletCollector):
 
                 results = mytwitter.cursor(
                     mytwitter.search,
+                    return_pages=True,
                     q=query,  # The query: search for hashtags
                     count=str(self.max_count),  # Results per page
                     result_type=rt,
                     # search for both popular and not popular content
                     tweet_mode='extended',
                 )
-                for result in results:
-                    statuses = statuses + result["statuses"]
+                # Retrieve only self.max_pages pages
+                for i in range(0, self.max_pages):
+                    r = next(results)
+                    statuses = statuses + r
 
-        return flatten(statuses)
+        return statuses
 
     def construct_queries(self) -> list:
         queries = []
@@ -63,11 +68,10 @@ class TwitterWalletCollector(AbsWalletCollector):
                 query = ("(" + p.symbol.lower() +
                          " OR "
                          + p.name + ")"
-                         + "AND ("
+                         + " AND ("
                          + "donation OR donate OR donating OR "
-                         + "give OR giving"
-                         + "contribution OR contribute OR contributing"
-                         + "OR providing"
+                         + "give OR giving OR"
+                         + " contribution OR contribute OR contributing "
                          + ") AND "
                          + query_filter)
                 queries = queries + [query]
@@ -77,6 +81,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         return queries
 
     def extract_content_single(self, response) -> str:
+        # print(response["full_text"])
         return response["full_text"]
 
     def extract_content(self, responses):
