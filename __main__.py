@@ -31,7 +31,7 @@ def search_github(tokens):
 def search_twitter(tokens):
     try:
         results = (TwitterWalletCollector('./Nduja/format.json',
-                                          './Nduja/API_KEYS/twitter.json')
+                                          tokens)
                    .collect_address())
         print("Twitter gave " + len(results) + " results")
         Parser().parseString(results)
@@ -51,19 +51,19 @@ if __name__ == "__main__":
         sys.exit(1)
         # config.read('./Nduja/default-conf.ini')
 
-    tokens = {'github': config["tokens"]["github"],
-              'twitter_app_key': config["tokens"]["twitter_app_key"],
-              'twitter_app_secret': config["tokens"]["twitter_app_secret"],
-              'twitter_oauth_token': config["tokens"][
-                  "twitter_oauth_token"],
-              'twitter_oauth_token_secret': config["tokens"][
-                  'twitter_oauth_token_secret']
-              }
+    # tokens = {'github': config["tokens"]["github"],
+    #           'twitter_app_key': config["tokens"]["twitter_app_key"],
+    #           'twitter_app_secret': config["tokens"]["twitter_app_secret"],
+    #           'twitter_oauth_token': config["tokens"][
+    #               "twitter_oauth_token"],
+    #           'twitter_oauth_token_secret': config["tokens"][
+    #               'twitter_oauth_token_secret']
+    #           }
 
     DbManager.setDBFileName(config["dbname"])
     pool = Pool(processes=3)
     p1 = pool.apply_async(search_github(tokens["github"]), [])
-    p2 = pool.apply_async(search_twitter(tokens))
+    p2 = pool.apply_async(search_twitter(config["tokens"]), [])
     p3 = pool.apply_async(search_searchcode(), [])
 
     print("ciao")
@@ -73,20 +73,20 @@ if __name__ == "__main__":
     # t1 = \
     #     Thread(target=searchSearchCode(
     #         config.get('file_names', 'result_file')))
-    try:
-        tokens = {'github': config["tokens"]["github"],
-                  'twitter_app_key': config["tokens"]["twitter_app_key"],
-                  'twitter_app_secret': config["tokens"][
-                      "twitter_app_secret"],
-                  'twitter_oauth_token': config["tokens"][
-                      "twitter_oauth_token"],
-                  'twitter_oauth_token_secret': config["tokens"][
-                      'twitter_oauth' +
-                      '_token_secret']
-                  }
-        InfoRetriever.setTokens(tokens)
-    except KeyError:
-        print()
-    InfoRetriever().retrieveInfoForAccountSaved()
+    # try:
+    #     # tokens = {'github': config["tokens"]["github"],
+    #     #           'twitter_app_key': config["tokens"]["twitter_app_key"],
+    #     #           'twitter_app_secret': config["tokens"][
+    #     #               "twitter_app_secret"],
+    #     #           'twitter_oauth_token': config["tokens"][
+    #     #               "twitter_oauth_token"],
+    #     #           'twitter_oauth_token_secret': config["tokens"][
+    #     #               'twitter_oauth' +
+    #     #               '_token_secret']
+    #     #           }
+    #     # InfoRetriever.setTokens(tokens)
+    # except KeyError:
+    #     print()
+    # InfoRetriever().retrieveInfoForAccountSaved()
 
 
