@@ -67,4 +67,6 @@ if __name__ == "__main__":
         InfoRetriever.setTokens(config)
     except KeyError:
         print()
+    print("Finish to fetch the data. Sleep 15 minutes to let the api ")
+    sleep(15*62)
     InfoRetriever().retrieveInfoForAccountSaved()
