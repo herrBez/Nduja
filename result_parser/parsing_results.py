@@ -10,8 +10,8 @@ class Parser:
     HOST = "hostname"
     USERNAME = "username"
     URL = "known_raw_url"
-    NOT_SURE_CHECK = ['XMR', 'BCH', 'ETH', 'ETC']
-    CURRENCIES = ['BTC', 'BCH', 'DOGE', 'XMR', 'LTC']
+    NOT_SURE_CHECK = ['XMR', 'BCH']
+    CURRENCIES = ['BTC', 'BCH', 'DOGE', 'XMR', 'LTC', 'ETH']
 
     def __init__(self):
         Parser.dbManager = DbManager.getInstance()
@@ -41,13 +41,14 @@ class Parser:
                                 res[Parser.HOST],
                                 res[Parser.USERNAME])
                     if (not(Parser.dbManager.findWallet(w))):
+                        status = 0
+                        if (checker.address_check(w)):
                             status = 1
-                            if (s in Parser.NOT_SURE_CHECK):
+                        if (s in Parser.NOT_SURE_CHECK):
                                 status = 0
-                            (Parser.dbManager.
-                             insertWalletWithAccount(w, s,
-                                                     status, accountId,
-                                                     res[Parser.URL]))
+                        (Parser.dbManager.
+                         insertWalletWithAccount(w, s, status, accountId,
+                                                 res[Parser.URL]))
 
     def validWallets(self, wallets, checker):
         validWallets = []
@@ -61,9 +62,6 @@ class Parser:
             return self.getClass('address_checkers.' +
                                  currency.lower() + "_address_checker." +
                                  currency.lower().title() + "AddressChecker")()
-        elif (currency in ['ETH', 'ETC']):
-            return self.getClass('address_checkers.ethereum_address_checker.' +
-                                 "EthereumAddressChecker")()
         else:
             return None
 
