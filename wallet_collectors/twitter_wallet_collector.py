@@ -10,25 +10,40 @@ def print_json(s):
 
 class TwitterWalletCollector(AbsWalletCollector):
 
-    def __init__(self, format_file, login_file):
+    def __init__(self, format_file, tokens_dictionary):
         super().__init__(format_file)
-        login_object = json.loads(open(login_file).read())
-        self.twitter = Twython(
-            login_object["APP_KEY"],
-            login_object["APP_SECRET"],
-            login_object["OAUTH_TOKEN"],
-            login_object["OAUTH_TOKEN_SECRET"]
-        )
-        self.max_count = 2
+
+        print_json(tokens_dictionary)
+
+        self.twitter_index = 0
+        self.twitters = []
+
+        for i in range(len(tokens_dictionary["twitter_app_key"])):
+            self.twitters.append(Twython(
+                tokens_dictionary["twitter_app_key"][i],
+                tokens_dictionary["twitter_app_secret"][i],
+                tokens_dictionary["twitter_oauth_token"][i],
+                tokens_dictionary["twitter_oauth_token_secret"][i]
+            ))
+
+        self.max_count = 100
+
+    def getTwython(self):
+        resTwhython = self.twitters[self.twitter_index]
+        self.twitter_index = (self.twitter_index + 1) % len(self.twitters)
+        return resTwhython
 
     def collect_raw_result(self, queries):
         statuses = []
 
+        print("How many queries?" + len(queries))
 
         for query in queries:
             for rt in ["mixed", "popular", "recent"]:
-                results = self.twitter.cursor(
-                    self.twitter.search,
+                mytwitter = self.getTwython()
+
+                results = mytwitter.cursor(
+                    mytwitter.search,
                     q=query,  # The query: search for hashtags
                     count=str(self.max_count),  # Results per page
                     result_type=rt,
