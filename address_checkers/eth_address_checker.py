@@ -1,4 +1,3 @@
-from web3 import Web3
 from address_checkers.abs_address_checker import AbsAddressChecker
 import requests
 import json
@@ -36,6 +35,4 @@ class EthAddressChecker(AbsAddressChecker):
 
     def address_valid(self, addr):
         '''Check if addr is a valid Ethereum address using web3'''
-        if (Web3.isAddress(addr)):
-            return self.address_search(addr)
-        return False
+        return self.address_search(addr)
