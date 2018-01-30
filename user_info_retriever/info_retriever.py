@@ -9,7 +9,7 @@ class InfoRetriever:
 
     def setTokens(tokens):
         try:
-            GithubInfoRetriever.setToken(tokens['github'])
+            GithubInfoRetriever.setToken(tokens['tokens']['github'])
         except KeyError:
             pass
         try:
@@ -32,13 +32,14 @@ class InfoRetriever:
                 elif "twitter" in account.host:
                     twitters.append(account)
         infos = []
-        infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
-        #(((infos.append(GithubInfoRetriever().retrieveInfo(githubs)))
-        #  .append(BitbucketInfoRetriever().retrieveInfo(bitbuckets)))
-        # .append(TwitterInfoRetriever().retrieveInfo(twitters)))
+        if (len(githubs) > 0):
+            infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
+        if (len(bitbuckets) > 0):
+            infos = infos + BitbucketInfoRetriever().retrieveInfo(bitbuckets)
+        if (len(twitters) > 0):
+            infos = infos + TwitterInfoRetriever().retrieveInfo(twitters)
         accounts = []
-        accounts = accounts + githubs
-        #accounts = githubs.append(bitbuckets).append(twitters)
+        accounts = accounts + githubs + bitbuckets + twitters
         accInfo = zip(accounts, infos)
         for (account, info) in accInfo:
             if info is not None:

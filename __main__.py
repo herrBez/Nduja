@@ -53,15 +53,15 @@ if __name__ == "__main__":
     DbManager.setDBFileName(config["dbname"])
     EthAddressChecker.setToken(config["tokens"]["etherscan"])
     pool = Pool(processes=3)
-    p1 = pool.apply_async(search_github(config["format"],
-                                        config["tokens"]["github"]), [])
-    p2 = pool.apply_async(search_twitter(config["format"],
-                                         config["tokens"]), [])
+    # p1 = pool.apply_async(search_github(config["format"],
+    #                                     config["tokens"]["github"]), [])
+    # p2 = pool.apply_async(search_twitter(config["format"],
+    #                                      config["tokens"]), [])
     p3 = pool.apply_async(search_searchcode(config["format"]), [])
     pool.close()
     pool.join()
-    # try:
-    #     # InfoRetriever.setTokens(config)
-    # except KeyError:
-    #     print()
-    # InfoRetriever().retrieveInfoForAccountSaved()
+    try:
+        InfoRetriever.setTokens(config)
+    except KeyError:
+        print()
+    InfoRetriever().retrieveInfoForAccountSaved()
