@@ -22,7 +22,7 @@ def search_searchcode():
 def search_github(tokens):
     print("Search Github")
     results = (GithubWalletCollector('./Nduja/format.json',
-                                     tokens
+                                     tokens["github"]
                                      )
                .collect_address())
     Parser().parseString(results)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     DbManager.setDBFileName(config["dbname"])
     pool = Pool(processes=3)
-    p1 = pool.apply_async(search_github(config["github"]), [])
+    p1 = pool.apply_async(search_github(config["tokens"]), [])
     p2 = pool.apply_async(search_twitter(config["tokens"]), [])
     p3 = pool.apply_async(search_searchcode(), [])
 
