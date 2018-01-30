@@ -6,17 +6,28 @@ from twython import Twython
 
 
 class TwitterInfoRetriever(PersonalInfoRetriever):
-    twitter = None
+    twitter_index = 0
+    twitters = []
 
-    def setToken(app_key, app_secret, oauth_token, oauth_token_secret):
-        if TwitterInfoRetriever.twitter is None:
-            TwitterInfoRetriever.twitter = Twython(app_key, app_secret,
-                                                   oauth_token,
-                                                   oauth_token_secret)
+    def getTwython():
+        resTwhython = (TwitterInfoRetriever.
+                       twitters[TwitterInfoRetriever.twitter_index])
+        TwitterInfoRetriever.twitter_index = \
+            ((TwitterInfoRetriever.twitter_index + 1) %
+             len(TwitterInfoRetriever.twitters))
+        return resTwhython
+
+    def setToken(tokens):
+        for i in range(len(tokens["twitter_app_key"])):
+            TwitterInfoRetriever.twitters.append(Twython(
+                tokens["twitter_app_key"][i],
+                tokens["twitter_app_secret"][i],
+                tokens["twitter_oauth_token"][i],
+                tokens["twitter_oauth_token_secret"][i]))
 
     def formatURL(self, username):
-        if (username is None):
-            TwitterInfoRetriever.twitter.show_user(screen_name=username)
+        if (username is not None):
+            TwitterInfoRetriever.getTwython().show_user(screen_name=username)
         else:
             return None
 

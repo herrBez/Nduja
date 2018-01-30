@@ -13,10 +13,7 @@ class InfoRetriever:
         except KeyError:
             pass
         try:
-            TwitterInfoRetriever.setToken(tokens['twitter_app_key'],
-                                          tokens['twitter_app_secret'],
-                                          tokens['twitter_oauth_token'],
-                                          tokens['twitter_oauth_token_secret'])
+            TwitterInfoRetriever.setToken(tokens)
         except KeyError:
             pass
 
