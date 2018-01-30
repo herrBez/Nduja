@@ -10,7 +10,7 @@ from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from multiprocessing import Pool
 import json
-
+import twython
 
 def search_searchcode():
     print("Search Code")
@@ -29,10 +29,16 @@ def search_github(tokens):
 
 
 def search_twitter(tokens):
-    results = (TwitterWalletCollector('./Nduja/format.json',
-                                      './Nduja/API_KEYS/twitter.json')
-               .collect_address())
-    Parser().parseString(results)
+    try:
+        results = (TwitterWalletCollector('./Nduja/format.json',
+                                          './Nduja/API_KEYS/twitter.json')
+                   .collect_address())
+        print("Twitter gave " + len(results) + " results")
+        Parser().parseString(results)
+
+    except twython.exceptions.TwythonRateLimitError:
+        print("Twython rate limit exceed!. Exiting without crash")
+
 
 
 if __name__ == "__main__":
@@ -41,6 +47,7 @@ if __name__ == "__main__":
     if (Path('./Nduja/conf.json')).is_file():
         config = json.load(open('./Nduja/conf.json'))
     else:
+        print("Error config file not found")
         sys.exit(1)
         # config.read('./Nduja/default-conf.ini')
 
@@ -56,11 +63,13 @@ if __name__ == "__main__":
     DbManager.setDBFileName(config["dbname"])
     pool = Pool(processes=3)
     p1 = pool.apply_async(search_github(tokens["github"]), [])
-    # p2 = pool.apply_async(search_twitter(tokens))
+    p2 = pool.apply_async(search_twitter(tokens))
     p3 = pool.apply_async(search_searchcode(), [])
+
     print("ciao")
     pool.close()
     pool.join()
+
     # t1 = \
     #     Thread(target=searchSearchCode(
     #         config.get('file_names', 'result_file')))
