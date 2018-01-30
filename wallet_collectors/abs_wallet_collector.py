@@ -91,9 +91,7 @@ class AbsWalletCollector:
 
         queries = self.construct_queries()
 
-        list_of_raw_results = self.collect_raw_result(queries)
-
-        raw_results = flatten(list_of_raw_results)
+        raw_results = self.collect_raw_result(queries)
 
         contents = self.extract_content(raw_results)
 
