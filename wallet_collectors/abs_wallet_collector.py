@@ -10,6 +10,7 @@ import re
 from functools import reduce
 import traceback
 import sys
+import logging
 
 
 class Pattern:
@@ -37,25 +38,21 @@ class Pattern:
 def match_email(text):
     """Check if inside the text there is a list of emails"""
     pattern = re.compile("\\b([a-zA-Z0-9_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)\\b")
-
     emails = pattern.findall(text)
     return emails
 
+
 def match_personal_website(text):
     """Check if inside the given text there is a list of websites"""
-    pattern = re.compile("\\b(https?:\/\/([^/\\s]+\/?)*)\\b")
+    pattern = re.compile("\\b(https?://([^/\\s]+/?)*)\\b")
     website_matches = pattern.findall(text)
     # Filter out all results that links to license reference
     website_matches = [w[0] for w in website_matches if "license" not in w[0]]
     return website_matches
 
 
-def print_json(s):
-    print(json.dumps(s, indent=2))
-
-
 def flatten(l) -> list:
-    '''It takes as input a list of lists and returns a list'''
+    """It takes as input a list of lists and returns a list"""
     return reduce(
         lambda x, y: x + y,
         l,
@@ -64,10 +61,9 @@ def flatten(l) -> list:
 
 
 class AbsWalletCollector:
-    '''Abstract base class for the Address Collector'''
+    """Abstract base class for the Address Collector"""
     __metaclass__ = ABCMeta
 
-    @abstractmethod
     def __init__(self, format_file):
         self.format_object = json.loads(open(format_file).read())
         self.patterns = list(map(lambda f: Pattern(f), self.format_object))
@@ -107,17 +103,20 @@ class AbsWalletCollector:
         final_result = []
 
         queries = self.construct_queries()
+        logging.debug("Queries Constructed")
 
         raw_results = self.collect_raw_result(queries)
+        logging.debug("Raw Results Collected")
 
         contents = self.extract_content(raw_results)
+        logging.debug("Contents extracted")
 
         for i in range(0, len(contents)):
             if contents[i] != "":
                 try:
 
                     emails = match_email(contents[i])
-                    websites = match_personal_website(contents[i])
+                    websites = []# match_personal_website(contents[i])
 
                     # Retrieve the list of matches
                     match_list = list(
@@ -135,7 +134,6 @@ class AbsWalletCollector:
                         match_list = list(set(match_list))
                         symbol_list, wallet_list = map(list, zip(*match_list))
 
-
                         element = self.build_answer_json(raw_results[i],
                                                          contents[i],
                                                          symbol_list,
@@ -145,16 +143,14 @@ class AbsWalletCollector:
 
                         final_result.append(element)
 
-                        # if len(emails) > 0:
-                        #     print_json(element)
-
                 except Exception:
                     traceback.print_exc()
                     print("Error on: ", file=sys.stderr)
             else:
-                print("content empty")
+                logging.warning("content[" + str(i) + "] empty")
 
-        # print_json(final_result)
+            logging.debug(str(i) + "/" + str(len(contents))
+                          + " elements processed.")
 
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
 
