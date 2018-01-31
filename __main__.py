@@ -12,21 +12,22 @@ import json
 import twython
 from address_checkers.eth_address_checker import EthAddressChecker
 from time import sleep
+import logging
 
 def search_searchcode(formatfile):
-    print("Search Code")
+    logging.info("Search Code")
     results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
     Parser().parseString(results)
 
 
 def search_github(formatfile, tokens):
-    print("Search Github")
+    logging.info("Search Github")
     results = (GithubWalletCollector(formatfile,
                                      tokens
                                      )
                .collect_address())
-    print("Finish Search Github")
+    logging.info("Finish Search Github")
     Parser().parseString(results)
 
 
@@ -35,21 +36,23 @@ def search_twitter(formatfile, tokens):
         results = (TwitterWalletCollector(formatfile,
                                           tokens)
                    .collect_address())
-        print("Twitter gave " + str(len(results)) + " results")
 
         Parser().parseString(results)
 
     except twython.exceptions.TwythonRateLimitError:
-        print("Twython rate limit exceed!. Exiting without crash")
+        logging.error("Twython rate limit exceed!. Exiting without crash")
 
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
+
+    logging.basicConfig(level=logging.DEBUG)
+
     config = None
     if (Path('./Nduja/conf.json')).is_file():
         config = json.load(open('./Nduja/conf.json'))
     else:
-        print("Error config file not found")
+        logging.error("Config file not found")
         sys.exit(1)
 
     DbManager.setDBFileName(config["dbname"])
@@ -69,7 +72,7 @@ if __name__ == "__main__":
         InfoRetriever.setTokens(config)
     except KeyError:
         print()
-    print("Finish to fetch the data. Sleep 15 minutes to let the api ")
+    logging.info("Finish to fetch the data. Sleep 15 minutes to let the api ")
     # sleep(15*62)
-    print("Finish the sleep for the twitter api -.-")
+    logging.info("Finish the sleep for the twitter api")
     # InfoRetriever().retrieveInfoForAccountSaved()
