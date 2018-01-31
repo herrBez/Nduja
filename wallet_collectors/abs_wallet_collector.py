@@ -34,6 +34,22 @@ class Pattern:
         return matches
 
 
+def match_email(text):
+    """Check if inside the text there is a list of emails"""
+    pattern = re.compile("\\b([a-zA-Z0-9_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)\\b")
+
+    emails = pattern.findall(text)
+    return emails
+
+def match_personal_website(text):
+    """Check if inside the given text there is a list of websites"""
+    pattern = re.compile("\\b(https?:\/\/([^/\\s]+\/?)*)\\b")
+    website_matches = pattern.findall(text)
+    # Filter out all results that links to license reference
+    website_matches = [w[0] for w in website_matches if "license" not in w[0]]
+    return website_matches
+
+
 def print_json(s):
     print(json.dumps(s, indent=2))
 
@@ -82,7 +98,8 @@ class AbsWalletCollector:
 
     @abstractmethod
     def build_answer_json(self, raw_response, content,
-                          match_list, symbol_list, wallet_list):
+                          match_list, symbol_list, wallet_list, emails=None,
+                          websites=None):
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
 
@@ -95,13 +112,13 @@ class AbsWalletCollector:
 
         contents = self.extract_content(raw_results)
 
-        non_empty_list = [c for c in contents if c != ""]
-
-        print("Result fetched" + str(len(non_empty_list)))
-
         for i in range(0, len(contents)):
-            if contents[i] == "":
+            if contents[i] != "":
                 try:
+
+                    emails = match_email(contents[i])
+                    websites = match_personal_website(contents[i])
+
                     # Retrieve the list of matches
                     match_list = list(
                         map(lambda x:
@@ -115,17 +132,30 @@ class AbsWalletCollector:
                     )
                     # A match was found
                     if len(match_list) > 0:
+                        match_list = list(set(match_list))
                         symbol_list, wallet_list = map(list, zip(*match_list))
+
+
                         element = self.build_answer_json(raw_results[i],
                                                          contents[i],
                                                          symbol_list,
-                                                         wallet_list)
+                                                         wallet_list,
+                                                         emails,
+                                                         websites)
 
-                        final_result = final_result + [element]
+                        final_result.append(element)
+
+                        # if len(emails) > 0:
+                        #     print_json(element)
 
                 except Exception:
                     traceback.print_exc()
                     print("Error on: ", file=sys.stderr)
+            else:
+                print("content empty")
+
+        # print_json(final_result)
+
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
 
 
