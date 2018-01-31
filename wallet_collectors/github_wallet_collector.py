@@ -1,20 +1,27 @@
 import json
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
-from wallet_collectors.abs_wallet_collector import Pattern
-import sys
 import grequests
-import requests
 from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import pause
-import math
+import logging
 
-def print_json(s):
-    print(json.dumps(s, indent=2))
 
 def exception_handler(request, exception):
-    print("error with request")
-    print(exception)
+    """Exception handler for the grequests map function. It simply retry
+    the failing request once and on success return the new response
+    otherwise it gives up and gives back a None"""
+
+    logging.warning("error with request. Trying to avoid None")
+    res = grequests.get(request)
+    response = grequests.map([res])
+    if response[0] is None:
+        logging.error("Retried. But Failed")
+        logging.error(exception)
+        sleep(10)
+    else:
+        logging.info("Retried successfully")
+    return response[0]
 
 
 class GithubWalletCollector(AbsWalletCollector):
@@ -22,7 +29,7 @@ class GithubWalletCollector(AbsWalletCollector):
     def __init__(self, format_file, tokens):
         super().__init__(format_file)
         self.format_object = json.load(open(format_file))
-        self.max_page = 30
+        self.max_page = 10
         self.per_page = 100
         self.current_token = 0
         self.tokens = tokens
@@ -37,84 +44,121 @@ class GithubWalletCollector(AbsWalletCollector):
         self.current_token = (self.current_token + 1) % len(self.tokens)
         return token
 
+    def perform_request(self, rs):
+
+        raw_results = grequests.map(rs, exception_handler=exception_handler)
+
+        while None in raw_results:
+            logging.warning("There is a None. Let's pause?")
+            for r in raw_results:
+                if r is not None:
+                    logging.warning("Sleep Until "
+                                    + dict(r.headers)["X-RateLimit-Reset"])
+                    pause.until(int(dict(r.headers)["X-RateLimit-Reset"]))
+            raw_results = grequests.map(rs, exception_handler=exception_handler)
+
+        for r in raw_results:
+            if int(dict(r.headers)[
+                       "X-RateLimit-Remaining"]) <= 5:  # Let's wait until
+                logging.warning("Let's pause 'cause we do not have rate")
+                logging.warning("Until " + dict(r.headers)["X-RateLimit-Reset"])
+                pause.until(int(dict(r.headers)["X-RateLimit-Reset"]))
+
+        return raw_results
+
     def collect_raw_result(self, queries):
-        sleep(20)
         raw_results_with_url = []
 
         max_index = 0
-        try:
-            # We proceed sequentially to avoid to be blocked for abuses of
-            # api.
-            while max_index < len(queries):
-                min_index = max_index
-                max_index = min(max_index + len(self.tokens),
-                                len(queries))
-                rs = (grequests.get(q,
-                                    headers={
-                                        'Authorization': 'token '
-                                        + self.get_next_token()
-                                    }
-                                    ) for q in queries[min_index:max_index]
-                      )
 
-                raw_results = grequests.map(rs, exception_handler=exception_handler)
+        # We proceed sequentially to avoid to be blocked for abuses of
+        # api.
+        while max_index < len(queries):
+            min_index = max_index
+            max_index = min(max_index + len(self.tokens),
+                            len(queries))
 
-                for r in raw_results:
-                    # print_json(json.loads(r.headers))
-                    # print("Remaing calls: "
-                    #       + str(dict(r.headers)["X-RateLimit-Remaining"])
-                    #       )
-                    if int(dict(r.headers)["X-RateLimit-Remaining"]) <= 1: # Let's wait until
-                        print("Let's pause 'cause we do not have rate")
-                        pause(dict(r.headers)["X-RateLimit-Reset"])
+            logging.debug("Q[" + str(min_index) + ":" + str(max_index) + "] A")
 
-                # Filter out None responses
-                raw_results = [r for r in raw_results if r is not None]
+            rs = (grequests.get(q,
+                                headers={
+                                    'Authorization': 'token '
+                                                     + self.get_next_token()
+                                },
+                                timeout=300,
+                                ) for q in queries[min_index:max_index]
+                  )
 
-                raw_results = list(
-                    map(lambda r1:
-                        # print_json(r.json()["items"]),
-                        r1.json()["items"],
-                        raw_results
-                        )
-                )
+            raw_results = self.perform_request(rs)
 
-                raw_results = flatten(raw_results)
-                res_urls = (grequests.get(response["url"],
+            # Filter out None responses
+            raw_results = [r for r in raw_results if r is not None]
+
+            for r1 in raw_results:
+                if "items" not in r1.json():
+                    print_json(dict(r1.json()))
+                    sleep(30)
+
+            raw_results = list(
+                map(lambda r1:
+                    # print_json(r.json()["items"]),
+                    r1.json()["items"],
+                    raw_results
+                    )
+            )
+
+            raw_results = flatten(raw_results)
+            logging.debug("Q[" + str(min_index) + ":" + str(max_index) + "] B")
+
+            r_max_index = 0
+
+            res_urls = []
+
+
+            while r_max_index < len(raw_results):
+                r_min_index = r_max_index
+                r_max_index = min(r_max_index + len(self.tokens),
+                                len(raw_results))
+
+                logging.debug(
+                    "RES_URL["
+                    + str(r_min_index)
+                    + ":"
+                    + str(r_max_index)
+                    + "] A")
+
+                tmp_res_url = (grequests.get(response["url"],
                                           headers={
                                               'Authorization': 'token '
                                               + self.get_next_token()
-                                          }
-                                          ) for response in raw_results
+                                          },
+                                          timeout=200
+                                          ) for response in raw_results[r_min_index:r_max_index]
                             )
-                res_urls = grequests.map(res_urls,
-                                         exception_handler=exception_handler)
 
+                res_urls = res_urls + self.perform_request(tmp_res_url)
 
-                for i in range(0, len(res_urls)):
-                    # print_json(raw_results[i])
-                    if res_urls[i] is not None:
-                        ru = res_urls[i].json()
+            for i in range(0, len(res_urls)):
+                if res_urls[i] is not None:
+                    ru = res_urls[i].json()
 
-                        download_url = ""
-                        if "download_url" in ru:
-                            download_url = ru["download_url"]
+                    download_url = ""
+                    if "download_url" in ru:
+                        download_url = ru["download_url"]
 
-                        tmp = {"known_raw_url": download_url}
-                        # print_json(tmp)
-                        # ** = all item in a dict
-                        raw_results_with_url.append(
-                            {
-                                **raw_results[i],
-                                **tmp
-                            }
-                        )
-                    else:
-                        print(str(i) + " res_url is None")
+                    tmp = {"known_raw_url": download_url}
+                    # print_json(tmp)
+                    # ** = all item in a dict
+                    raw_results_with_url.append(
+                        {
+                            **raw_results[i],
+                            **tmp
+                        }
+                    )
+                else:
+                    logging.warning(str(i) + " res_url is None")
 
-        except KeyError:
-            print("There was a Key Error")
-
+        logging.info("Finish Collection of Raw Results")
         return raw_results_with_url
 
     def construct_queries(self) -> list:
@@ -131,41 +175,41 @@ class GithubWalletCollector(AbsWalletCollector):
             for page in range(0, self.max_page)
         ]
 
+
     def extract_content(self, responses) -> str:
-        # for response in responses:
-        #     print(response["known_raw_url"])
+        logging.debug("Entering extract Content")
+        contents = []
+        max_index = 0
 
-        print("Hallo")
+        while max_index < len(responses):
 
-        download_urls = (grequests.get(response["known_raw_url"],
-                            headers={
-                                'Authorization': 'token '
-                                                 + self.get_next_token()
-                            }
-                           ) for response in responses
+            min_index = max_index
+            max_index = min(max_index + len(self.tokens),
+                            len(responses))
+
+            logging.debug("R[" + str(min_index) + ":" + str(max_index) + "]")
+
+            download_urls = (grequests.get(response["known_raw_url"],
+                                headers={
+                                    'Authorization': 'token '
+                                                     + self.get_next_token()
+                                },
+                                timeout=300,
+                               ) for response in responses[min_index:max_index]
+                        )
+
+            file_contents_responses = \
+                grequests.map(download_urls, exception_handler=exception_handler)
+
+            file_contents = list(
+                map(lambda f:
+                    "" if f is None else f.text,
+                    file_contents_responses
                     )
-
-        file_contents_responses = grequests.map(download_urls,
-                                  exception_handler=exception_handler)
-
-
-        # for fcr in file_contents_responses:
-        #
-        #     print("text" + fcr.text)
-        #     # print("content" + fcr.content.decode()
-        #     # print("raw" + fcr.raw)
-        #     sleep(10)
-
-
-        file_contents = list(
-            map(lambda f:
-                "" if f is None else f.text,
-                file_contents_responses
                 )
-            )
+            contents += file_contents
 
-
-        return file_contents
+        return contents
 
     def build_answer_json(self, item, content, symbol_list, wallet_list, emails,
                           websites):
