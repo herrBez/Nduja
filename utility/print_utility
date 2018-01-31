@@ -1,0 +1,5 @@
+import json
+
+def print_json(s):
+    """pretty print a json string"""
+    print(json.dumps(s, indent=2))
