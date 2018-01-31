@@ -114,7 +114,6 @@ class GithubWalletCollector(AbsWalletCollector):
 
             res_urls = []
 
-
             while r_max_index < len(raw_results):
                 r_min_index = r_max_index
                 r_max_index = min(r_max_index + len(self.tokens),
@@ -172,7 +171,7 @@ class GithubWalletCollector(AbsWalletCollector):
             + "&per_page="
             + str(self.per_page)
             for pattern in self.patterns
-            for page in range(0, self.max_page)
+            for page in range(1, self.max_page+1)
         ]
 
 
