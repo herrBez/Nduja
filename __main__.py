@@ -26,6 +26,7 @@ def search_github(formatfile, tokens):
                                      tokens
                                      )
                .collect_address())
+    print("Finish Search Github")
     Parser().parseString(results)
 
 
@@ -35,6 +36,7 @@ def search_twitter(formatfile, tokens):
                                           tokens)
                    .collect_address())
         print("Twitter gave " + str(len(results)) + " results")
+
         Parser().parseString(results)
 
     except twython.exceptions.TwythonRateLimitError:
@@ -56,9 +58,9 @@ if __name__ == "__main__":
 
     p1 = pool.apply_async(search_github(config["format"],
                                         config["tokens"]["github"]), [])
-    p2 = pool.apply_async(search_twitter(config["format"],
-                                         config["tokens"]), [])
-    p3 = pool.apply_async(search_searchcode(config["format"]), [])
+    # p2 = pool.apply_async(search_twitter(config["format"],
+    #                                      config["tokens"]), [])
+    # p3 = pool.apply_async(search_searchcode(config["format"]), [])
 
 
     pool.close()
@@ -68,6 +70,6 @@ if __name__ == "__main__":
     except KeyError:
         print()
     print("Finish to fetch the data. Sleep 15 minutes to let the api ")
-    sleep(15*62)
+    # sleep(15*62)
     print("Finish the sleep for the twitter api -.-")
-    InfoRetriever().retrieveInfoForAccountSaved()
+    # InfoRetriever().retrieveInfoForAccountSaved()
