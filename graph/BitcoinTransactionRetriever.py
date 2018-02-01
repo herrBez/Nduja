@@ -34,6 +34,7 @@ class BtcTransactionRetriever:
                 # https://blockchain.info/tx/d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
                 out_addr = []
                 in_addr = []
+
                 for o in t["out"]:
                     try:
                         e = o["addr"]
@@ -54,10 +55,10 @@ class BtcTransactionRetriever:
                                       + t["hash"]
                                       + " is not valid. Skip this input")
 
-
                 if addr in in_addr and addr in out_addr:
                     logging.warning("In btc transaction " + t["hash"] + " " +
                                     addr + " is in both input and output")
+
 
                 tmp = [(i1, o1) for i1 in in_addr for o1 in out_addr]
                 in_out += list(set(tmp))
@@ -65,6 +66,7 @@ class BtcTransactionRetriever:
 
         except ValueError:
             return (0,0,0)
+
         return (addr, in_out)
 
 
@@ -78,10 +80,9 @@ print(tr)
 
 g = CurrencyGraph([addr])
 
-
-
 for (i, o) in tr:
-    g.add_edge(i, o, 1)
+    g.add_edge(i, o)
+
 
 print("Loaded. Now Print")
 
