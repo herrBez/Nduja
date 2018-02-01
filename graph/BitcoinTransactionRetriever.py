@@ -59,8 +59,7 @@ class BtcTransactionRetriever:
                     logging.warning("In btc transaction " + t["hash"] + " " +
                                     addr + " is in both input and output")
 
-
-                tmp = [(i1, o1) for i1 in in_addr for o1 in out_addr]
+                tmp = [(i1, o1, t["hash"]) for i1 in in_addr for o1 in out_addr]
                 in_out += list(set(tmp))
 
 
@@ -80,9 +79,11 @@ print(tr)
 
 g = CurrencyGraph([addr])
 
-for (i, o) in tr:
-    g.add_edge(i, o)
+for (i, o, h) in tr:
+    g.add_edge(i, o, h)
 
+for (i, o, h) in tr:
+    g.add_edge(i, o, h)
 
 print("Loaded. Now Print")
 
