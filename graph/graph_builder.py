@@ -35,17 +35,23 @@ class CurrencyGraph:
 
         max_val = 1
         for e in G.edges(data=True):
-            print(e[2]["t"])
+            # print(e[2]["t"])
             max_val = max(e[2]["t"], max_val)
 
         # line_widths = [(e[2]["t"]/max_val)*3 for e in G.edges(data=True)]
 
-        pos = nx.circular_layout(G)
+        shells = [
+            [n for n in G.nodes if n in self.original_nodes],
+            [n for n in G.nodes if n not in self.original_nodes]
+            ]
+
+
+        pos = nx.shell_layout(G, shells)
         nx.draw(G,
                 pos,
                 node_color=node_colours,
                 alpha=0.9,
-                with_labels=True,
+                # with_labels=True,
                 widths=2
                 )
 
@@ -53,7 +59,7 @@ class CurrencyGraph:
                             for u, v, d in G.edges(data=True)])
 
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels,
-                                     label_pos=0.2, font_size=7)
+                                     label_pos=0.3, font_size=7)
 
         plt.show()
 
@@ -74,12 +80,12 @@ class CurrencyGraph:
     pass
 
 
-g = CurrencyGraph([1, 2, 3])
-g.add_edge(4, 5, 10)
-g.add_edge(5, 4, 4)
-g.add_edge(4, 1, 5)
-
-# g.plot_multigraph(2)
-g.plot_multigraph(4)
+# g = CurrencyGraph([1, 2, 3])
+# g.add_edge(4, 5, 10)
+# g.add_edge(5, 4, 4)
+# g.add_edge(4, 1, 5)
+#
+# # g.plot_multigraph(2)
+# g.plot_multigraph(4)
 
 
