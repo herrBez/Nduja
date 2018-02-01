@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import logging
 
+
 class CurrencyGraph:
     """This class represent the transition graph for a single currency"""
 
@@ -10,16 +11,39 @@ class CurrencyGraph:
         self.G.add_nodes_from(list_of_addresses)
         self.original_nodes = list_of_addresses
 
-    def add_edge(self, u, v, **extra_info):
+    def get_original_nodes(self):
+        return self.original_nodes
+
+    def add_edge(self, u, v, **kargs):
         """Add an edge from u to v containing the number of transactions
         from u to v"""
+        t = kargs["trx"]
+        ivalue = kargs["ivalue"]
+        ovalue = kargs["ovalue"]
+
         if not self.G.has_edge(u, v):
-            self.G.add_edge(u, v, w=1)
+            self.G.add_edge(u, v,
+                            w=1,
+                            trxs=[t],
+                            ivalues=[ivalue],
+                            ovalues=[ovalue]
+                            )
             print(self.G.edges(data=True))
         else:
             d = self.G.get_edge_data(u, v)
-            w = d["w"]
-            self.G.add_edge(u, v, w=(w + 1))
+            transactions = d["trxs"]
+            # if t in trxs it is already present in the graph
+            if t not in transactions:
+                w = d["w"]
+                ivalues_list = d["ivalues"]
+                ivalues_list.append(ivalue)
+                ovalues_list = d["ovalues"]
+                ovalues_list.append(ovalue)
+                transactions.append(t)
+                self.G.add_edge(u, v, w=(w + 1),
+                                trxs=transactions,
+                                ivalues=[ivalues_list],
+                                ovalues=[ovalues_list])
 
     def add_node(self, u):
         """Add a node to the multidigraph"""
