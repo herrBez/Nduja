@@ -1,6 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 from dao.account import Account
+from dao.wallet import Wallet
 import traceback
 
 
@@ -194,6 +195,28 @@ class DbManager:
             traceback.print_exc()
             return False
         return True
+
+    def getAllWallets(self):
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT * FROM Wallet WHERE Status>=0''')
+            for row in c:
+                accounts.append(Wallet(row[0], row[1], None, row[2]))
+        except Error:
+            traceback.print_exc()
+        return accounts
+
+    def getAllKnownWallets(self):
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT * FROM Wallet WHERE Status<0''')
+            for row in c:
+                accounts.append(Wallet(row[0], row[1], None, row[2]))
+        except Error:
+            traceback.print_exc()
+        return accounts
 
 # try:
 #     os.remove('./db.db')
