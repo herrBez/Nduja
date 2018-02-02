@@ -46,7 +46,7 @@ def search_twitter(formatfile, tokens):
 if __name__ == "__main__":
     """ This is executed when run from the command line """
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     config = None
     if (Path('./Nduja/conf.json')).is_file():
@@ -59,10 +59,10 @@ if __name__ == "__main__":
     EthAddressChecker.setToken(config["tokens"]["etherscan"])
     pool = Pool(processes=3)
 
-    p1 = pool.apply_async(search_github(config["format"],
-                                        config["tokens"]["github"]), [])
-    # p2 = pool.apply_async(search_twitter(config["format"],
-    #                                      config["tokens"]), [])
+    #p1 = pool.apply_async(search_github(config["format"],
+    #                                    config["tokens"]["github"]), [])
+    p2 = pool.apply_async(search_twitter(config["format"],
+                                         config["tokens"]), [])
     # p3 = pool.apply_async(search_searchcode(config["format"]), [])
 
 
