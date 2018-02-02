@@ -18,6 +18,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         print_json(tokens_dictionary)
 
         self.twitter_index = 0
+        self.api_call_count = []
         self.twitters = []
 
         for i in range(len(tokens_dictionary["twitter_app_key"])):
@@ -27,13 +28,17 @@ class TwitterWalletCollector(AbsWalletCollector):
                 tokens_dictionary["twitter_oauth_token"][i],
                 tokens_dictionary["twitter_oauth_token_secret"][i]
             ))
-        self.max_pages = 3
+            self.api_call_count.append(0)
+        self.max_pages = 2
         self.max_count = 100
 
     def getTwython(self):
-        resTwhython = self.twitters[self.twitter_index]
         self.twitter_index = (self.twitter_index + 1) % len(self.twitters)
-        return resTwhython
+        return self.twitter_index
+
+    def inc_api_call_count(self):
+        self.api_call_count[self.twitter_index] += 1
+
 
     def collect_raw_result(self, queries):
         statuses = []
@@ -41,22 +46,78 @@ class TwitterWalletCollector(AbsWalletCollector):
         print("How many queries?" + str(len(queries)))
 
         for query in queries:
-            for rt in ["mixed", "popular", "recent"]:
-                mytwitter = self.getTwython()
+            for rt in ["mixed"]: #, "popular", "recent"]:
 
-                results = mytwitter.cursor(
-                    mytwitter.search,
-                    return_pages=True,
+                mytwitter = self.twitters[self.getTwython()]
+
+                # pages = mytwitter.cursor(
+                #     mytwitter.search,
+                #     # Search entire pages and not single results
+                #     return_pages=True,
+                #     q=query,  # The query: search for hashtags
+                #     count=str(self.max_count),  # Results per page
+                #     result_type=rt,
+                #     # search for both popular and not popular content
+                #     tweet_mode='extended',
+                # )
+
+                result = mytwitter.search(
                     q=query,  # The query: search for hashtags
                     count=str(self.max_count),  # Results per page
                     result_type=rt,
                     # search for both popular and not popular content
                     tweet_mode='extended',
                 )
-                # Retrieve only self.max_pages pages
-                for i in range(0, self.max_pages):
-                    r = next(results)
-                    statuses = statuses + r
+                self.inc_api_call_count()
+                print("===")
+                print(str(len(result["statuses"])))
+                statuses = statuses + result["statuses"]
+
+                # When you no longer receive new results --> stop
+                while "next_results" in result["search_metadata"]:
+                    print("while with query" + query)
+                    f = furl(result["search_metadata"]["next_results"])
+                    self.inc_api_call_count()
+                    result = mytwitter.search(
+                        q=f.args["q"],
+                        count=str(self.max_count),  # Results per page
+                        # result_type='recent',
+                        # search for both popular and not popular content
+                        tweet_mode='extended',
+                        max_id=f.args["max_id"]
+                    )
+                    print(str(len(result["statuses"])))
+                    statuses = statuses + result["statuses"]
+                print("===")
+                # page_retrieved = 0
+                # for page in pages:
+                #     page_retrieved += 1
+                #     print("PAGE RETRIEVED" + str(page_retrieved) +
+                #           " retrieved " + str(len(page)))
+                #     sleep(0.2)
+                #     statuses += page
+                #     # I get less results than expected
+                #     if len(page) < self.max_count - 1:
+                #         print("Received less result as maximum. Let's break")
+                #         break
+                #     else:
+                #         print("Din Din Din: " + query)
+                #     if page_retrieved > self.max_pages:
+                #         break
+
+                #
+                # previous_r = ""
+                # # Retrieve only self.max_pages pages
+                # for i in range(0, self.max_pages):
+                #     self.api_call_count[self.twitter_index] += 1
+                #     r = next(results)
+                #     if r == previous_r:
+                #         print("Next and this are equals")
+                #
+                #
+                #     statuses = statuses + r
+                #     previous_r = r
+                # print(self.api_call_count[self.twitter_index])
 
         return statuses
 
