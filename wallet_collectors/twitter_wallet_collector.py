@@ -2,6 +2,8 @@ import json
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
+from twython.exceptions import TwythonRateLimitError
+from twython.exceptions import TwythonError
 from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import logging
@@ -10,6 +12,38 @@ import sys
 
 def print_json(s):
     print(json.dumps(s, indent=2))
+
+
+def twitter_safe_research(twython_instance, **params):
+    sleep_time = 60
+    retry = 0
+
+    while True:
+        exception_raised = False
+
+        try:
+            result = twython_instance.search(
+                **params
+            )
+        except TwythonRateLimitError:
+            logging.info("Wait "
+                         + str(sleep_time)
+                         + " seconds to avoid being blocked."
+                         + " We have already slept "
+                         + str(retry)
+                         + " minutes")
+            retry = retry + 1
+            sleep(sleep_time)
+            exception_raised = True
+        except TwythonError:
+            print_json(params)
+            sleep(10)
+            sys.exit(0)
+
+        if not exception_raised:
+            break
+
+    return result
 
 
 class TwitterWalletCollector(AbsWalletCollector):
@@ -41,32 +75,18 @@ class TwitterWalletCollector(AbsWalletCollector):
     def inc_api_call_count(self):
         self.api_call_count[self.twitter_index] += 1
 
-
     def twitter_fetch_all_requests(self, query, **kargs):
+        """Since the current implementation of cursor contains bug. We should
+        iterate over the results manually."""
 
-        exception_not_raised = False
+        mytwitter = self.twitters[self.getTwython()]
+        result = twitter_safe_research(mytwitter,
+                                       q=query,
+                                       count=self.max_count,
+                                       result_type=kargs["rt"],
+                                       tweet_mode="extended"
+                                       )
 
-        while(True):
-            
-            try:
-                mytwitter = self.twitters[self.getTwython()]
-        
-                result = mytwitter.search(
-                        q=query,  # The query: search for hashtags
-                        count=str(self.max_count),  # Results per page
-                        result_type=kargs["rt"],
-                        # search for both popular and not popular content
-                        tweet_mode='extended',
-                    )
-            except twython.exceptions.TwythonRateLimitError:
-                logging.info("Wait 15 minutes to avoid being blocked")
-                sleep(15*60 + 2)
-                exception_raised = True
-
-            if not exception_raised:
-                
-            
-            
         logging.info("===")
         statuses = result["statuses"]
         
@@ -75,21 +95,18 @@ class TwitterWalletCollector(AbsWalletCollector):
 
         # When you no longer receive new results --> stop
         while "next_results" in result["search_metadata"]:
-            mytwitter = self.twitters[self.getTwython()]
-            logging.info("while with query" + query)
             f = furl(result["search_metadata"]["next_results"])
-            
-            result = mytwitter.search(
-                q=query,
-                count=str(self.max_count),  # Results per page
-                tweet_mode='extended',
-                result_type=kargs["rt"],
-                max_id=f.args["max_id"]
-            )
-            logging.info(str(len(result["statuses"])))
+            mytwitter = self.twitters[self.getTwython()]
+            result = twitter_safe_research(mytwitter,
+                                           q=query,
+                                           count=str(self.max_count),
+                                           # Results per page
+                                           tweet_mode='extended',
+                                           result_type=kargs["rt"],
+                                           max_id=f.args["max_id"]
+                                           )
             statuses = statuses + result["statuses"]
             
-            self.inc_api_call_count()
         logging.info("===")
         return statuses
     
