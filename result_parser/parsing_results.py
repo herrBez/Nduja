@@ -27,6 +27,7 @@ class Parser:
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
             accountId = None
+            Parser.dbManager.initConnection()
             for i in range(0, len(symbols)):
                 s = symbols[i]
                 w = wallets[i]
@@ -49,6 +50,7 @@ class Parser:
                         (Parser.dbManager.
                          insertWalletWithAccount(w, s, status, accountId,
                                                  res[Parser.URL]))
+            Parser.dbManager.saveChanges()
 
     def validWallets(self, wallets, checker):
         validWallets = []
