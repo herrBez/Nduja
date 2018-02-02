@@ -18,7 +18,6 @@ class DbManager:
         return DbManager.instance
 
     def __init__(self):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS Currency(
             Name VARCHAR(4) PRIMARY KEY
@@ -61,11 +60,15 @@ class DbManager:
             c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
         except Error:
             traceback.print_exc()
+
+    def initConnection(self):
+        self.conn = sqlite3.connect(DbManager.db)
+
+    def saveChanges(self):
         self.conn.commit()
         self.conn.close()
 
     def insertWallet(self, address, currency, status):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
@@ -73,12 +76,9 @@ class DbManager:
         except Error:
             traceback.print_exc()
             return False
-        self.conn.commit()
-        self.conn.close()
         return True
 
     def insertWalletWithAccount(self, address, currency, status, account, url):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
@@ -86,12 +86,9 @@ class DbManager:
         except Error:
             traceback.print_exc()
             return False
-        self.conn.commit()
-        self.conn.close()
         return self.insertAccountWallet(account, address, url)
 
     def insertInformation(self, name, website, email, json):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         if (email is None or email.isspace()):
             email = " "
@@ -104,12 +101,9 @@ class DbManager:
             return -1
         c.execute('SELECT max(_id) FROM Information')
         max_id = c.fetchone()[0]
-        self.conn.commit()
-        self.conn.close()
         return max_id
 
     def insertAccount(self, host, username, info):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
@@ -119,12 +113,9 @@ class DbManager:
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
-        self.conn.commit()
-        self.conn.close()
         return max_id
 
     def insertAccountNoInfo(self, host, username):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username)
@@ -134,12 +125,9 @@ class DbManager:
             return -1
         c.execute('SELECT max(_id) FROM Account')
         max_id = c.fetchone()[0]
-        self.conn.commit()
-        self.conn.close()
         return max_id
 
     def insertAccountWallet(self, account, wallet, url):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
@@ -149,12 +137,9 @@ class DbManager:
             return -1
         c.execute('SELECT max(_id) FROM AccountWallet')
         max_id = c.fetchone()[0]
-        self.conn.commit()
-        self.conn.close()
         return max_id
 
     def findWallet(self, address):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
@@ -162,7 +147,6 @@ class DbManager:
         return (data is not None)
 
     def findAccount(self, host, username):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         c.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                   (host, username,))
@@ -187,7 +171,6 @@ class DbManager:
             self.insertAccountWallet(acc, wallet.address, wallet.file)
 
     def getAllAccounts(self):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         accounts = []
         try:
@@ -196,12 +179,9 @@ class DbManager:
                 accounts.append(Account(row[0], row[1], row[2], row[3]))
         except Error:
             traceback.print_exc()
-        self.conn.commit()
-        self.conn.close()
         return accounts
 
     def addInfoToAccount(self, accountId, infoId):
-        self.conn = sqlite3.connect(DbManager.db)
         c = self.conn.cursor()
         try:
             c.execute('''UPDATE Account SET Info = ? WHERE _id = ?''',
@@ -209,8 +189,6 @@ class DbManager:
         except Error:
             traceback.print_exc()
             return False
-        self.conn.commit()
-        self.conn.close()
         return True
 
 # try:
