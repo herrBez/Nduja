@@ -18,6 +18,7 @@ class DbManager:
         return DbManager.instance
 
     def __init__(self):
+        self.initConnection()
         c = self.conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS Currency(
             Name VARCHAR(4) PRIMARY KEY
@@ -60,9 +61,14 @@ class DbManager:
             c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
         except Error:
             traceback.print_exc()
+        self.saveChanges()
 
     def initConnection(self):
+        print("INIT CONNECTION")
         self.conn = sqlite3.connect(DbManager.db)
+
+    def closeDb(self):
+        self.conn.close()
 
     def saveChanges(self):
         self.conn.commit()
@@ -143,7 +149,6 @@ class DbManager:
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
-        self.conn.close()
         return (data is not None)
 
     def findAccount(self, host, username):
@@ -151,7 +156,6 @@ class DbManager:
         c.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                   (host, username,))
         data = c.fetchone()
-        self.conn.close()
         if data is None:
             return -1
         else:
