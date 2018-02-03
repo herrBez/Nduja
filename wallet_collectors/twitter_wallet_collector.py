@@ -17,6 +17,8 @@ def print_json(s):
 def twitter_safe_research(twython_instance, **params):
     sleep_time = 60
     retry = 0
+    retry_on_error = 0
+    max_retry_on_error = 10
 
     while True:
         exception_raised = False
@@ -36,9 +38,13 @@ def twitter_safe_research(twython_instance, **params):
             sleep(sleep_time)
             exception_raised = True
         except TwythonError:
+            retry_on_error += 1
+            logging.warn("Error on ")
             print_json(params)
-            sleep(10)
-            sys.exit(0)
+            sleep(60)
+            exception_raised = True
+            if retry_on_error > max_retry_on_error:
+                return {}
 
         if not exception_raised:
             break
@@ -88,8 +94,12 @@ class TwitterWalletCollector(AbsWalletCollector):
                                        )
 
         logging.info("===")
+        if not result: #The result is empty
+             return []
+
+
         statuses = result["statuses"]
-        
+
         logging.info(str(len(result["statuses"])))
         statuses = statuses + result["statuses"]
 
@@ -105,11 +115,13 @@ class TwitterWalletCollector(AbsWalletCollector):
                                            result_type=kargs["rt"],
                                            max_id=f.args["max_id"]
                                            )
+            if not result:
+                break;
             statuses = statuses + result["statuses"]
-            
+
         logging.info("===")
         return statuses
-    
+
 
     def collect_raw_result(self, queries):
         statuses = []
