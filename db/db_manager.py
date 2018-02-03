@@ -3,6 +3,7 @@ from sqlite3 import Error
 from dao.account import Account
 from dao.wallet import Wallet
 import traceback
+import os
 
 
 class DbManager:
@@ -61,11 +62,17 @@ class DbManager:
             c.execute('''INSERT INTO Currency VALUES ("LTC")''')
             c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
         except Error:
+            print()
+        try:
+            path = os.path.dirname(os.path.abspath(__file__))
+            with open(path + '/known_addresses_btc', 'r') as btcwallets:
+                for w in btcwallets.readlines():
+                    self.insertWallet(str(w), "BTC", "-1")
+        except Error:
             traceback.print_exc()
         self.saveChanges()
 
     def initConnection(self):
-        print("INIT CONNECTION")
         self.conn = sqlite3.connect(DbManager.db)
 
     def closeDb(self):
