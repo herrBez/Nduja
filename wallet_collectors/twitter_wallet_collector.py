@@ -4,10 +4,8 @@ from furl import furl
 from twython import Twython
 from twython.exceptions import TwythonRateLimitError
 from twython.exceptions import TwythonError
-from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import logging
-import sys
 import datetime
 import pause
 from utility.print_utility import print_json
@@ -70,8 +68,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         self.api_call_count = []  # type: List[int]
         self.twitters = []  # type: List[Twython]
 
-        #for i in range(len(tokens_dictionary["twitter_app_key"])):
-        for i in range(0, len(tokens_dictionary["twitter_app_key"])):
+        for i in range(len(tokens_dictionary["twitter_app_key"])):
             self.twitters.append(Twython(
                 tokens_dictionary["twitter_app_key"][i],
                 tokens_dictionary["twitter_app_secret"][i],
@@ -82,7 +79,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         self.max_pages = 2
         self.max_count = 100
 
-    def getTwython(self):
+    def get_twython(self):
         self.twitter_index = (self.twitter_index + 1) % len(self.twitters)
         return self.twitter_index
 
@@ -93,8 +90,8 @@ class TwitterWalletCollector(AbsWalletCollector):
         """Since the current implementation of cursor contains bug. We should
         iterate over the results manually."""
 
-        mytwitter = self.twitters[self.getTwython()]
-        result = twitter_safe_research(mytwitter,
+        my_twitter = self.twitters[self.get_twython()]
+        result = twitter_safe_research(my_twitter,
                                        q=query,
                                        count=self.max_count,
                                        result_type=kargs["rt"],
@@ -102,7 +99,7 @@ class TwitterWalletCollector(AbsWalletCollector):
                                        )
 
         logging.info("===")
-        if not result: #The result is empty
+        if not result:  # The result is empty
             return []
 
         statuses = result["statuses"]
@@ -113,8 +110,8 @@ class TwitterWalletCollector(AbsWalletCollector):
         # When you no longer receive new results --> stop
         while "next_results" in result["search_metadata"]:
             f = furl(result["search_metadata"]["next_results"])
-            mytwitter = self.twitters[self.getTwython()]
-            result = twitter_safe_research(mytwitter,
+            my_twitter = self.twitters[self.get_twython()]
+            result = twitter_safe_research(my_twitter,
                                            q=query,
                                            count=str(self.max_count),
                                            # Results per page
@@ -132,15 +129,13 @@ class TwitterWalletCollector(AbsWalletCollector):
 
     def collect_raw_result(self, queries):
         statuses = []
-
+        rt = "mixed"
         logging.info("How many queries?" + str(len(queries)))
 
         for query in queries:
-            for rt in ["mixed"]: #, "popular", "recent"]:
-
-                statuses = statuses + self.twitter_fetch_all_requests(query,
-                                                                      rt=rt
-                                                                      )
+            statuses = statuses + self.twitter_fetch_all_requests(query,
+                                                                  rt=rt
+                                                                  )
 
         screen_names = list(set([s["user"]["screen_name"] for s in statuses]))
 
