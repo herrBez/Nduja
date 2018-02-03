@@ -25,7 +25,7 @@ def twitter_safe_research(twython_instance, **params):
         try:
             logging.debug("Try" + json.dumps(params))
             result = twython_instance.search(
-                timeout=120, # Max Timeout 2 mins
+                timeout=120,  # Max Timeout 2 minutes
                 **params
             )
             logging.debug("Try Done")
@@ -56,7 +56,6 @@ def twitter_safe_research(twython_instance, **params):
         if not exception_raised:
             break
 
-    print("Giving Back")
     return result
 
 
@@ -72,7 +71,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         self.twitters = []  # type: List[Twython]
 
         #for i in range(len(tokens_dictionary["twitter_app_key"])):
-        for i in range(1):
+        for i in range(0, len(tokens_dictionary["twitter_app_key"])):
             self.twitters.append(Twython(
                 tokens_dictionary["twitter_app_key"][i],
                 tokens_dictionary["twitter_app_secret"][i],
@@ -104,7 +103,7 @@ class TwitterWalletCollector(AbsWalletCollector):
 
         logging.info("===")
         if not result: #The result is empty
-             return []
+            return []
 
         statuses = result["statuses"]
 
@@ -156,7 +155,6 @@ class TwitterWalletCollector(AbsWalletCollector):
                                                                   rt=rt
                                                                   )
 
-
         return statuses
 
     def construct_queries(self) -> list:
@@ -196,9 +194,8 @@ class TwitterWalletCollector(AbsWalletCollector):
 
     def build_answer_json(self, raw_response, content, symbol_list,
                           wallet_list, emails, websites):
-        known_raw_url = ''
-        if len(raw_response["entities"]["urls"]) > 0:
-            known_raw_url = raw_response["entities"]["urls"][0]["url"]
+        known_raw_url = "https://twitter.com/statuses/"\
+                        + str(raw_response["id"])
 
         final_json_element = {
             "hostname": "twitter.com",
