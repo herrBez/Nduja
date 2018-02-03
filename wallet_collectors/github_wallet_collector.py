@@ -5,6 +5,7 @@ from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import pause
 import logging
+from typing import List
 
 
 def exception_handler(request, exception):
@@ -174,10 +175,9 @@ class GithubWalletCollector(AbsWalletCollector):
             for page in range(1, self.max_page+1)
         ]
 
-
-    def extract_content(self, responses) -> str:
+    def extract_content(self, responses) -> List[str]:
         logging.debug("Entering extract Content")
-        contents = []
+        contents = []  # type: List[str]
         max_index = 0
 
         while max_index < len(responses):
@@ -189,13 +189,14 @@ class GithubWalletCollector(AbsWalletCollector):
             logging.debug("R[" + str(min_index) + ":" + str(max_index) + "]")
 
             download_urls = (grequests.get(response["known_raw_url"],
-                                headers={
-                                    'Authorization': 'token '
-                                                     + self.get_next_token()
-                                },
-                                timeout=300,
-                               ) for response in responses[min_index:max_index]
-                        )
+                                           headers={
+                                               'Authorization': 'token '
+                                                                + self.get_next_token()
+                                           },
+                                           timeout=300,
+                                           ) for response in
+                             responses[min_index:max_index]
+                             )
 
             file_contents_responses = \
                 grequests.map(download_urls, exception_handler=exception_handler)
