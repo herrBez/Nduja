@@ -8,15 +8,14 @@ from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import logging
 import sys
-
-
-def print_json(s):
-    print(json.dumps(s, indent=2))
+import datetime
+import pause
+from utility.print_utility import print_json
+from typing import List
+from typing import Dict
 
 
 def twitter_safe_research(twython_instance, **params):
-    sleep_time = 60
-    retry = 0
     retry_on_error = 0
     max_retry_on_error = 10
 
@@ -24,22 +23,30 @@ def twitter_safe_research(twython_instance, **params):
         exception_raised = False
 
         try:
+            logging.debug("Try" + json.dumps(params))
             result = twython_instance.search(
+                timeout=120, # Max Timeout 2 mins
                 **params
             )
-        except TwythonRateLimitError:
-            logging.info("Wait "
-                         + str(sleep_time)
-                         + " seconds to avoid being blocked."
-                         + " We have already slept "
-                         + str(retry)
-                         + " minutes")
-            retry = retry + 1
-            sleep(sleep_time)
+            logging.debug("Try Done")
+        except TwythonRateLimitError as tre:
+            next_reset = int(tre.retry_after) + 1
+
+            next_reset_date_str = datetime.datetime.\
+                fromtimestamp(next_reset) \
+                .strftime('%H:%M:%S %Y-%m-%d')
+
+            logging.warning("Rate Limit reached: Pause until: "
+                            + next_reset_date_str)
+
+            pause.until(next_reset)
+
+            logging.warning("Pause Finished. Let's retry")
+
             exception_raised = True
-        except TwythonError:
+        except TwythonError as te:
             retry_on_error += 1
-            logging.warn("Error on ")
+            logging.warning("TwythonError raised: " + te.msg)
             print_json(params)
             sleep(60)
             exception_raised = True
@@ -49,21 +56,23 @@ def twitter_safe_research(twython_instance, **params):
         if not exception_raised:
             break
 
+    print("Giving Back")
     return result
 
 
 class TwitterWalletCollector(AbsWalletCollector):
 
-    def __init__(self, format_file, tokens_dictionary):
+    def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
         super().__init__(format_file)
 
         print_json(tokens_dictionary)
 
         self.twitter_index = 0
-        self.api_call_count = []
-        self.twitters = []
+        self.api_call_count = []  # type: List[int]
+        self.twitters = []  # type: List[Twython]
 
-        for i in range(len(tokens_dictionary["twitter_app_key"])):
+        #for i in range(len(tokens_dictionary["twitter_app_key"])):
+        for i in range(1):
             self.twitters.append(Twython(
                 tokens_dictionary["twitter_app_key"][i],
                 tokens_dictionary["twitter_app_secret"][i],
@@ -97,7 +106,6 @@ class TwitterWalletCollector(AbsWalletCollector):
         if not result: #The result is empty
              return []
 
-
         statuses = result["statuses"]
 
         logging.info(str(len(result["statuses"])))
@@ -116,49 +124,30 @@ class TwitterWalletCollector(AbsWalletCollector):
                                            max_id=f.args["max_id"]
                                            )
             if not result:
-                break;
+                break
+            logging.info(str(len(result["statuses"])))
             statuses = statuses + result["statuses"]
 
         logging.info("===")
         return statuses
-
 
     def collect_raw_result(self, queries):
         statuses = []
 
         logging.info("How many queries?" + str(len(queries)))
 
-
-        #~ mytwitter = self.twitters[self.getTwython()]
-
-        #~ logging.info("Search " + queries[2])
-        
-        #~ result = mytwitter.search(
-            #~ q=queries[2],
-            #~ count=40,
-            #~ result_type="popular",
-            #~ # search for both popular and not popular content
-            #~ tweet_mode='extended'
-        #~ )
-        #~ print_json(result)
-        #~ sys.exit(1)
-            
-        
-
         for query in queries:
             for rt in ["mixed"]: #, "popular", "recent"]:
 
-               statuses = statuses + self.twitter_fetch_all_requests(query,
-                                                                    rt=rt
-                                                                    )
-
-                
-            
-        #~ tmp_statuses = list(set(statuses))
+                statuses = statuses + self.twitter_fetch_all_requests(query,
+                                                                      rt=rt
+                                                                      )
 
         screen_names = list(set([s["user"]["screen_name"] for s in statuses]))
 
         print("Fetch " + str(len(screen_names)))
+        logging.debug("Fetched " + str(len(screen_names))
+                      + "screen_names = " + str(screen_names))
         
         for sn in screen_names:
             query = "to:" + sn
@@ -166,10 +155,7 @@ class TwitterWalletCollector(AbsWalletCollector):
             statuses = statuses + self.twitter_fetch_all_requests(query,
                                                                   rt=rt
                                                                   )
-        
-        
-        print(screen_names)
-             
+
 
         return statuses
 
