@@ -41,8 +41,10 @@ class InfoRetriever:
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
         accInfo = zip(accounts, infos)
+        db.initConnection()
         for (account, info) in accInfo:
             if info is not None:
                 infoId = (db.insertInformation(info.name, info.website,
                                                info.email, info.json))
                 db.addInfoToAccount(account.ID, infoId)
+        db.saveChanges()
