@@ -9,34 +9,42 @@ class InfoRetriever:
 
     def setTokens(tokens):
         try:
-            GithubInfoRetriever.setToken(tokens['github'])
+            GithubInfoRetriever.setToken(tokens['tokens']['github'])
         except KeyError:
             pass
         try:
-            TwitterInfoRetriever.setToken(tokens['twitter_app_key'],
-                                          tokens['twitter_app_secret'],
-                                          tokens['twitter_oauth_token'],
-                                          tokens['twitter_oauth_token_secret'])
+            TwitterInfoRetriever.setToken(tokens)
         except KeyError:
             pass
 
     def retrieveInfoForAccountSaved(self):
         db = DbManager.getInstance()
         accounts = db.getAllAccounts()
+        githubs = []
+        bitbuckets = []
+        twitters = []
         for account in accounts:
             if account.info is None:
-                info = None
                 if "github" in account.host:
-                    info = GithubInfoRetriever().retrieveInfo(
-                        account.username)
+                    githubs.append(account)
                 elif "bitbucket" in account.host:
-                    info = \
-                        BitbucketInfoRetriever().retrieveInfo(
-                            account.username)
+                    bitbuckets.append(account)
                 elif "twitter" in account.host:
-                    info = TwitterInfoRetriever().retrieveInfo(
-                        account.username)
-                if info is not None:
-                    infoId = (db.insertInformation(info.name, info.website,
-                                                   info.email, info.json))
-                    db.addInfoToAccount(account.ID, infoId)
+                    twitters.append(account)
+        infos = []
+        if (len(githubs) > 0):
+            infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
+        if (len(bitbuckets) > 0):
+            infos = infos + BitbucketInfoRetriever().retrieveInfo(bitbuckets)
+        if (len(twitters) > 0):
+            infos = infos + TwitterInfoRetriever().retrieveInfo(twitters)
+        accounts = []
+        accounts = accounts + githubs + bitbuckets + twitters
+        accInfo = zip(accounts, infos)
+        db.initConnection()
+        for (account, info) in accInfo:
+            if info is not None:
+                infoId = (db.insertInformation(info.name, info.website,
+                                               info.email, info.json))
+                db.addInfoToAccount(account.ID, infoId)
+        db.saveChanges()

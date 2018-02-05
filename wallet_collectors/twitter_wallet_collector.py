@@ -2,77 +2,195 @@ import json
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
+from twython.exceptions import TwythonRateLimitError
+from twython.exceptions import TwythonError
+from time import sleep
+import logging
+import datetime
+import pause
+from utility.print_utility import print_json
+from typing import List
+from typing import Dict
 
 
-def print_json(s):
-    print(json.dumps(s, indent=2))
+def twitter_safe_research(twython_instance, **params):
+    retry_on_error = 0
+    max_retry_on_error = 10
+
+    while True:
+        exception_raised = False
+
+        try:
+            logging.debug("Try" + json.dumps(params))
+            result = twython_instance.search(
+                timeout=120,  # Max Timeout 2 minutes
+                **params
+            )
+            logging.debug("Try Done")
+        except TwythonRateLimitError as tre:
+            next_reset = int(tre.retry_after) + 1
+
+            next_reset_date_str = datetime.datetime.\
+                fromtimestamp(next_reset) \
+                .strftime('%H:%M:%S %Y-%m-%d')
+
+            logging.warning("Rate Limit reached: Pause until: "
+                            + next_reset_date_str)
+
+            pause.until(next_reset)
+
+            logging.warning("Pause Finished. Let's retry")
+
+            exception_raised = True
+        except TwythonError as te:
+            retry_on_error += 1
+            logging.warning("TwythonError raised: " + te.msg)
+            print_json(params)
+            sleep(60)
+            exception_raised = True
+            if retry_on_error > max_retry_on_error:
+                return {}
+
+        if not exception_raised:
+            break
+
+    return result
 
 
 class TwitterWalletCollector(AbsWalletCollector):
 
-    def __init__(self, format_file, login_file):
+    def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
         super().__init__(format_file)
-        login_object = json.loads(open(login_file).read())
-        self.twitter = Twython(
-            login_object["APP_KEY"],
-            login_object["APP_SECRET"],
-            login_object["OAUTH_TOKEN"],
-            login_object["OAUTH_TOKEN_SECRET"]
-        )
+
+        print_json(tokens_dictionary)
+
+        self.twitter_index = 0
+        self.api_call_count = []  # type: List[int]
+        self.twitters = []  # type: List[Twython]
+
+        for i in range(len(tokens_dictionary["twitter_app_key"])):
+            self.twitters.append(Twython(
+                tokens_dictionary["twitter_app_key"][i],
+                tokens_dictionary["twitter_app_secret"][i],
+                tokens_dictionary["twitter_oauth_token"][i],
+                tokens_dictionary["twitter_oauth_token_secret"][i]
+            ))
+            self.api_call_count.append(0)
+        self.max_pages = 2
         self.max_count = 100
 
-    def collect_raw_result(self, query):
-        statuses = []
-        count_pages = 0
+    def get_twython(self):
+        self.twitter_index = (self.twitter_index + 1) % len(self.twitters)
+        return self.twitter_index
 
-        for rt in ["mixed", "popular", "recent"]:
-            result = self.twitter.search(
-                q=query,  # The query: search for hashtags
-                count=str(self.max_count),  # Results per page
-                result_type=rt,
-                # search for both popular and not popular content
-                tweet_mode='extended',
-            )
+    def inc_api_call_count(self):
+        self.api_call_count[self.twitter_index] += 1
+
+    def twitter_fetch_all_requests(self, query, **kargs):
+        """Since the current implementation of cursor contains bug. We should
+        iterate over the results manually."""
+
+        my_twitter = self.twitters[self.get_twython()]
+        result = twitter_safe_research(my_twitter,
+                                       q=query,
+                                       count=self.max_count,
+                                       result_type=kargs["rt"],
+                                       tweet_mode="extended"
+                                       )
+
+        logging.info("===")
+        if not result:  # The result is empty
+            return []
+
+        statuses = result["statuses"]
+
+        logging.info(str(len(result["statuses"])))
+        statuses = statuses + result["statuses"]
+
+        # When you no longer receive new results --> stop
+        while "next_results" in result["search_metadata"]:
+            f = furl(result["search_metadata"]["next_results"])
+            my_twitter = self.twitters[self.get_twython()]
+            result = twitter_safe_research(my_twitter,
+                                           q=query,
+                                           count=str(self.max_count),
+                                           # Results per page
+                                           tweet_mode='extended',
+                                           result_type=kargs["rt"],
+                                           max_id=f.args["max_id"]
+                                           )
+            if not result:
+                break
+            logging.info(str(len(result["statuses"])))
             statuses = statuses + result["statuses"]
 
-            # When you no longer receive new results --> stop
-            while "next_results" in result["search_metadata"]:
-                f = furl(result["search_metadata"]["next_results"])
+        logging.info("===")
+        return statuses
 
-                result = self.twitter.search(
-                    q=f.args["q"],
-                    count=str(self.max_count),  # Results per page
-                    # result_type='recent',
-                    # search for both popular and not popular content
-                    tweet_mode='extended',
-                    max_id=f.args["max_id"]
-                )
-                statuses = statuses + result["statuses"]
-                count_pages = count_pages + 1
+    def collect_raw_result(self, queries):
+        statuses = []
+        rt = "mixed"
+        logging.info("How many queries?" + str(len(queries)))
+
+        for query in queries:
+            statuses = statuses + self.twitter_fetch_all_requests(query,
+                                                                  rt=rt
+                                                                  )
+
+        screen_names = list(set([s["user"]["screen_name"] for s in statuses]))
+
+        print("Fetch " + str(len(screen_names)))
+        logging.debug("Fetched " + str(len(screen_names))
+                      + "screen_names = " + str(screen_names))
+        
+        for sn in screen_names:
+            query = "to:" + sn
+            
+            statuses = statuses + self.twitter_fetch_all_requests(query,
+                                                                  rt=rt
+                                                                  )
 
         return statuses
 
-    def construct_queries(self, p) -> list:
+    def construct_queries(self) -> list:
         queries = []
-        for query_filter in ["-filter:retweets AND -filter:replies",
-                             "filter:replies"]:
-            query = (p.symbol.lower() +
-                     " AND donation AND " +
-                     query_filter)
-            queries = queries + [query]
-        query = ("#" + p.symbol.lower() + "GiveAway" +
-                 " AND filter:replies")
-        queries = queries + [query]
+        for p in self.patterns:
+            for query_filter in ["-filter:retweets AND -filter:replies"]:
+                
+                query = ("(" + p.symbol.lower() +
+                         " OR "
+                         + p.name + ")"
+                         + " AND ("
+                         + "donation OR donate OR donating OR"
+                         + " give OR giving OR"
+                         + " contribution OR contribute OR contributing "
+                         + ") AND "
+                         + query_filter)
+                queries.append(query)
+                query = ("(#" + p.symbol.lower() + " #GiveAway) OR"
+                         + "(#" + p.symbol.lower() + "GiveAway)"
+                         + " AND "
+                         + query_filter
+                         )
+                queries.append(query)
+        print(queries)
         return queries
 
-    def extract_content(self, response) -> str:
+    def extract_content_single(self, response) -> str:
+        # print(response["full_text"])
         return response["full_text"]
 
+    def extract_content(self, responses):
+        return list(map(
+            lambda r:
+            self.extract_content_single(r),
+            responses
+        ))
+
     def build_answer_json(self, raw_response, content, symbol_list,
-                          wallet_list):
-        known_raw_url = ''
-        if len(raw_response["entities"]["urls"]) > 0:
-            known_raw_url = raw_response["entities"]["urls"][0]["url"]
+                          wallet_list, emails, websites):
+        known_raw_url = "https://twitter.com/statuses/"\
+                        + str(raw_response["id"])
 
         final_json_element = {
             "hostname": "twitter.com",

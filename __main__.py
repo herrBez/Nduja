@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import configparser
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
 from pathlib import Path
@@ -10,74 +9,70 @@ from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from multiprocessing import Pool
 import json
+import twython
+from address_checkers.eth_address_checker import EthAddressChecker
+from time import sleep
+import logging
 
-
-def search_searchcode():
-    print("Search Code")
-    results = (SearchcodeWalletCollector('./Nduja/format.json')
+def search_searchcode(formatfile):
+    logging.info("Search Code")
+    results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
     Parser().parseString(results)
 
 
-def search_github(tokens):
-    print("Search Github")
-    results = (GithubWalletCollector('./Nduja/format.json',
+def search_github(formatfile, tokens):
+    logging.info("Search Github")
+    results = (GithubWalletCollector(formatfile,
                                      tokens
                                      )
                .collect_address())
+    logging.info("Finish Search Github")
     Parser().parseString(results)
 
 
-def search_twitter(tokens):
-    results = (TwitterWalletCollector('./Nduja/format.json',
-                                      './Nduja/API_KEYS/twitter.json')
-               .collect_address())
-    Parser().parseString(results)
+def search_twitter(formatfile, tokens):
+    try:
+        results = (TwitterWalletCollector(formatfile,
+                                          tokens)
+                   .collect_address())
+
+        Parser().parseString(results)
+
+    except twython.exceptions.TwythonRateLimitError:
+        logging.error("Twython rate limit exceed!. Exiting without crash")
 
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
+
+    logging.basicConfig(level=logging.INFO)
+
     config = None
     if (Path('./Nduja/conf.json')).is_file():
         config = json.load(open('./Nduja/conf.json'))
     else:
+        logging.error("Config file not found")
         sys.exit(1)
-        # config.read('./Nduja/default-conf.ini')
-
-    tokens = {'github': config["tokens"]["github"],
-              'twitter_app_key': config["tokens"]["twitter_app_key"],
-              'twitter_app_secret': config["tokens"]["twitter_app_secret"],
-              'twitter_oauth_token': config["tokens"][
-                  "twitter_oauth_token"],
-              'twitter_oauth_token_secret': config["tokens"][
-                  'twitter_oauth_token_secret']
-              }
 
     DbManager.setDBFileName(config["dbname"])
+    EthAddressChecker.setToken(config["tokens"]["etherscan"])
     pool = Pool(processes=3)
-    p1 = pool.apply_async(search_github(tokens["github"]), [])
-    # p2 = pool.apply_async(search_twitter(tokens))
-    p3 = pool.apply_async(search_searchcode(), [])
-    print("ciao")
+
+    #p1 = pool.apply_async(search_github(config["format"],
+    #                                    config["tokens"]["github"]), [])
+    p2 = pool.apply_async(search_twitter(config["format"],
+                                         config["tokens"]), [])
+    # p3 = pool.apply_async(search_searchcode(config["format"]), [])
+
+
     pool.close()
     pool.join()
-    # t1 = \
-    #     Thread(target=searchSearchCode(
-    #         config.get('file_names', 'result_file')))
     try:
-        tokens = {'github': config["tokens"]["github"],
-                  'twitter_app_key': config["tokens"]["twitter_app_key"],
-                  'twitter_app_secret': config["tokens"][
-                      "twitter_app_secret"],
-                  'twitter_oauth_token': config["tokens"][
-                      "twitter_oauth_token"],
-                  'twitter_oauth_token_secret': config["tokens"][
-                      'twitter_oauth' +
-                      '_token_secret']
-                  }
-        InfoRetriever.setTokens(tokens)
+        InfoRetriever.setTokens(config)
     except KeyError:
         print()
-    InfoRetriever().retrieveInfoForAccountSaved()
-
-
+    logging.info("Finish to fetch the data. Sleep 15 minutes to let the api ")
+    # sleep(15*62)
+    logging.info("Finish the sleep for the twitter api")
+    # InfoRetriever().retrieveInfoForAccountSaved()
