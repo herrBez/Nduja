@@ -1,6 +1,7 @@
 from address_checkers.abs_address_checker import AbsAddressChecker
 import requests
 import json
+from time import sleep
 
 
 class EthAddressChecker(AbsAddressChecker):
@@ -24,7 +25,16 @@ class EthAddressChecker(AbsAddressChecker):
         return False
 
     def address_search(self, addr):
-        r = requests.get(self.createURL(addr))
+        r = ''
+        while True:
+            exception_raised = False
+            try:
+                r = requests.get(self.createURL(addr))
+            except requests.exceptions.ConnectionError:
+                sleep(1)
+                exception_raised = True
+            if not exception_raised:
+                break
         resp = r.text
         try:
             jsonResp = json.loads(resp)

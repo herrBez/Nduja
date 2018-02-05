@@ -13,9 +13,17 @@ class DogeAddressChecker(AbsAddressChecker):
 
     def address_search(self, addr):
         '''Use chain.so API to check if an address is valid'''
-        r = requests.get(DogeAddressChecker.CHAINSO + addr)
-        # WARNING: chain.so API give 5request/sec for free
-        sleep(0.2)
+        r = ''
+        while True:
+            exception_raised = False
+            try:
+                r = requests.get(DogeAddressChecker.CHAINSO + addr)
+                # WARNING: chain.so API give 5request/sec for free
+            except requests.exceptions.ConnectionError:
+                sleep(1)
+                exception_raised = True
+            if not exception_raised:
+                break
         resp = r.text
         try:
             jsonResp = json.loads(resp)
