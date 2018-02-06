@@ -1,61 +1,11 @@
-import json
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 from furl import furl
 from twython import Twython
-from twython.exceptions import TwythonRateLimitError
-from twython.exceptions import TwythonError
-from time import sleep
 import logging
-import datetime
-import pause
 from utility.print_utility import print_json
 from typing import List
 from typing import Dict
 from utility.twython_utility import twitter_safe_call
-
-
-def twitter_safe_research(twython_instance, **params):
-    retry_on_error = 0
-    max_retry_on_error = 10
-
-    while True:
-        exception_raised = False
-
-        try:
-            logging.debug("Try" + json.dumps(params))
-            result = twython_instance.search(
-                timeout=120,  # Max Timeout 2 minutes
-                **params
-            )
-            logging.debug("Try Done")
-        except TwythonRateLimitError as tre:
-            next_reset = int(tre.retry_after) + 1
-
-            next_reset_date_str = datetime.datetime.\
-                fromtimestamp(next_reset) \
-                .strftime('%H:%M:%S %Y-%m-%d')
-
-            logging.warning("Rate Limit reached: Pause until: "
-                            + next_reset_date_str)
-
-            pause.until(next_reset)
-
-            logging.warning("Pause Finished. Let's retry")
-
-            exception_raised = True
-        except TwythonError as te:
-            retry_on_error += 1
-            logging.warning("TwythonError raised: " + te.msg)
-            print_json(params)
-            sleep(60)
-            exception_raised = True
-            if retry_on_error > max_retry_on_error:
-                return {}
-
-        if not exception_raised:
-            break
-
-    return result
 
 
 class TwitterWalletCollector(AbsWalletCollector):
