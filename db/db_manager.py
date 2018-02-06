@@ -1,9 +1,10 @@
+import os
 import sqlite3
+import traceback
 from sqlite3 import Error
+
 from dao.account import Account
 from dao.wallet import Wallet
-import traceback
-import os
 
 
 class DbManager:
@@ -104,7 +105,7 @@ class DbManager:
 
     def insertInformation(self, name, website, email, json):
         c = self.conn.cursor()
-        if (email is None or email.isspace()):
+        if email is None or email.isspace():
             email = " "
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
@@ -157,7 +158,7 @@ class DbManager:
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
-        return (data is not None)
+        return data is not None
 
     def findAccount(self, host, username):
         c = self.conn.cursor()

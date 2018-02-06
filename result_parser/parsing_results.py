@@ -26,41 +26,41 @@ class Parser:
         for res in results[Parser.RESULTS]:
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
-            accountId = None
+            account_id = None
             Parser.dbManager.initConnection()
             for i in range(0, len(symbols)):
                 s = symbols[i]
                 w = wallets[i]
                 checker = self.retrieveChecker(s)
-                if (checker.address_valid(w)):
-                    if accountId is None:
-                        accountId = (Parser.dbManager.
+                if checker.address_valid(w):
+                    if account_id is None:
+                        account_id = (Parser.dbManager.
                                      findAccount(res[Parser.HOST],
                                                  res[Parser.USERNAME]))
-                        if (accountId == -1):
-                            accountId = Parser.dbManager.insertAccountNoInfo(
+                        if account_id == -1:
+                            account_id = Parser.dbManager.insertAccountNoInfo(
                                 res[Parser.HOST],
                                 res[Parser.USERNAME])
-                    if (not(Parser.dbManager.findWallet(w))):
+                    if not Parser.dbManager.findWallet(w):
                         status = 0
-                        if (checker.address_check(w)):
+                        if checker.address_check(w):
                             status = 1
-                        if (s in Parser.NOT_SURE_CHECK):
+                        if s in Parser.NOT_SURE_CHECK:
                                 status = 0
                         (Parser.dbManager.
-                         insertWalletWithAccount(w, s, status, accountId,
+                         insertWalletWithAccount(w, s, status, account_id,
                                                  res[Parser.URL]))
             Parser.dbManager.saveChanges()
 
     def validWallets(self, wallets, checker):
-        validWallets = []
+        valid_wallets = []
         for wallet in wallets:
-            if (checker.address_valid(wallet)):
-                validWallets.append(wallet)
-        return validWallets
+            if checker.address_valid(wallet):
+                valid_wallets.append(wallet)
+        return valid_wallets
 
     def retrieveChecker(self, currency):
-        if (currency in Parser.CURRENCIES):
+        if currency in Parser.CURRENCIES:
             return self.getClass('address_checkers.' +
                                  currency.lower() + "_address_checker." +
                                  currency.lower().title() + "AddressChecker")()
