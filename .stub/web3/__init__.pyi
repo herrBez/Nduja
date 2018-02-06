@@ -1,0 +1,3 @@
+
+class Web3:
+    def isAddress(self, address : str) -> bool: ...

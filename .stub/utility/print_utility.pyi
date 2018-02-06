@@ -1,0 +1,3 @@
+from typing import Dict
+
+def print_json(s: Dict) -> None: ...

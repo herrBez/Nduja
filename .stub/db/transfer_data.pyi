@@ -1,0 +1,6 @@
+from sqlite3 import Cursor
+
+
+def transfer_data(oldDb : str, newDb : str) -> int: ...
+
+def init_db(c : Cursor) -> Cursor: ...
