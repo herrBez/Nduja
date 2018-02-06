@@ -9,6 +9,7 @@ from twython import TwythonError
 from twython import TwythonRateLimitError
 from utility.print_utility import print_json
 
+
 from typing import Dict
 
 
@@ -23,7 +24,7 @@ def twitter_safe_call(twython_function, max_retry_on_error: int = 10,
     """
 
     retry_on_error = 0
-    result = {}
+    result = {}  # type: Dict
 
     while True:
         exception_raised = False
