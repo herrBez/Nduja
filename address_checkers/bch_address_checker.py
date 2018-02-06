@@ -2,7 +2,9 @@ import json
 from hashlib import sha256
 import requests
 from address_checkers.abs_address_checker import AbsAddressChecker
-
+from typing import Iterable
+from typing import List
+from typing import Any
 
 class BchAddressChecker(AbsAddressChecker):
     """Bitcoin cash address checker"""
@@ -15,14 +17,14 @@ class BchAddressChecker(AbsAddressChecker):
     NOERRORS = 0
     DATA = "data"
 
-    def decode_base58(self, bc, length):
+    def decode_base58(self, bc: str, length: int) -> bytes:
         """Returns the base 58 econding of the wallet"""
         n = 0
         for char in bc:
             n = n * 58 + BchAddressChecker.DIGITS58.index(char)
         return n.to_bytes(length, "big")
 
-    def address_valid(self, bc):
+    def address_valid(self, bc: str) -> bool:
         """Checks if the string passed could be a valid address for a bitcoin
         wallet"""
         try:
@@ -32,7 +34,7 @@ class BchAddressChecker(AbsAddressChecker):
         except Exception:
             return False
 
-    def address_search(self, address):
+    def address_search(self, address: str) -> bool:
         """Checks if the bitcoin address exists"""
         r = requests.get(BchAddressChecker.BCHCHAIN + address)
         resp = r.text
@@ -45,7 +47,7 @@ class BchAddressChecker(AbsAddressChecker):
         except ValueError:
             return False
 
-    def address_check(self, address):
+    def address_check(self, address: str) -> bool:
         """Check if the bitcoin address is valid and exists"""
         if address.startswith("bitcoincash:"):
             return True
