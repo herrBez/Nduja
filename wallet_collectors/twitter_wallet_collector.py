@@ -11,6 +11,7 @@ import pause
 from utility.print_utility import print_json
 from typing import List
 from typing import Dict
+from utility.twython_utility import twitter_safe_call
 
 
 def twitter_safe_research(twython_instance, **params):
@@ -91,12 +92,12 @@ class TwitterWalletCollector(AbsWalletCollector):
         iterate over the results manually."""
 
         my_twitter = self.twitters[self.get_twython()]
-        result = twitter_safe_research(my_twitter,
-                                       q=query,
-                                       count=self.max_count,
-                                       result_type=kargs["rt"],
-                                       tweet_mode="extended"
-                                       )
+        result = twitter_safe_call(my_twitter.search,
+                                   q=query,
+                                   count=self.max_count,
+                                   result_type=kargs["rt"],
+                                   tweet_mode="extended"
+                                   )
 
         logging.info("===")
         if not result:  # The result is empty
@@ -111,14 +112,14 @@ class TwitterWalletCollector(AbsWalletCollector):
         while "next_results" in result["search_metadata"]:
             f = furl(result["search_metadata"]["next_results"])
             my_twitter = self.twitters[self.get_twython()]
-            result = twitter_safe_research(my_twitter,
-                                           q=query,
-                                           count=str(self.max_count),
-                                           # Results per page
-                                           tweet_mode='extended',
-                                           result_type=kargs["rt"],
-                                           max_id=f.args["max_id"]
-                                           )
+            result = twitter_safe_call(my_twitter.search,
+                                       q=query,
+                                       count=str(self.max_count),
+                                       # Results per page
+                                       tweet_mode='extended',
+                                       result_type=kargs["rt"],
+                                       max_id=f.args["max_id"]
+                                       )
             if not result:
                 break
             logging.info(str(len(result["statuses"])))

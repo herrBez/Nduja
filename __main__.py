@@ -78,7 +78,7 @@ if __name__ == "__main__":
                                          config["tokens"])
     f3 = executor.submit(search_searchcode, config["format"])
 
-    print("Let's wait bitch")
+    print("Let's wait")
 
     print(f1.result())
     print(f2.result())
