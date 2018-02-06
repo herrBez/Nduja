@@ -5,8 +5,10 @@ from time import sleep
 
 
 class EthAddressChecker(AbsAddressChecker):
-    P1 = 'https://api.etherscan.io/api?module=account&action=balance&address='
-    P2 = '&tag=latest&apikey='
+    """Ethereum address checker"""
+
+    P1 = "https://api.etherscan.io/api?module=account&action=balance&address="
+    P2 = "&tag=latest&apikey="
     token = None
     token_index = 0
     RESULT = "result"
@@ -14,22 +16,22 @@ class EthAddressChecker(AbsAddressChecker):
     def setToken(token):
         EthAddressChecker.token = token
 
-    def createURL(self, addr):
-        url = (EthAddressChecker.P1 + addr + EthAddressChecker.P2 +
+    def createURL(self, address):
+        url = (EthAddressChecker.P1 + address + EthAddressChecker.P2 +
                (EthAddressChecker.token[EthAddressChecker.token_index]))
         EthAddressChecker.token_index = ((EthAddressChecker.token_index + 1) %
                                          len(EthAddressChecker.token))
         return url
 
-    def address_check(self, addr):
+    def address_check(self, address):
         return False
 
-    def address_search(self, addr):
-        r = ''
+    def address_search(self, address):
+        r = ""
         while True:
             exception_raised = False
             try:
-                r = requests.get(self.createURL(addr))
+                r = requests.get(self.createURL(address))
             except requests.exceptions.ConnectionError:
                 sleep(1)
                 exception_raised = True
@@ -37,12 +39,12 @@ class EthAddressChecker(AbsAddressChecker):
                 break
         resp = r.text
         try:
-            jsonResp = json.loads(resp)
-            return (len(jsonResp[EthAddressChecker.RESULT]) > 0)
+            json_resp = json.loads(resp)
+            return len(json_resp[EthAddressChecker.RESULT]) > 0
         except ValueError:
             return False
         return True
 
-    def address_valid(self, addr):
-        '''Check if addr is a valid Ethereum address using web3'''
-        return self.address_search(addr)
+    def address_valid(self, address):
+        """Check if addr is a valid Ethereum address using web3"""
+        return self.address_search(address)

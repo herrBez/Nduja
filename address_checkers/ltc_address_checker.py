@@ -5,15 +5,17 @@ from address_checkers.abs_address_checker import AbsAddressChecker
 
 
 class LtcAddressChecker(AbsAddressChecker):
-    CHAINSO = 'https://chain.so/api/v2/is_address_valid/LTC/'
-    STATUS = 'status'
-    SUCCESS = 'success'
-    DATA = 'data'
-    ISVALID = 'is_valid'
+    """Litecoin Address Checker"""
+
+    CHAINSO = "https://chain.so/api/v2/is_address_valid/LTC/"
+    STATUS = "status"
+    SUCCESS = "success"
+    DATA = "data"
+    ISVALID = "is_valid"
 
     def address_search(self, addr):
-        '''Use chain.so API to check if an address is valid'''
-        r = ''
+        """Use chain.so API to check if an address is valid"""
+        r = ""
         while True:
             exception_raised = False
             try:
@@ -37,12 +39,12 @@ class LtcAddressChecker(AbsAddressChecker):
             return False
         return True
 
-    def address_valid(self, addr):
-        return ((addr.startswith('L') or addr.startswith('M')) and
-                len(addr) >= 26 and len(addr) <= 36)
+    def address_valid(self, address):
+        return ((address.startswith("L") or address.startswith("M")) and
+                26 <= len(address) <= 36)
 
-    def address_check(self, addr):
-        '''Check if a litecoin address is valid'''
-        if (self.address_valid(addr)):
-            return self.address_search(addr)
+    def address_check(self, address):
+        """Check if a litecoin address is valid"""
+        if self.address_valid(address):
+            return self.address_search(address)
         return False
