@@ -12,9 +12,10 @@ class DbManager:
     db = 'db.db'
     instance = None
 
+    @staticmethod
     def setDBFileName(filename):
         DbManager.db = filename
-
+    @staticmethod
     def getInstance():
         if DbManager.instance is None:
             DbManager.instance = DbManager()

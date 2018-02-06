@@ -1,0 +1,3 @@
+from typing import Dict
+
+def furl(url : str) -> Dict[str, str]: ...

@@ -1,21 +1,19 @@
-#!/usr/bin/env python3
+import json
+import logging
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+import twython
+
+from address_checkers.eth_address_checker import EthAddressChecker
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
-from pathlib import Path
-from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
-from wallet_collectors.searchcode_wallet_collector import SearchcodeWalletCollector
-import sys
-from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
-from multiprocessing.dummy import Pool
-# from multiprocessing.pool import ThreadPool
-from concurrent.futures import  ThreadPoolExecutor
-import json
-import twython
-from address_checkers.eth_address_checker import EthAddressChecker
-from time import sleep
-import logging
-from sys import argv
+from wallet_collectors.searchcode_wallet_collector import \
+    SearchcodeWalletCollector
+from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
+
 
 def search_searchcode(formatfile):
     logging.info("Search Code")
