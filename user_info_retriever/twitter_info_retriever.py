@@ -5,6 +5,7 @@ from user_info_retriever.abs_personal_info_retriever \
 from twython import Twython
 from twython.exceptions import TwythonRateLimitError
 from twython.exceptions import TwythonError
+from typing import List
 
 
 def twitter_safe_show(twython_instance, **params):
@@ -42,8 +43,9 @@ def twitter_safe_show(twython_instance, **params):
 
 class TwitterInfoRetriever(PersonalInfoRetriever):
     twitter_index = 0
-    twitters = []
+    twitters = [] # type: List[Twython]
 
+    @staticmethod
     def getTwython():
         print(TwitterInfoRetriever.twitter_index)
         print(len(TwitterInfoRetriever.twitters))
@@ -54,6 +56,7 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
              len(TwitterInfoRetriever.twitters))
         return resTwhython
 
+    @staticmethod
     def setToken(tokens):
         print("Set token")
         for i in range(len(tokens["twitter_app_key"])):

@@ -10,9 +10,11 @@ class GithubInfoRetriever(PersonalInfoRetriever):
     token = None
     current_token = 0
 
+    @staticmethod
     def setToken(token):
         GithubInfoRetriever.token = token
 
+    @staticmethod
     def getToken():
         t = GithubInfoRetriever.token[GithubInfoRetriever.current_token]
         GithubInfoRetriever.current_token = \
