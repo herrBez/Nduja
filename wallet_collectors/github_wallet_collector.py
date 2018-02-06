@@ -5,10 +5,17 @@ from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import pause
 import logging
+from utility.print_utility import print_json
+
+from requests import Response
+from grequests import AsyncRequest
+
 from typing import List
+from typing import Any
+from typing import Dict
 
 
-def exception_handler(request, exception):
+def exception_handler(request : AsyncRequest, exception: Exception) -> Response:
     """Exception handler for the grequests map function. It simply retry
     the failing request once and on success return the new response
     otherwise it gives up and gives back a None"""
@@ -27,7 +34,7 @@ def exception_handler(request, exception):
 
 class GithubWalletCollector(AbsWalletCollector):
 
-    def __init__(self, format_file, tokens):
+    def __init__(self, format_file, tokens) -> None:
         super().__init__(format_file)
         self.format_object = json.load(open(format_file))
         self.max_page = 10
@@ -35,17 +42,17 @@ class GithubWalletCollector(AbsWalletCollector):
         self.current_token = 0
         self.tokens = tokens
 
-    def request_url(self, url, token=None):
+    def request_url(self, url: str, token: str =None) -> str:
         r = super().request_url(url, self.tokens[self.current_token])
         self.current_token = (self.current_token + 1) % len(self.tokens)
         return r
 
-    def get_next_token(self):
+    def get_next_token(self) -> str:
         token = self.tokens[self.current_token]
         self.current_token = (self.current_token + 1) % len(self.tokens)
         return token
 
-    def perform_request(self, rs):
+    def perform_request(self, rs: Any) -> Any:
 
         raw_results = grequests.map(rs, exception_handler=exception_handler)
 
@@ -67,7 +74,7 @@ class GithubWalletCollector(AbsWalletCollector):
 
         return raw_results
 
-    def collect_raw_result(self, queries):
+    def collect_raw_result(self, queries: List[str]) -> List[Dict[str, Any]]:
         raw_results_with_url = []
 
         max_index = 0
@@ -113,7 +120,7 @@ class GithubWalletCollector(AbsWalletCollector):
 
             r_max_index = 0
 
-            res_urls = []
+            res_urls = [] # type: List[Response]
 
             while r_max_index < len(raw_results):
                 r_min_index = r_max_index
