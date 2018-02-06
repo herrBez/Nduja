@@ -10,7 +10,7 @@ install:
 
 before_script:
   - git clone https://github.com/python/typeshed.git
-  - export MYPYPATH=$(pwd)/.stub:$(pwd)/typeshed
+  - export MYPYPATH=$(pwd)/.stub:$(pwd):$(pwd)/typeshed
 
 script:
   - mypy --python-version 3.6 --cache-dir /tmp/mypy address_checkers/*.py
