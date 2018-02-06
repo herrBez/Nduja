@@ -1,3 +1,5 @@
+import logging
+
 from db.db_manager import DbManager
 from user_info_retriever.bitbucket_info_retriever import BitbucketInfoRetriever
 from user_info_retriever.github_info_retriever import GithubInfoRetriever
@@ -31,18 +33,20 @@ class InfoRetriever:
                     bitbuckets.append(account)
                 elif "twitter" in account.host:
                     twitters.append(account)
+                else:
+                    logging.warning(account.host + " not yet supported.")
         infos = []
-        if (len(githubs) > 0):
+        if len(githubs) > 0:
             infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
-        if (len(bitbuckets) > 0):
+        if len(bitbuckets) > 0:
             infos = infos + BitbucketInfoRetriever().retrieveInfo(bitbuckets)
-        if (len(twitters) > 0):
+        if len(twitters) > 0:
             infos = infos + TwitterInfoRetriever().retrieveInfo(twitters)
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
-        accInfo = zip(accounts, infos)
+        acc_infos = zip(accounts, infos)
         db.initConnection()
-        for (account, info) in accInfo:
+        for (account, info) in acc_infos:
             if info is not None:
                 infoId = (db.insertInformation(info.name, info.website,
                                                info.email, info.json))

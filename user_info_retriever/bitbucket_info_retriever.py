@@ -9,10 +9,10 @@ class BitbucketInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.bitbucket.org/2.0/users/"
 
     def formatURL(self, username):
-        if (username is None or username.isspace()):
+        if username is None or username.isspace():
             return None
         else:
-            return (BitbucketInfoRetriever.URL + username)
+            return BitbucketInfoRetriever.URL + username
 
     def parseResults(self, results):
         infos = []

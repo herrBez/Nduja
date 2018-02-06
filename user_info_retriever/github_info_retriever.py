@@ -21,19 +21,19 @@ class GithubInfoRetriever(PersonalInfoRetriever):
         return t
 
     def formatURL(self, username):
-        if (username is None or username.isspace()):
+        if username is None or username.isspace():
             return None
         else:
-            toReturn = GithubInfoRetriever.URL + username
+            to_return = GithubInfoRetriever.URL + username
 
             if GithubInfoRetriever.token is not None:
-                toReturn = (toReturn + '?access_token=' +
+                to_return = (to_return + '?access_token=' +
                             (GithubInfoRetriever.
                                 token[GithubInfoRetriever.current_token]))
                 GithubInfoRetriever.current_token = \
                     (GithubInfoRetriever.current_token + 1) \
                     % len(GithubInfoRetriever.token)
-            return toReturn
+            return to_return
 
     def parseResults(self, results):
         infos = []
