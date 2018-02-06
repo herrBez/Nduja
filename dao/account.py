@@ -1,4 +1,9 @@
+import json
+
+
 class Account:
+    """DAO class for an account in the database"""
+
     ID = None
     host = None
     username = None
@@ -11,20 +16,13 @@ class Account:
         self.info = info
 
     def __str__(self):
-        idstr = ' '
-        hoststr = ' '
-        usernamestr = ' '
-        infostr = ' '
-        if self.ID is not None:
-            idstr = str(self.ID)
-        if self.host is not None:
-            hoststr = str(self.host)
-        if self.username is not None:
-            usernamestr = str(self.username)
-        if self.info is not None:
-            infostr = str(self.info)
-        return '{\n\t"id":"' + idstr + \
-            '",\n\t"host":"' + hoststr + \
-            '",\n\t"username":"' + usernamestr + \
-            '",\n\t"info":"' + infostr + \
-            '"\n}'
+        return json.dumps(
+            {
+                "id": str(self.ID) if self.ID is not None else ' ',
+                "host": self.host if self.host is not None else ' ',
+                "username": str(self.username) if self.username is not None
+                else ' ',
+                "info": str(self.info) if self.info is not None else ' '
+            },
+            ident=2
+        )

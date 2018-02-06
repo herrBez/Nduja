@@ -1,4 +1,9 @@
+import json
+
+
 class Wallet:
+    """DAO class for the Wallet"""
+
     address = None
     currency = None
     status = None
@@ -11,14 +16,11 @@ class Wallet:
         self.status = u
 
     def __str__(self):
-        address_str = ''
-        currency_str = ''
-        status_str = ''
-        if self.address is not None:
-            address_str = str(self.address)
-        if self.currency is not None:
-            currency_str = str(self.currency)
-        if self.status is not None:
-            status_str = str(self.status)
-        return ('{\n    "address":"' + address_str + '",\n    "currency":"' +
-                currency_str + '",\n    "status":"' + status_str + '"\n}')
+        return json.dumps(
+            {
+                "address": self.address if self.address is not None else ' ',
+                "currency": self.currency if self.currency is not None else ' ',
+                "status": self.status if self.status is not None else ' '
+            },
+            ident=2
+        )
