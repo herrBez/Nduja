@@ -9,13 +9,13 @@ class Account:
     username = None
     info = None
 
-    def __init__(self, ID, host, username, info):
+    def __init__(self, ID: str, host: str, username: str, info: str) -> None:
         self.ID = ID
         self.host = host
         self.username = username
         self.info = info
 
-    def __str__(self):
+    def __str__(self) -> str:
         return json.dumps(
             {
                 "id": str(self.ID) if self.ID is not None else ' ',
