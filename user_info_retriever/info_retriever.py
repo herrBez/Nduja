@@ -4,12 +4,15 @@ from db.db_manager import DbManager
 from user_info_retriever.bitbucket_info_retriever import BitbucketInfoRetriever
 from user_info_retriever.github_info_retriever import GithubInfoRetriever
 from user_info_retriever.twitter_info_retriever import TwitterInfoRetriever
+from typing import Dict, List
+from dao.personal_info import PersonalInfo
 
 
 class InfoRetriever:
     tokens = None
 
-    def setTokens(tokens):
+    @staticmethod
+    def setTokens(tokens: Dict) -> None:
         try:
             GithubInfoRetriever.setToken(tokens['tokens']['github'])
         except KeyError:
@@ -19,7 +22,7 @@ class InfoRetriever:
         except KeyError:
             pass
 
-    def retrieveInfoForAccountSaved(self):
+    def retrieveInfoForAccountSaved(self) -> None:
         db = DbManager.getInstance()
         accounts = db.getAllAccounts()
         githubs = []
@@ -35,7 +38,7 @@ class InfoRetriever:
                     twitters.append(account)
                 else:
                     logging.warning(account.host + " not yet supported.")
-        infos = []
+        infos = []  # type: List[PersonalInfo]
         if len(githubs) > 0:
             infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
         if len(bitbuckets) > 0:

@@ -8,7 +8,7 @@ from user_info_retriever.abs_personal_info_retriever \
 class BitbucketInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.bitbucket.org/2.0/users/"
 
-    def formatURL(self, username):
+    def formatURL(self, username: str) -> str:
         if username is None or username.isspace():
             return None
         else:

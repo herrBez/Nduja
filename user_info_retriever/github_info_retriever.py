@@ -3,11 +3,11 @@ from user_info_retriever.abs_personal_info_retriever \
     import PersonalInfoRetriever
 import grequests
 import requests
-
+from typing import Dict
 
 class GithubInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.github.com/users/"
-    token = None
+    token = {}  # type: Dict
     current_token = 0
 
     @staticmethod
@@ -22,7 +22,7 @@ class GithubInfoRetriever(PersonalInfoRetriever):
              len(GithubInfoRetriever.token))
         return t
 
-    def formatURL(self, username):
+    def formatURL(self, username: str) -> str:
         if username is None or username.isspace():
             return None
         else:
