@@ -2,9 +2,7 @@ import json
 from hashlib import sha256
 import requests
 from address_checkers.abs_address_checker import AbsAddressChecker
-from typing import Iterable
-from typing import List
-from typing import Any
+
 
 class BchAddressChecker(AbsAddressChecker):
     """Bitcoin cash address checker"""
