@@ -2,7 +2,6 @@ import os
 import sqlite3
 import traceback
 from sqlite3 import Error
-from sqlite3 import Connection
 from dao.account import Account
 from dao.wallet import Wallet
 
@@ -11,7 +10,7 @@ from typing import List
 
 
 class DbManager:
-    conn = Connection()
+
     db = 'db.db'
     instance = None
 
