@@ -9,7 +9,7 @@ class Wallet:
     status = None
     file = None
 
-    def __init__(self, add: str, curr: str, f: str, u: str) -> None:
+    def __init__(self, add: str, curr: str, f: str, u: int) -> None:
         self.address = add
         self.currency = curr
         self.file = f

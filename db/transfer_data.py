@@ -1,10 +1,11 @@
 import sqlite3
 from sqlite3 import Error
+from sqlite3 import Cursor
 import traceback
 import os
 
 
-def transfer_data(oldDb, newDb):
+def transfer_data(oldDb : str, newDb : str) -> None:
     old = sqlite3.connect(oldDb)
     new = sqlite3.connect(newDb)
     cnew = new.cursor()
@@ -66,7 +67,7 @@ def transfer_data(oldDb, newDb):
     old.close()
 
 
-def init_db(c):
+def init_db(c : Cursor) -> Cursor:
     c.execute('''CREATE TABLE IF NOT EXISTS Currency(
             Name VARCHAR(4) PRIMARY KEY
         )''')
