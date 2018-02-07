@@ -1,5 +1,7 @@
 import json
 from db.db_manager import DbManager
+from address_checkers.abs_address_checker import AbsAddressChecker
+from typing import List, Callable, Dict, Any
 
 
 class Parser:
@@ -13,16 +15,16 @@ class Parser:
     NOT_SURE_CHECK = ['XMR', 'BCH']
     CURRENCIES = ['BTC', 'BCH', 'DOGE', 'XMR', 'LTC', 'ETH']
 
-    def __init__(self):
+    def __init__(self) -> None:
         Parser.dbManager = DbManager.getInstance()
 
-    def parseString(self, string):
+    def parseString(self, string: str) -> None:
         return self.parse(json.loads(string))
 
-    def parseFile(self, path):
+    def parseFile(self, path: str) -> None:
         return self.parse(json.load(open(path)))
 
-    def parse(self, results):
+    def parse(self, results: Dict[str, Any]) -> None:
         for res in results[Parser.RESULTS]:
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
@@ -52,14 +54,15 @@ class Parser:
                                                  res[Parser.URL]))
             Parser.dbManager.saveChanges()
 
-    def validWallets(self, wallets, checker):
+    def validWallets(self, wallets: List[str],
+                     checker: AbsAddressChecker) -> List[str]:
         valid_wallets = []
         for wallet in wallets:
             if checker.address_valid(wallet):
                 valid_wallets.append(wallet)
         return valid_wallets
 
-    def retrieveChecker(self, currency):
+    def retrieveChecker(self, currency: str) -> AbsAddressChecker:
         if currency in Parser.CURRENCIES:
             return self.getClass('address_checkers.' +
                                  currency.lower() + "_address_checker." +
@@ -67,7 +70,7 @@ class Parser:
         else:
             return None
 
-    def getClass(self, name):
+    def getClass(self, name) -> Callable:
         parts = name.split('.')
         module = ".".join(parts[:-1])
         m = __import__(module)
