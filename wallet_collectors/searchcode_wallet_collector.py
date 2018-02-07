@@ -26,11 +26,11 @@ class SearchcodeWalletCollector(AbsWalletCollector):
 
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
         rs = (grequests.get(q) for q in queries)
-        raw_results = grequests.imap(rs, exception_handler=exception_handler)
+        raw_responses = grequests.imap(rs, exception_handler=exception_handler)
         raw_results = list(
             map(lambda r:
                 r.json()["results"],
-                raw_results
+                raw_responses
                 )
         )
 

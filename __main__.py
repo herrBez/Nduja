@@ -3,6 +3,11 @@ import logging
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+# Do not cancel these two imports before twython --> It prevents an infinte
+# recursion error due to a bug in grequests (called by twython)
+
+import grequests
+import requests
 
 import twython
 
@@ -34,15 +39,11 @@ def search_github(formatfile, tokens):
     return "ok search_github"
 
 def search_twitter(formatfile, tokens):
-    try:
-        results = (TwitterWalletCollector(formatfile,
-                                          tokens)
-                   .collect_address())
+    results = (TwitterWalletCollector(formatfile,
+                                      tokens)
+               .collect_address())
 
-        Parser().parseString(results)
-
-    except twython.exceptions.TwythonRateLimitError:
-        logging.error("Twython rate limit exceed!. Exiting without crash")
+    Parser().parseString(results)
 
     return "ok search_twitter"
 
