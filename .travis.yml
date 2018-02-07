@@ -7,6 +7,7 @@ cache: pip
 
 install:
   - pip install -r requirements.txt
+  - sudo apt-get install pylint
 
 before_script:
   - git clone https://github.com/python/typeshed.git
@@ -21,3 +22,4 @@ script:
   - mypy --python-version 3.6 --cache-dir /tmp/mypy utility/*.py
   - mypy --python-version 3.6 --cache-dir /tmp/mypy wallet_collectors/*.py
   - mypy --python-version 3.6 --cache-dir /tmp/mypy __main__.py
+  - pylint -d "C" -d "R" -d "W" *.py */*.py
