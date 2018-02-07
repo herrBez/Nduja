@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 from time import sleep
+
 # import grequests
 # import requests
 import pause
@@ -9,12 +10,12 @@ from twython import TwythonError
 from twython import TwythonRateLimitError
 from utility.print_utility import print_json
 
-
+from typing import Any
 from typing import Dict
 
 
 def twitter_safe_call(twython_function, max_retry_on_error: int = 10,
-                      **params: Dict) -> Dict:
+                      **params: Any) -> Dict:
     """This utility function calls a twython function safely, by catching
     the exceptions that can rise:
     if a TwythonRateLimitError occurs, it pauses until the reaching of the

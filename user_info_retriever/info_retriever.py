@@ -40,11 +40,11 @@ class InfoRetriever:
                     logging.warning(account.host + " not yet supported.")
         infos = []  # type: List[PersonalInfo]
         if len(githubs) > 0:
-            infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
+            infos = infos + GithubInfoRetriever().retrieve_info(githubs)
         if len(bitbuckets) > 0:
-            infos = infos + BitbucketInfoRetriever().retrieveInfo(bitbuckets)
+            infos = infos + BitbucketInfoRetriever().retrieve_info(bitbuckets)
         if len(twitters) > 0:
-            infos = infos + TwitterInfoRetriever().retrieveInfo(twitters)
+            infos = infos + TwitterInfoRetriever().retrieve_info(twitters)
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
         acc_infos = zip(accounts, infos)

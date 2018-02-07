@@ -1,9 +1,12 @@
-from dao.personal_info import PersonalInfo
+from typing import Dict
+import requests
+from requests import Response
+
 from user_info_retriever.abs_personal_info_retriever \
     import PersonalInfoRetriever
-import grequests
-import requests
-from typing import Dict
+from dao.account import Account
+from dao.personal_info import PersonalInfo
+
 
 class GithubInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.github.com/users/"
@@ -22,6 +25,15 @@ class GithubInfoRetriever(PersonalInfoRetriever):
              len(GithubInfoRetriever.token))
         return t
 
+    def retrieve_info_from_account(self, account: Account) -> PersonalInfo:
+        res = requests.get(self.formatURL(account.username),
+                           headers={
+                               "Authorization": "token " +
+                                                GithubInfoRetriever.getToken()
+                           }
+                           )
+        return self.parseResult(res)
+
     def formatURL(self, username: str) -> str:
         if username is None or username.isspace():
             return None
@@ -37,24 +49,13 @@ class GithubInfoRetriever(PersonalInfoRetriever):
                     % len(GithubInfoRetriever.token)
             return to_return
 
-    def parseResults(self, results):
-        infos = []
-        for rx in results:
-            if rx is not None:
-                infos.append(PersonalInfo(rx.json()["name"], rx.json()["blog"],
-                                          rx.json()["email"], rx.json()))
-            else:
-                infos.append(None)
-        return infos
+    def parseResult(self, result: Response) -> PersonalInfo:
+        info = None
+        if result is not None:
+            info = PersonalInfo(result.json()["name"],
+                                result.json()["blog"],
+                                result.json()["email"],
+                                result.json())
+        return info
 
-    def retrieveInfo(self, accounts):
-        reqs = []
-        [reqs.append(self.formatURL(account.username))
-         for account in accounts]
-        rs = (grequests.get(q,
-                            headers={
-                                'Authorization': 'token ' +
-                                GithubInfoRetriever.getToken()}) for q in reqs)
-        return self.parseResults(grequests.map(rs))
 
-# print(GithubInfoRetriever().retrieveInfo('mzanella'))
