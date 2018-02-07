@@ -22,16 +22,32 @@ from typing import TypeVar
 class Pattern:
 
     def __init__(self, format_object: Dict[str, str]) -> None:
-        self.pattern = re.compile(format_object["wallet_regexp"])
-        self.name = format_object["name"]
-        self.group = format_object["group"]
-        self.symbol = format_object["symbol"]
+        self._pattern = re.compile(format_object["wallet_regexp"])
+        self._name = format_object["name"]
+        self._group = format_object["group"]
+        self._symbol = format_object["symbol"]
 
     @property
-    def symbol(self) -> str: return self.symbol
+    def pattern(self):
+        return self._pattern
+
+    @pattern.setter
+    def pattern(self, value):
+        self._pattern = value
+
+    @property
+    def symbol(self) -> str: return self._symbol
+
+    @symbol.setter
+    def symbol(self, value: str):
+        self._symbol = value
 
     @property
     def name(self) -> str: return self.name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
 
     def __str__(self) -> str:
         return self.symbol + " Pattern "
@@ -63,7 +79,10 @@ def match_personal_website(text: str) -> List[str]:
     website_matches = [w[0] for w in website_matches if "license" not in w[0]]
     return website_matches
 
+
 T = TypeVar('T')
+
+
 def flatten(l : List[List[T]]) -> List[T]:
     """It takes as input a list of lists and returns a list"""
     return reduce(
@@ -78,11 +97,16 @@ class AbsWalletCollector:
     __metaclass__ = ABCMeta
 
     def __init__(self, format_file: str) -> None:
-        self.format_object = json.loads(open(format_file).read())
-        self.patterns = list(map(lambda f: Pattern(f), self.format_object))
+        self._format_object = json.loads(open(format_file).read())
+        self._patterns = list(map(lambda f: Pattern(f), self._format_object))
 
     @property
-    def patterns(self) -> List[Pattern]: return self.patterns
+    def patterns(self) -> List[Pattern]:
+        return self._patterns
+
+    @patterns.setter
+    def patterns(self, value: List[Pattern]) -> None:
+        self._patterns = value
 
     def request_url(self, url: str, token: str=None) -> str:
         """ Request an url synchronously and returns the json response"""
@@ -110,7 +134,7 @@ class AbsWalletCollector:
 
     @abstractmethod
     def build_answer_json(self, raw_response: Any, content: str,
-                          match_list, symbol_list, wallet_list, emails=None,
+                          symbol_list, wallet_list, emails=None,
                           websites=None) -> Dict[str, Any]:
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
@@ -158,8 +182,7 @@ class AbsWalletCollector:
                         final_result.append(element)
 
                 except Exception:
-                    traceback.print_exc()
-                    print("Error on: ", file=sys.stderr)
+                    logging.error("Error on: " + str(traceback), file=sys.stderr)
             else:
                 logging.warning("content[" + str(i) + "] empty")
 
