@@ -5,13 +5,17 @@ from time import sleep
 import grequests
 import requests
 from wallet_collectors.abs_wallet_collector import flatten
+from utility.print_utility import print_json
+import logging
 
+from typing import Dict
+from typing import Any
+from typing import List
 
-def print_json(s):
-    print(json.dumps(s, indent=2))
 
 def exception_handler(request, exception):
         print(exception)
+
 
 class SearchcodeWalletCollector(AbsWalletCollector):
 
@@ -20,7 +24,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
         self.max_page = 10
         self.per_page = 20
 
-    def collect_raw_result(self, queries):
+    def collect_raw_result(self, queries: List[str]) -> List[Any]:
         rs = (grequests.get(q) for q in queries)
         raw_results = grequests.imap(rs, exception_handler=exception_handler)
         raw_results = list(
@@ -32,7 +36,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
 
         return flatten(raw_results)
 
-    def construct_queries(self) -> list:
+    def construct_queries(self) -> List[str]:
         return [
             "https://searchcode.com/api/codesearch_I/?"
             + "q="
@@ -54,18 +58,19 @@ class SearchcodeWalletCollector(AbsWalletCollector):
             res += "\n" + lines[key]
         return res
 
-    def extract_content(self, responses):
+    def extract_content(self, responses: List[Any]) -> List[str]:
         return list(map(
             lambda r:
             self.extract_content_single(r),
             responses
         ))
 
-    def build_answer_json(self, item, content, symbol_list, wallet_list):
+    def build_answer_json(self, item: Any, content: str,
+                          symbol_list, wallet_list, emails=None,
+                          websites=None) -> Dict[str, Any]:
         repo = item["repo"]
         username_pattern = re.compile("(https?|git)://([^/]*)/([^/]*)/([^/]*)")
         my_match = username_pattern.search(repo)
-
 
         if "bitbucket" in repo:
             hostname = "bitbucket.org"
@@ -80,6 +85,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
             hostname = "gitlab.com"
             username = my_match.group(3)
         else:
+            logging.warning("Repo of type " + repo + " not yet supported")
             # Not known source
             hostname = ""
             username = ""
