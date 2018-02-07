@@ -15,17 +15,17 @@ from typing import Any
 from typing import Dict
 
 
-def exception_handler(request : AsyncRequest, exception: Exception) -> Response:
+def exception_handler(request: AsyncRequest, exception: Exception) -> Response:
     """Exception handler for the grequests map function. It simply retry
     the failing request once and on success return the new response
     otherwise it gives up and gives back a None"""
 
     logging.warning("error with request. Trying to avoid None")
-    res = grequests.get(request)
-    response = grequests.map([res])
+    # res = grequests.get(request)
+    response = grequests.map([request])
     if response[0] is None:
         logging.error("Retried. But Failed")
-        logging.error(exception)
+        logging.error(str(exception))
         sleep(10)
     else:
         logging.info("Retried successfully")
