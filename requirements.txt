@@ -8,3 +8,4 @@ web3==3.16.4
 pause==0.1.2
 typing==3.6.4
 mypy==0.560
+future==0.16.0
