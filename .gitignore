@@ -110,3 +110,5 @@ conf.json
 # Do not keep track of API_KEYS directory content
 API_KEYS/*
 *.fuse*
+
+.idea/
