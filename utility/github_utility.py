@@ -13,9 +13,9 @@ from typing import Callable
 
 def default_github_exc_handler(request: AsyncRequest,
                                exception: Exception) -> Response:
-    """Exception handler for the grequests map function. It simply retry
+    """Exception handler for the github grequest. It simply retry
     the failing request once and on success return the new response
-    otherwise it gives up and gives back a None"""
+    otherwise it gives up and gives back a None."""
 
     logging.warning("error with request. Trying to avoid None")
     response = grequests.map([request])
@@ -31,23 +31,43 @@ def perform_request(rs: Iterable[AsyncRequest],
                     exception_handler: Callable =
                     default_github_exc_handler) -> List[Response]:
 
-    raw_results = grequests.map(rs,
+    # transform the iterable into a list
+    async_request_list = list(rs)  # type: List[AsyncRequest]
+
+    # try to get all async requests
+    raw_results = grequests.map(async_request_list,
                                 exception_handler=exception_handler)
 
+    reset_time = -1
     while None in raw_results:
-        logging.warning("There is a None. Let's pause?")
-        for r in raw_results:
+        # Find one valid result to pause until the reset time
+        for i in range(len(raw_results)):
+            r = raw_results[i]
             if r is not None:
                 logging.warning("Sleep Until "
                                 + dict(r.headers)["X-RateLimit-Reset"])
-                pause.until(int(dict(r.headers)["X-RateLimit-Reset"]))
-        raw_results = grequests.map(rs, exception_handler=exception_handler)
 
-    for r in raw_results:
-        if int(dict(r.headers)[
-                   "X-RateLimit-Remaining"]) <= 5:  # Let's wait until
-            logging.warning("Let's pause 'cause we do not have rate")
-            logging.warning("Until " + dict(r.headers)["X-RateLimit-Reset"])
-            pause.until(int(dict(r.headers)["X-RateLimit-Reset"]))
+                # It is very unlikely that that we find different
+                # X-RateLimit-Reset --> but we want to be safe
+                reset_time = max(reset_time,
+                                 int(dict(r.headers)["X-RateLimit-Reset"]))
+                pause.until(reset_time)
+                break  # Wait only once
+
+        # get the requests for which the result is None
+        tmp_requests = []
+
+        for i in range(len(requests)):
+            if raw_results[i] is None:
+                tmp_requests[i].append(async_request_list[i])
+
+        # retry to get the failed requests
+        tmp_raw_result = grequests.map(tmp_requests,
+                                       exception_handler=exception_handler)
+
+        # update results
+        for i in range(len(requests)):
+            if raw_results[i] is None:
+                raw_results[i] = tmp_raw_result[i]
 
     return raw_results
