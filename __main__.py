@@ -1,7 +1,7 @@
 import json
 import logging
 import sys
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 # Do not cancel these two imports before twython --> It prevents an infinte
 # recursion error due to a bug in grequests (called by twython)
@@ -14,6 +14,7 @@ import twython
 from address_checkers.eth_address_checker import EthAddressChecker
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
+from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from wallet_collectors.searchcode_wallet_collector import \
     SearchcodeWalletCollector
@@ -68,20 +69,20 @@ if __name__ == "__main__":
     DbManager.setDBFileName(config["dbname"])
     EthAddressChecker.setToken(config["tokens"]["etherscan"])
     # pool = Pool(processes=3)
-
-    executor = ThreadPoolExecutor(max_workers=4)
-    f1 = executor.submit(search_github,config["format"],
-                                       config["tokens"]["github"])
-
-    f2 = executor.submit(search_twitter, config["format"],
-                                         config["tokens"])
-    f3 = executor.submit(search_searchcode, config["format"])
-
-    print("Let's wait")
-
-    print(f1.result())
-    print(f2.result())
-    print(f3.result())
+    #
+    # executor = ThreadPoolExecutor(max_workers=4)
+    # f1 = executor.submit(search_github,config["format"],
+    #                                    config["tokens"]["github"])
+    #
+    # f2 = executor.submit(search_twitter, config["format"],
+    #                                      config["tokens"])
+    # f3 = executor.submit(search_searchcode, config["format"])
+    #
+    # print("Let's wait")
+    #
+    # print(f1.result())
+    # print(f2.result())
+    # print(f3.result())
 
 
     # p1 = pool.apply_async(search_github(config["format"],
@@ -92,11 +93,11 @@ if __name__ == "__main__":
     #
     #
     # pool.join()
-    # try:
-    #     InfoRetriever.setTokens(config)
-    # except KeyError:
-    #     print()
+    try:
+        InfoRetriever.setTokens(config)
+    except KeyError:
+        print()
     # logging.info("Finish to fetch the data. Sleep 15 minutes to let the api ")
     # # sleep(15*62)
     # logging.info("Finish the sleep for the twitter api")
-    # # InfoRetriever().retrieveInfoForAccountSaved()
+    InfoRetriever().retrieveInfoForAccountSaved()
