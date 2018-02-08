@@ -2,26 +2,29 @@ import os
 import sqlite3
 import traceback
 from sqlite3 import Error
-
 from dao.account import Account
 from dao.wallet import Wallet
 
+from typing import List
+
+
 
 class DbManager:
-    conn = None
+
     db = 'db.db'
     instance = None
 
     @staticmethod
-    def setDBFileName(filename):
+    def setDBFileName(filename: str):
         DbManager.db = filename
+
     @staticmethod
     def getInstance():
         if DbManager.instance is None:
             DbManager.instance = DbManager()
         return DbManager.instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.initConnection()
         c = self.conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS Currency(
@@ -69,22 +72,22 @@ class DbManager:
             path = os.path.dirname(os.path.abspath(__file__))
             with open(path + '/known_addresses_btc', 'r') as btcwallets:
                 for w in btcwallets.readlines():
-                    self.insertWallet(str(w), "BTC", "-1")
+                    self.insertWallet(str(w), "BTC", -1)
         except Error:
             traceback.print_exc()
         self.saveChanges()
 
-    def initConnection(self):
+    def initConnection(self) -> None:
         self.conn = sqlite3.connect(DbManager.db)
 
-    def closeDb(self):
+    def closeDb(self) -> None:
         self.conn.close()
 
-    def saveChanges(self):
+    def saveChanges(self) -> None:
         self.conn.commit()
         self.conn.close()
 
-    def insertWallet(self, address, currency, status):
+    def insertWallet(self, address: str, currency: str, status: int) -> bool:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
@@ -94,7 +97,9 @@ class DbManager:
             return False
         return True
 
-    def insertWalletWithAccount(self, address, currency, status, account, url):
+    def insertWalletWithAccount(self, address: str, currency: str,
+                                status: int,
+                                account: int, url: str) -> bool:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status)
@@ -102,9 +107,11 @@ class DbManager:
         except Error:
             traceback.print_exc()
             return False
-        return self.insertAccountWallet(account, address, url)
 
-    def insertInformation(self, name, website, email, json):
+        return self.insertAccountWallet(account, address, url) >= 0
+
+    def insertInformation(self, name: str, website: str, email: str,
+                          json: str) -> int:
         c = self.conn.cursor()
         if email is None or email.isspace():
             email = " "
@@ -119,7 +126,7 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def insertAccount(self, host, username, info):
+    def insertAccount(self, host: str, username: str, info: int) -> int:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
@@ -131,7 +138,7 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def insertAccountNoInfo(self, host, username):
+    def insertAccountNoInfo(self, host: str, username: str) -> int:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username)
@@ -143,11 +150,11 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def insertAccountWallet(self, account, wallet, url):
+    def insertAccountWallet(self, account: int, wallet: str, url: str) -> int:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
-                VALUES (?,?,?)''', (account, str(wallet), url,))
+                VALUES (?,?,?)''', (account, wallet, url,))
         except Error:
             traceback.print_exc()
             return -1
@@ -155,13 +162,13 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def findWallet(self, address):
+    def findWallet(self, address: str) -> bool:
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
         return data is not None
 
-    def findAccount(self, host, username):
+    def findAccount(self, host: str, username: str) -> int:
         c = self.conn.cursor()
         c.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                   (host, username,))
@@ -171,20 +178,23 @@ class DbManager:
         else:
             return data[0]
 
-    def insertNewInfo(self, address, currency, status, name, website, email,
-                      json, host, username, url):
+    def insertNewInfo(self, address: str, currency: str, status: int,
+                      name: str, website: str, email: str, json: str,
+                      host: str, username: str, url: str):
+
         self.insertWallet(address, currency, status)
-        info = self.insertInformation(name, website, email, json)
+        info = self.insertInformation(name, website, email, json)  # type: int
         acc = self.insertAccount(host, username, info)
         self.insertAccountWallet(acc, address, url)
         return acc
 
-    def insertMultipleAddresses(self, acc, wallets):
+    def insertMultipleAddresses(self, acc: int,
+                                wallets: List[Wallet]) -> None:
         for wallet in wallets:
             self.insertWallet(wallet.address, wallet.currency, wallet.status)
             self.insertAccountWallet(acc, wallet.address, wallet.file)
 
-    def getAllAccounts(self):
+    def getAllAccounts(self) -> List[Account]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -195,7 +205,7 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def addInfoToAccount(self, accountId, infoId):
+    def addInfoToAccount(self, accountId: int, infoId: int) -> bool:
         c = self.conn.cursor()
         try:
             c.execute('''UPDATE Account SET Info = ? WHERE _id = ?''',
@@ -205,7 +215,7 @@ class DbManager:
             return False
         return True
 
-    def getAllWallets(self):
+    def getAllWallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -216,7 +226,7 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def getAllKnownWallets(self):
+    def getAllKnownWallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         accounts = []
         try:

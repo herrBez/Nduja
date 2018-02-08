@@ -1,3 +1,0 @@
-from user_info_retriever.abs_personal_info_retriever import PersonalInfoRetriever
-
-class GithubInfoRetriever(PersonalInfoRetriever): ...

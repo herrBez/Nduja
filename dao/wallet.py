@@ -9,13 +9,13 @@ class Wallet:
     status = None
     file = None
 
-    def __init__(self, add, curr, f, u):
+    def __init__(self, add: str, curr: str, f: str, u: int) -> None:
         self.address = add
         self.currency = curr
         self.file = f
         self.status = u
 
-    def __str__(self):
+    def __str__(self) -> str:
         return json.dumps(
             {
                 "address": self.address if self.address is not None else ' ',

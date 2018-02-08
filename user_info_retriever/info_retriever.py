@@ -4,12 +4,15 @@ from db.db_manager import DbManager
 from user_info_retriever.bitbucket_info_retriever import BitbucketInfoRetriever
 from user_info_retriever.github_info_retriever import GithubInfoRetriever
 from user_info_retriever.twitter_info_retriever import TwitterInfoRetriever
+from typing import Dict, List
+from dao.personal_info import PersonalInfo
 
 
 class InfoRetriever:
     tokens = None
 
-    def setTokens(tokens):
+    @staticmethod
+    def setTokens(tokens: Dict) -> None:
         try:
             GithubInfoRetriever.setToken(tokens['tokens']['github'])
         except KeyError:
@@ -19,8 +22,9 @@ class InfoRetriever:
         except KeyError:
             pass
 
-    def retrieveInfoForAccountSaved(self):
+    def retrieveInfoForAccountSaved(self) -> None:
         db = DbManager.getInstance()
+        db.initConnection()
         accounts = db.getAllAccounts()
         githubs = []
         bitbuckets = []
@@ -35,17 +39,16 @@ class InfoRetriever:
                     twitters.append(account)
                 else:
                     logging.warning(account.host + " not yet supported.")
-        infos = []
+        infos = []  # type: List[PersonalInfo]
         if len(githubs) > 0:
-            infos = infos + GithubInfoRetriever().retrieveInfo(githubs)
+            infos = infos + GithubInfoRetriever().retrieve_info(githubs)
         if len(bitbuckets) > 0:
-            infos = infos + BitbucketInfoRetriever().retrieveInfo(bitbuckets)
+            infos = infos + BitbucketInfoRetriever().retrieve_info(bitbuckets)
         if len(twitters) > 0:
-            infos = infos + TwitterInfoRetriever().retrieveInfo(twitters)
+            infos = infos + TwitterInfoRetriever().retrieve_info(twitters)
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
         acc_infos = zip(accounts, infos)
-        db.initConnection()
         for (account, info) in acc_infos:
             if info is not None:
                 infoId = (db.insertInformation(info.name, info.website,

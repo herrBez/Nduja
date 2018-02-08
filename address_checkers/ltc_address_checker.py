@@ -13,13 +13,13 @@ class LtcAddressChecker(AbsAddressChecker):
     DATA = "data"
     ISVALID = "is_valid"
 
-    def address_search(self, addr):
+    def address_search(self, address: str) -> bool:
         """Use chain.so API to check if an address is valid"""
-        r = ""
+        r = None
         while True:
             exception_raised = False
             try:
-                r = requests.get(LtcAddressChecker.CHAINSO + addr)
+                r = requests.get(LtcAddressChecker.CHAINSO + address)
                 # WARNING: chain.so API give 5request/sec for free
             except requests.exceptions.ConnectionError:
                 sleep(1)
@@ -39,11 +39,11 @@ class LtcAddressChecker(AbsAddressChecker):
             return False
         return True
 
-    def address_valid(self, address):
+    def address_valid(self, address: str) -> bool:
         return ((address.startswith("L") or address.startswith("M")) and
                 26 <= len(address) <= 36)
 
-    def address_check(self, address):
+    def address_check(self, address: str) -> bool:
         """Check if a litecoin address is valid"""
         if self.address_valid(address):
             return self.address_search(address)
