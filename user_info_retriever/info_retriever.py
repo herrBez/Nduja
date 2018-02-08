@@ -7,6 +7,7 @@ from user_info_retriever.twitter_info_retriever import TwitterInfoRetriever
 from typing import Dict, List
 from dao.personal_info import PersonalInfo
 import sys
+import traceback
 
 class InfoRetriever:
     tokens = None
@@ -21,6 +22,7 @@ class InfoRetriever:
             TwitterInfoRetriever.setToken(tokens)
         except KeyError as ke:
             print(ke)
+            traceback.print_exc()
             sys.exit(12)
 
     def retrieveInfoForAccountSaved(self) -> None:
