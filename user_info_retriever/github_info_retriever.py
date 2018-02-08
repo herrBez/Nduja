@@ -35,6 +35,7 @@ class GithubInfoRetriever(PersonalInfoRetriever):
                                                 GithubInfoRetriever.getToken()
                            }
                            )
+        print("github: " + account.username)
         # parseResult expects only one Respone. On the contrary
         # perform request expect a List of AsyncRequests and returns a List of
         # Responses

@@ -38,6 +38,7 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
     def retrieve_info_from_account(self, account: Account) -> PersonalInfo:
         """This method fetches the information for a single Account
         and is specific for each subclass"""
+        print("twitter" + account.username)
         result = twitter_safe_call(TwitterInfoRetriever.getTwython().show_user(),
                                    screen_name=account.username)
         info = None
