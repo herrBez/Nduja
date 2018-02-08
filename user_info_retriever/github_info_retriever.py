@@ -9,7 +9,7 @@ from user_info_retriever.abs_personal_info_retriever \
 from dao.account import Account
 from dao.personal_info import PersonalInfo
 from utility.github_utility import perform_request
-
+from utility.print_utility import print_json
 
 class GithubInfoRetriever(PersonalInfoRetriever):
     URL = "https://api.github.com/users/"
@@ -58,10 +58,13 @@ class GithubInfoRetriever(PersonalInfoRetriever):
     def parseResult(self, result: Response) -> PersonalInfo:
         info = None
         if result is not None:
-            info = PersonalInfo(result.json()["name"],
-                                result.json()["blog"],
-                                result.json()["email"],
-                                result.json())
+            try:
+                info = PersonalInfo(result.json()["name"],
+                                    result.json()["blog"],
+                                    result.json()["email"],
+                                    result.json())
+            except KeyError:
+                print_json(result.json())
         return info
 
 
