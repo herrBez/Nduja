@@ -94,7 +94,7 @@ if __name__ == "__main__":
     #
     # pool.join()
     try:
-        InfoRetriever.setTokens(config)
+        InfoRetriever.setTokens(config["tokens"])
     except KeyError:
         print()
     # logging.info("Finish to fetch the data. Sleep 15 minutes to let the api ")

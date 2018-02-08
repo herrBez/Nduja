@@ -15,7 +15,7 @@ class InfoRetriever:
     @staticmethod
     def setTokens(tokens: Dict) -> None:
         try:
-            GithubInfoRetriever.setToken(tokens['tokens']['github'])
+            GithubInfoRetriever.setToken(tokens['github'])
         except KeyError:
             pass
         try:
