@@ -24,6 +24,7 @@ class InfoRetriever:
 
     def retrieveInfoForAccountSaved(self) -> None:
         db = DbManager.getInstance()
+        db.initConnection()
         accounts = db.getAllAccounts()
         githubs = []
         bitbuckets = []
@@ -48,7 +49,6 @@ class InfoRetriever:
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
         acc_infos = zip(accounts, infos)
-        db.initConnection()
         for (account, info) in acc_infos:
             if info is not None:
                 infoId = (db.insertInformation(info.name, info.website,
