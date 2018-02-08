@@ -6,8 +6,8 @@ from time import sleep
 # import grequests
 # import requests
 import pause
-from twython import TwythonError
-from twython import TwythonRateLimitError
+from twython.exceptions import TwythonError
+from twython.exceptions import TwythonRateLimitError
 from utility.print_utility import print_json
 
 from typing import Any
