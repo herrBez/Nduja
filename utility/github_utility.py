@@ -2,7 +2,6 @@ import grequests
 import requests
 from grequests import AsyncRequest
 from requests import Response
-from time import sleep
 import logging
 import pause
 
@@ -55,19 +54,20 @@ def perform_request(rs: Iterable[AsyncRequest],
                 break  # Wait only once
 
         # get the requests for which the result is None
-        tmp_requests = []
+        tmp_requests = []  # type: List[AsyncRequest]
 
-        for i in range(len(requests)):
+        # Create a stack of async requests that failed
+        for i in range(len(raw_results)):
             if raw_results[i] is None:
-                tmp_requests[i].append(async_request_list[i])
+                tmp_requests.append(async_request_list[i])
 
         # retry to get the failed requests
         tmp_raw_result = grequests.map(tmp_requests,
                                        exception_handler=exception_handler)
 
-        # update results
-        for i in range(len(requests)):
+        # Pop from the results of the retried requests
+        for i in range(len(raw_results)):
             if raw_results[i] is None:
-                raw_results[i] = tmp_raw_result[i]
+                raw_results[i] = tmp_raw_result.pop(0)
 
     return raw_results
