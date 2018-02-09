@@ -14,9 +14,6 @@ class TwitterWalletCollector(AbsWalletCollector):
 
     def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
         super().__init__(format_file)
-
-        print_json(tokens_dictionary)
-
         self.twitter_index = 0
         self.api_call_count = []  # type: List[int]
         self.twitters = []  # type: List[Twython]
