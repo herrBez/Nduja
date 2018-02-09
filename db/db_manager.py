@@ -226,6 +226,18 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
+    def getAllWalletsByCurrency(self, currency : str) -> List[Wallet]:
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT * FROM Wallet WHERE Status>=0 
+                      AND Currency = ?''', (currency,))
+            for row in c:
+                accounts.append(Wallet(row[0], row[1], None, row[2]))
+        except Error:
+            traceback.print_exc()
+        return accounts
+
     def getAllKnownWallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         accounts = []
