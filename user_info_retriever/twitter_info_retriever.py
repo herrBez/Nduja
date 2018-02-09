@@ -15,8 +15,6 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
 
     @staticmethod
     def getTwython() -> Twython:
-        print(TwitterInfoRetriever.twitter_index)
-        print(len(TwitterInfoRetriever.twitters))
         resTwhython = (TwitterInfoRetriever.
                        twitters[TwitterInfoRetriever.twitter_index])
         TwitterInfoRetriever.twitter_index = \

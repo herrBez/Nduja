@@ -31,7 +31,7 @@ def twitter_safe_call(twython_function: Callable[..., Any],
     """
 
     retry_on_error = 0
-    result = {}  # type: Dict
+    result = None  # type: Dict
 
     while True:
         exception_raised = False
@@ -62,10 +62,6 @@ def twitter_safe_call(twython_function: Callable[..., Any],
         except TwythonAuthError as tae:
             logging.warning("Twython Authorization error raised: " + tae.msg)
             logging.warning("The query was: " + json.dumps(params, indent=2))
-
-            with open("suspended.txt", "a") as myfile:
-                myfile.write(tae.msg + " " + json.dumps(params))
-
             sleep(10)
             return None
         except TwythonError as te:
@@ -75,6 +71,12 @@ def twitter_safe_call(twython_function: Callable[..., Any],
             sleep(2)
             exception_raised = True
             if retry_on_error > max_retry_on_error:
+                with open("suspended.txt", "a") as myfile:
+                    myfile.write("===")
+                    myfile.write(twython_function)  # print the type of fun
+                    myfile.write(te.msg)  # the error message
+                    myfile.write(json.dumps(params))  # print the params
+                    myfile.write("===")
                 return None
 
         if not exception_raised:
