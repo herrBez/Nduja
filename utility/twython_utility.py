@@ -73,7 +73,7 @@ def twitter_safe_call(twython_function: Callable[..., Any],
             if retry_on_error > max_retry_on_error:
                 with open("suspended.txt", "a") as myfile:
                     myfile.write("===")
-                    myfile.write(twython_function)  # print the type of fun
+                    myfile.write(str(twython_function))  # print the type of fun
                     myfile.write(te.msg)  # the error message
                     myfile.write(json.dumps(params))  # print the params
                     myfile.write("===")
