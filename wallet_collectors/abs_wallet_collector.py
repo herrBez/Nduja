@@ -43,7 +43,7 @@ class Pattern:
         self._symbol = value
 
     @property
-    def name(self) -> str: return self.name
+    def name(self) -> str: return self._name
 
     @name.setter
     def name(self, value: str):
