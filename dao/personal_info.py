@@ -9,13 +9,14 @@ class PersonalInfo:
     email = ""
     json = ""
 
-    def __init__(self, name, website, email, json):
+    def __init__(self, name: str, website: str, email: str,
+                 json_string: str) -> None:
         self.name = name if name is not None else ' '
         self.website = website if website is not None else ' '
         self.email = email if email is not None else ' '
-        self.json = json if json is not None else ' '
+        self.json = json_string if json_string is not None else ' '
 
-    def __str__(self):
+    def __str__(self) -> str:
         return json.dumps(
             {
                 "name": self.name if self.name is not None else ' ',

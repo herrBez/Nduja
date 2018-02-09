@@ -11,7 +11,7 @@ class BtcAddressChecker(AbsAddressChecker):
     # Used for searching the address in the blockchain
     BITCOININFO = "https://blockchain.info/rawaddr/"
 
-    def decode_base58(self, bc, length):
+    def decode_base58(self, bc: str, length: int) -> bytes:
         """Returns the base 58 econding of the wallet"""
         n = 0
         for char in bc:

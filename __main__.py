@@ -1,14 +1,19 @@
 import json
 import logging
 import sys
+import getopt
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
-
+# Do not cancel these two imports before twython --> It prevents an infinte
+# recursion error due to a bug in grequests (called by twython)
+import grequests
+import requests
 import twython
+from typing import List
 
 from address_checkers.eth_address_checker import EthAddressChecker
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
+from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
 from wallet_collectors.searchcode_wallet_collector import \
     SearchcodeWalletCollector
@@ -33,69 +38,77 @@ def search_github(formatfile, tokens):
     Parser().parseString(results)
     return "ok search_github"
 
+
 def search_twitter(formatfile, tokens):
-    try:
-        results = (TwitterWalletCollector(formatfile,
-                                          tokens)
-                   .collect_address())
+    results = (TwitterWalletCollector(formatfile,
+                                      tokens)
+               .collect_address())
 
-        Parser().parseString(results)
-
-    except twython.exceptions.TwythonRateLimitError:
-        logging.error("Twython rate limit exceed!. Exiting without crash")
+    Parser().parseString(results)
 
     return "ok search_twitter"
 
-if __name__ == "__main__":
+
+def print_help():
+    print('python3.5 Nduja -t <tasks> -c <conf_file>\n' +
+          '<task> could be:\n' +
+          '\t* 0 performs all tasks\n' +
+          '\t* 1 performs wallet search\n' +
+          '\t* 2 performs user info search\n' +
+          '\t* 3 performs 1 and 2\n' +
+          'default <conf_file> is "./Nduja/conf.json"\n')
+
+
+def main(argv: List[str]) -> int:
     """ This is executed when run from the command line """
-
-    # if len(sys.argv) < 2:
-    #     logging.error("python3 %s <search_type>" % sys.argv[0])
-    #     sys.exit(0)
-    # search_type = sys.argv[1]
-
-
     logging.basicConfig(level=logging.INFO)
-
-    config = None
-    if (Path('./Nduja/conf.json')).is_file():
-        config = json.load(open('./Nduja/conf.json'))
-    else:
-        logging.error("Config file not found")
-        sys.exit(1)
+    tasks = 0
+    configfile = './Nduja/conf.json'
+    if len(argv) > 0:
+        try:
+            opts, args = getopt.getopt(argv, "ht:c:", ["help", "task=", "config="])
+        except getopt.GetoptError:
+            print_help()
+            sys.exit(2)
+        for opt, arg in opts:
+            if opt in ('-h', '--help'):
+                print_help()
+                sys.exit()
+            elif opt in ("-t", "--tasks"):
+                tasks = int(arg)
+            elif opt in ("-c", "--config"):
+                configfile = arg
+    print('Tasks is  ', tasks)
+    print('Config is ', configfile)
+    try:
+        config = json.load(open(configfile))
+    except FileNotFoundError:
+        logging.error("Configuration file not found")
+        sys.exit(2)
 
     DbManager.setDBFileName(config["dbname"])
     EthAddressChecker.setToken(config["tokens"]["etherscan"])
-    # pool = Pool(processes=3)
 
-    executor = ThreadPoolExecutor(max_workers=4)
-    f1 = executor.submit(search_github,config["format"],
-                                       config["tokens"]["github"])
+    if tasks in (0, 1):
+        executor = ThreadPoolExecutor(max_workers=4)
+        f1 = executor.submit(search_github, config["format"],
+                             config["tokens"]["github"])
+        f2 = executor.submit(search_twitter, config["format"],
+                             config["tokens"])
+        f3 = executor.submit(search_searchcode, config["format"])
+        print("Let's wait")
+        print(f1.result())
+        print(f2.result())
+        print(f3.result())
 
-    f2 = executor.submit(search_twitter, config["format"],
-                                         config["tokens"])
-    f3 = executor.submit(search_searchcode, config["format"])
-
-    print("Let's wait")
-
-    print(f1.result())
-    print(f2.result())
-    print(f3.result())
+    if tasks in (0, 2):
+        try:
+            InfoRetriever.setTokens(config["tokens"])
+        except KeyError:
+            print()
+        InfoRetriever().retrieveInfoForAccountSaved()
+    return 0
 
 
-    # p1 = pool.apply_async(search_github(config["format"],
-    #                                     config["tokens"]["github"]), [])
-    # p2 = pool.apply_async(search_twitter(config["format"],
-    #                                      config["tokens"]), [])
-    # p3 = pool.apply_async(search_searchcode(config["format"]), [])
-    #
-    #
-    # pool.join()
-    # try:
-    #     InfoRetriever.setTokens(config)
-    # except KeyError:
-    #     print()
-    # logging.info("Finish to fetch the data. Sleep 15 minutes to let the api ")
-    # # sleep(15*62)
-    # logging.info("Finish the sleep for the twitter api")
-    # # InfoRetriever().retrieveInfoForAccountSaved()
+if __name__ == "__main__":
+    main(sys.argv[1:])

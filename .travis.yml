@@ -3,14 +3,15 @@ language: python
 python:
   - "3.6"
 
-cache: pip
+cache: pip3
 
 install:
-  - pip install -r requirements.txt
+  - pip3 install -r requirements.txt
+  - pip3 install pylint
 
 before_script:
   - git clone https://github.com/python/typeshed.git
-  - export MYPYPATH=$(pwd)/.stub:$(pwd)/typeshed
+  - export MYPYPATH=$(pwd)/.stub:$(pwd):$(pwd)/typeshed
 
 script:
   - mypy --python-version 3.6 --cache-dir /tmp/mypy address_checkers/*.py
@@ -21,3 +22,11 @@ script:
   - mypy --python-version 3.6 --cache-dir /tmp/mypy utility/*.py
   - mypy --python-version 3.6 --cache-dir /tmp/mypy wallet_collectors/*.py
   - mypy --python-version 3.6 --cache-dir /tmp/mypy __main__.py
+  - pylint -d "C" -d "R" -d "W" address_checkers/*.py
+  - pylint -d "C" -d "R" -d "W" dao/*.py
+  - pylint -d "C" -d "R" -d "W" db/*.py
+  - pylint -d "C" -d "R" -d "W" result_parser/*.py
+  - pylint -d "C" -d "R" -d "W" user_info_retriever/*.py
+  - pylint -d "C" -d "R" -d "W" utility/*.py
+  - pylint -d "C" -d "R" -d "W" wallet_collectors/*.py
+  - pylint -d "C" -d "R" -d "W" __main__.py

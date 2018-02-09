@@ -13,9 +13,9 @@ class DogeAddressChecker(AbsAddressChecker):
     DATA = "data"
     ISVALID = "is_valid"
 
-    def address_search(self, address):
+    def address_search(self, address: str) -> bool:
         """Use chain.so API to check if an address is valid"""
-        r = ""
+        r = None
         while True:
             exception_raised = False
             try:
@@ -39,11 +39,11 @@ class DogeAddressChecker(AbsAddressChecker):
             return False
         return True
 
-    def address_valid(self, addr):
-        return len(addr) == 33 and addr.startswith("D")
+    def address_valid(self, address: str) -> bool:
+        return len(address) == 33 and address.startswith("D")
 
-    def address_check(self, addr):
+    def address_check(self, address: str) -> bool:
         """Check if a Doge address is valid"""
-        if self.address_valid(addr):
-            return self.address_search(addr)
+        if self.address_valid(address):
+            return self.address_search(address)
         return False

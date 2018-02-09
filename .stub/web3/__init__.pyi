@@ -1,3 +1,5 @@
 
+
 class Web3:
-    def isAddress(self, address : str) -> bool: ...
+    @staticmethod
+    def isAddress(address : str) -> bool: ...

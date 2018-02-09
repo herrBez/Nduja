@@ -5,16 +5,15 @@ import logging
 from utility.print_utility import print_json
 from typing import List
 from typing import Dict
+from typing import Any
 from utility.twython_utility import twitter_safe_call
+
 
 
 class TwitterWalletCollector(AbsWalletCollector):
 
     def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
         super().__init__(format_file)
-
-        print_json(tokens_dictionary)
-
         self.twitter_index = 0
         self.api_call_count = []  # type: List[int]
         self.twitters = []  # type: List[Twython]
@@ -78,8 +77,8 @@ class TwitterWalletCollector(AbsWalletCollector):
         logging.info("===")
         return statuses
 
-    def collect_raw_result(self, queries):
-        statuses = []
+    def collect_raw_result(self, queries: List[str]) -> List[Any]:
+        statuses = []  # type: List[Dict[Any, Any]]
         rt = "mixed"
         logging.info("How many queries?" + str(len(queries)))
 
@@ -103,7 +102,7 @@ class TwitterWalletCollector(AbsWalletCollector):
 
         return statuses
 
-    def construct_queries(self) -> list:
+    def construct_queries(self) -> List[str]:
         queries = []
         for p in self.patterns:
             for query_filter in ["-filter:retweets AND -filter:replies"]:
@@ -131,7 +130,7 @@ class TwitterWalletCollector(AbsWalletCollector):
         # print(response["full_text"])
         return response["full_text"]
 
-    def extract_content(self, responses):
+    def extract_content(self, responses) -> List[str]:
         return list(map(
             lambda r:
             self.extract_content_single(r),

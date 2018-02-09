@@ -5,29 +5,20 @@ from wallet_collectors.abs_wallet_collector import flatten
 from time import sleep
 import pause
 import logging
+from utility.print_utility import print_json
+from utility.github_utility import perform_request
+
+from requests import Response
+from grequests import AsyncRequest
+
 from typing import List
-
-
-def exception_handler(request, exception):
-    """Exception handler for the grequests map function. It simply retry
-    the failing request once and on success return the new response
-    otherwise it gives up and gives back a None"""
-
-    logging.warning("error with request. Trying to avoid None")
-    res = grequests.get(request)
-    response = grequests.map([res])
-    if response[0] is None:
-        logging.error("Retried. But Failed")
-        logging.error(exception)
-        sleep(10)
-    else:
-        logging.info("Retried successfully")
-    return response[0]
+from typing import Any
+from typing import Dict
 
 
 class GithubWalletCollector(AbsWalletCollector):
 
-    def __init__(self, format_file, tokens):
+    def __init__(self, format_file, tokens) -> None:
         super().__init__(format_file)
         self.format_object = json.load(open(format_file))
         self.max_page = 10
@@ -35,40 +26,18 @@ class GithubWalletCollector(AbsWalletCollector):
         self.current_token = 0
         self.tokens = tokens
 
-    def request_url(self, url, token=None):
+    def request_url(self, url: str, token: str =None) -> str:
         r = super().request_url(url, self.tokens[self.current_token])
         self.current_token = (self.current_token + 1) % len(self.tokens)
         return r
 
-    def get_next_token(self):
+    def get_next_token(self) -> str:
         token = self.tokens[self.current_token]
         self.current_token = (self.current_token + 1) % len(self.tokens)
         return token
 
-    def perform_request(self, rs):
-
-        raw_results = grequests.map(rs, exception_handler=exception_handler)
-
-        while None in raw_results:
-            logging.warning("There is a None. Let's pause?")
-            for r in raw_results:
-                if r is not None:
-                    logging.warning("Sleep Until "
-                                    + dict(r.headers)["X-RateLimit-Reset"])
-                    pause.until(int(dict(r.headers)["X-RateLimit-Reset"]))
-            raw_results = grequests.map(rs, exception_handler=exception_handler)
-
-        for r in raw_results:
-            if int(dict(r.headers)[
-                       "X-RateLimit-Remaining"]) <= 5:  # Let's wait until
-                logging.warning("Let's pause 'cause we do not have rate")
-                logging.warning("Until " + dict(r.headers)["X-RateLimit-Reset"])
-                pause.until(int(dict(r.headers)["X-RateLimit-Reset"]))
-
-        return raw_results
-
-    def collect_raw_result(self, queries):
-        raw_results_with_url = []
+    def collect_raw_result(self, queries: List[str]) -> List[Dict[str, Any]]:
+        raw_results_with_url = []  # type: List[Dict[str, Any]]
 
         max_index = 0
 
@@ -90,7 +59,7 @@ class GithubWalletCollector(AbsWalletCollector):
                                 ) for q in queries[min_index:max_index]
                   )
 
-            raw_results = self.perform_request(rs)
+            raw_results = perform_request(rs)
 
             # Filter out None responses
             raw_results = [r for r in raw_results if r is not None]
@@ -100,7 +69,7 @@ class GithubWalletCollector(AbsWalletCollector):
                     print_json(dict(r1.json()))
                     sleep(30)
 
-            raw_results = list(
+            raw_result_items = list(
                 map(lambda r1:
                     # print_json(r.json()["items"]),
                     r1.json()["items"],
@@ -108,12 +77,12 @@ class GithubWalletCollector(AbsWalletCollector):
                     )
             )
 
-            raw_results = flatten(raw_results)
+            raw_results_dict = flatten(raw_result_items)
             logging.debug("Q[" + str(min_index) + ":" + str(max_index) + "] B")
 
             r_max_index = 0
 
-            res_urls = []
+            res_urls = [] # type: List[Response]
 
             while r_max_index < len(raw_results):
                 r_min_index = r_max_index
@@ -133,10 +102,10 @@ class GithubWalletCollector(AbsWalletCollector):
                                               + self.get_next_token()
                                           },
                                           timeout=200
-                                          ) for response in raw_results[r_min_index:r_max_index]
+                                          ) for response in raw_results_dict[r_min_index:r_max_index]
                             )
 
-                res_urls = res_urls + self.perform_request(tmp_res_url)
+                res_urls = res_urls + perform_request(tmp_res_url)
 
             for i in range(0, len(res_urls)):
                 if res_urls[i] is not None:
@@ -151,7 +120,7 @@ class GithubWalletCollector(AbsWalletCollector):
                     # ** = all item in a dict
                     raw_results_with_url.append(
                         {
-                            **raw_results[i],
+                            **raw_results_dict[i],
                             **tmp
                         }
                     )
@@ -198,8 +167,7 @@ class GithubWalletCollector(AbsWalletCollector):
                              responses[min_index:max_index]
                              )
 
-            file_contents_responses = \
-                grequests.map(download_urls, exception_handler=exception_handler)
+            file_contents_responses = perform_request(download_urls)
 
             file_contents = list(
                 map(lambda f:
