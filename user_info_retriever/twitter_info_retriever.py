@@ -39,7 +39,7 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
         """This method fetches the information for a single Account
         and is specific for each subclass"""
         print("twitter" + account.username)
-        result = twitter_safe_call(TwitterInfoRetriever.getTwython().show_user(),
+        result = twitter_safe_call(TwitterInfoRetriever.getTwython().show_user,
                                    screen_name=account.username)
         info = None
         if result is not None:
