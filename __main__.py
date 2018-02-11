@@ -13,18 +13,15 @@ from typing import List
 from address_checkers.eth_address_checker import EthAddressChecker
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
-from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
-from wallet_collectors.searchcode_wallet_collector import \
-    SearchcodeWalletCollector
-from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
+
 
 
 def search_searchcode(formatfile):
-    logging.info("Search Code")
-    results = (SearchcodeWalletCollector(formatfile)
-               .collect_address())
-    Parser().parseString(results)
+    # logging.info("Search Code")
+    # results = (SearchcodeWalletCollector(formatfile)
+    #            .collect_address())
+    # Parser().parseString(results)
     return "ok searchcode"
 
 
@@ -40,11 +37,11 @@ def search_github(formatfile, tokens):
 
 
 def search_twitter(formatfile, tokens):
-    results = (TwitterWalletCollector(formatfile,
-                                      tokens)
-               .collect_address())
-
-    Parser().parseString(results)
+    # results = (TwitterWalletCollector(formatfile,
+    #                                   tokens)
+    #            .collect_address())
+    #
+    # Parser().parseString(results)
 
     return "ok search_twitter"
 
@@ -103,10 +100,11 @@ def main(argv: List[str]) -> int:
 
     if tasks in (0, 2):
         try:
-            InfoRetriever.setTokens(config["tokens"])
+            pass
+            # InfoRetriever.setTokens(config["tokens"])
         except KeyError:
             print()
-        InfoRetriever().retrieveInfoForAccountSaved()
+        # InfoRetriever().retrieveInfoForAccountSaved()
     return 0
 
 
