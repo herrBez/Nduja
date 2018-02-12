@@ -20,9 +20,19 @@ RUN apt-get update && \
     apt-get install python3 -y && \
     apt-get install -y python3-graph-tool && \
     apt-get install python3-pip -y && \
-    rm -rf /var/lib/apt/lists/* 
+    rm -rf /var/lib/apt/lists/*  && \
+    apt-get remove dirmngr -y && \
+    apt-get remove -y && \
+    apt-get autoclean -y && \ 
+    apt-get autoremove -y
+    
+RUN mkdir project
+    
+VOLUME ["project"]
+COPY requirements.txt ./project
+WORKDIR project/
 
-COPY requirements.txt ./
+
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
