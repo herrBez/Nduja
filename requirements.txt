@@ -3,7 +3,6 @@ requests==2.18.4
 twython==3.6.0
 matplotlib==2.1.2
 furl==1.0.1
-networkx==2.1
 web3==3.16.4
 pause==0.1.2
 typing==3.6.4
