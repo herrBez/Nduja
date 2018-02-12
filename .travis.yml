@@ -10,18 +10,20 @@ install:
   - pip3 install pylint
 
 before_script:
+  - cd Nduja
   - git clone https://github.com/python/typeshed.git
   - export MYPYPATH=$(pwd)/.stub:$(pwd):$(pwd)/typeshed
+  
 
 script:
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy address_checkers/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy dao/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy db/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy result_parser/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy user_info_retriever/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy utility/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy wallet_collectors/*.py
-  - mypy --python-version 3.6 --cache-dir /tmp/mypy __main__.py
+  - mypy --python-version 3.6 address_checkers/*.py
+  - mypy --python-version 3.6 dao/*.py
+  - mypy --python-version 3.6 db/*.py
+  - mypy --python-version 3.6 result_parser/*.py
+  - mypy --python-version 3.6 user_info_retriever/*.py
+  - mypy --python-version 3.6 utility/*.py
+  - mypy --python-version 3.6 wallet_collectors/*.py
+  - mypy --python-version 3.6 __main__.py
   - pylint -d "C" -d "R" -d "W" address_checkers/*.py
   - pylint -d "C" -d "R" -d "W" dao/*.py
   - pylint -d "C" -d "R" -d "W" db/*.py
