@@ -20,15 +20,21 @@ def perform_github_request(query: str, token: str) -> Response:
                             )
 
     if response is not None:
-        reset_time = int(dict(response.headers)["X-RateLimit-Reset"])
+        remaining_calls = int(dict(response.headers)["X-RateLimit-Remaining"])
+        if remaining_calls < 1:
+            total_calls = int(dict(response.headers)["X-RateLimit-Limit"])
 
-        next_reset_date_str = datetime.datetime. \
-            fromtimestamp(reset_time) \
-            .strftime('%H:%M:%S %Y-%m-%d')
+            reset_time = int(dict(response.headers)["X-RateLimit-Reset"])
 
-        logging.warning("Rate Limit reached: Pause until: "
-                        + next_reset_date_str)
+            next_reset_date_str = datetime.datetime. \
+                fromtimestamp(reset_time) \
+                .strftime('%H:%M:%S %Y-%m-%d')
 
-        pause.until(reset_time)
+            logging.warning("Rate Limit reached (/"
+                            + str(total_calls)
+                            + ": Pause until: "
+                            + next_reset_date_str)
+
+            pause.until(reset_time)
 
     return response
