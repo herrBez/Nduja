@@ -63,7 +63,7 @@ def main(argv: List[str]) -> int:
     """ This is executed when run from the command line """
     logging.basicConfig(level=logging.INFO)
     tasks = 0
-    configfile = './Nduja/conf.json'
+    configfile = 'conf.json'
     if len(argv) > 0:
         try:
             opts, args = getopt.getopt(argv, "ht:c:", ["help", "task=", "config="])

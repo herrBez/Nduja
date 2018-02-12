@@ -30,4 +30,4 @@ COPY . .
 
 
 # Default Command
-CMD ["python3", "./",  "-c",  "conf2.json"] 
+CMD ["python3", "./Nduja",  "-c",  "conf.json"] 
