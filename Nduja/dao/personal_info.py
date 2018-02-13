@@ -24,6 +24,6 @@ class PersonalInfo:
                 "email": self.email if self.email is not None else ' ',
                 "json": self.json if self.json is not None else ' '
             },
-            ident=2
+            indent=2
         )
 
