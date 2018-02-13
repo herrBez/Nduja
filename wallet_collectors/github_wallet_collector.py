@@ -21,15 +21,10 @@ class GithubWalletCollector(AbsWalletCollector):
     def __init__(self, format_file, tokens) -> None:
         super().__init__(format_file)
         self.format_object = json.load(open(format_file))
-        self.max_page = 10
-        self.per_page = 100
+        self.max_page = 1
+        self.per_page = 10
         self.current_token = 0
         self.tokens = tokens
-
-    def request_url(self, url: str, token: str =None) -> str:
-        r = super().request_url(url, self.tokens[self.current_token])
-        self.current_token = (self.current_token + 1) % len(self.tokens)
-        return r
 
     def get_next_token(self) -> str:
         token = self.tokens[self.current_token]
@@ -98,8 +93,8 @@ class GithubWalletCollector(AbsWalletCollector):
         contents = []  # type: List[str]
 
         for response in responses:
-            file_content_response = perform_github_request(response["known_raw_url"],
-                                                  self.get_next_token())
+            file_content_response = self.request_url(response["known_raw_url"],
+                                                     self.get_next_token())
 
             file_contents = "" if file_content_response is None else \
                             file_content_response.text

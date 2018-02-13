@@ -1,3 +1,4 @@
+import sys
 import datetime
 import grequests
 import requests
@@ -5,6 +6,7 @@ from grequests import AsyncRequest
 from requests import Response
 import logging
 import pause
+from utility.print_utility import print_json
 
 from typing import Iterable
 from typing import List
@@ -20,7 +22,13 @@ def perform_github_request(query: str, token: str) -> Response:
                             )
 
     if response is not None:
-        remaining_calls = int(dict(response.headers)["X-RateLimit-Remaining"])
+        try:
+            remaining_calls = int(dict(response.headers)["X-RateLimit-Remaining"])
+        except KeyError:
+            print(query)
+            print_json(dict(response.headers))
+            sys.exit(1)
+
         if remaining_calls < 1:
             total_calls = int(dict(response.headers)["X-RateLimit-Limit"])
 

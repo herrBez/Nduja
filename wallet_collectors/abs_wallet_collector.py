@@ -5,6 +5,7 @@ import json
 # https://github.com/kennethreitz/grequests/issues/103
 import grequests
 import requests
+from requests import Response
 import re
 from functools import reduce
 import traceback
@@ -15,6 +16,7 @@ from typing import List
 from typing import Tuple
 from typing import Any
 from typing import Dict
+from typing import Optional
 
 from typing import TypeVar
 
@@ -108,15 +110,17 @@ class AbsWalletCollector:
     def patterns(self, value: List[Pattern]) -> None:
         self._patterns = value
 
-    def request_url(self, url: str, token: str=None) -> str:
+    def request_url(self, url: str, token: str=None) -> Optional[Response]:
         """ Request an url synchronously and returns the json response"""
         data = None
         if token is not None:
             data = {'Authorization': 'token ' + token}
-        r = requests.get(url, headers=data)
-        resp = r.text
-        # ~ json.loads(resp) # if it is not well formatted exit
-        return resp
+        try:
+            response = requests.get(url, headers=data)
+        except requests.exceptions.MissingSchema:
+            response = None
+            traceback.print_exc()
+        return response
 
     @abstractmethod
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
@@ -154,10 +158,10 @@ class AbsWalletCollector:
         for i in range(len(contents)):
             if contents[i] != "":
                 try:
-
+                    print(contents[i])
                     emails = match_email(contents[i])
                     websites = match_personal_website(contents[i])
-
+                    
                     # Retrieve the list of matches
                     match_list = \
                         flatten(
