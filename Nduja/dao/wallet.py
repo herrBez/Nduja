@@ -10,7 +10,7 @@ class Wallet:
     file = None
     inferred = None
 
-    def __init__(self, add: str, curr: str, f: str, u: int, i:bool = False) \
+    def __init__(self, add: str, curr: str, f: str, u: int, i: int = False) \
             -> None:
         self.address = add
         self.currency = curr
