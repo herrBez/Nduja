@@ -17,15 +17,15 @@ class CurrencyGraph:
 
     def __init__(self, list_of_addresses: List[Cluster]) -> None:
         self.G = Graph()
-        self.vertex_name_property = self.G.new_vertex_property("string")
+        self.vertex_name_property = self.G.new_vertex_property("python::object")
         self.edge_ivalue_property = self.G.new_edge_property("vector<int64_t>")
         self.edge_ovalue_property = self.G.new_edge_property("vector<int64_t>")
         self.edge_weight_property = self.G.new_edge_property("int32_t")
         self.edge_transaction_property = \
             self.G.new_edge_property("vector<string>")
         # This dictionary stores the inverse mapping of vertex_name_property
-        self.vertex_name_to_vertex_index = {}  # type: Dict[Cluster, int]
-        self.original_nodes = []  # type: List[int]
+        self.vertex_name_to_vertex_index = {}  # type: Dict[Cluster, Vertex]
+        self.original_nodes = []  # type: List[Vertex]
 
         for address in list_of_addresses:
             v_index = self.G.add_vertex()
@@ -38,7 +38,7 @@ class CurrencyGraph:
     def get_original_nodes(self) -> List[Cluster]:
         return self.original_nodes_names_list
 
-    def get_edge(self, u: int, v: int) -> Optional[Edge]:
+    def get_edge(self, u: Vertex, v: Vertex) -> Optional[Edge]:
         edge = None
         try:
             edge = self.G.edge(u, v)
@@ -46,7 +46,7 @@ class CurrencyGraph:
             pass
         return edge
 
-    def get_node(self, address: Cluster) -> Optional[int]:
+    def get_node(self, address: Cluster) -> Optional[Vertex]:
         v_index = None
         try:
             v_index = self.vertex_name_to_vertex_index[address]
