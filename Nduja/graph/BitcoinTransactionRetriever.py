@@ -1,9 +1,8 @@
 import json
 import requests
 import logging
-import sys
 
-from graph_builder import CurrencyGraph
+from graph.graph_builder import CurrencyGraph
 
 def print_json(s):
     """pretty print a json string"""
