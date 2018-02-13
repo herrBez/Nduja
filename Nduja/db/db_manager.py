@@ -2,8 +2,8 @@ import os
 import sqlite3
 import traceback
 from sqlite3 import Error
-from account import Account
-from wallet import Wallet
+from dao.account import Account
+from dao.wallet import Wallet
 
 from typing import List
 
