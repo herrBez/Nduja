@@ -15,6 +15,17 @@ class Wallet:
         self.file = f
         self.status = u
 
+    def __key(self):
+        return self.address, self.currency
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other) -> bool:
+        return \
+            type(self) == type(other) and \
+            self.__key() == other.__key()
+
     def __str__(self) -> str:
         return json.dumps(
             {
