@@ -1,9 +1,10 @@
-from math import log
-from math import sqrt
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+
+from dao.wallet import Wallet
+from graph.Cluster import Cluster
 
 from graph_tool.all import *
 from graph_tool.all import Edge
@@ -14,7 +15,7 @@ from graph_tool.all import PropertyMap
 class CurrencyGraph:
     """This class represent the transition graph for a single currency"""
 
-    def __init__(self, list_of_addresses: List[str]) -> None:
+    def __init__(self, list_of_addresses: List[Cluster]) -> None:
         self.G = Graph()
         self.vertex_name_property = self.G.new_vertex_property("string")
         self.edge_ivalue_property = self.G.new_edge_property("vector<int64_t>")
@@ -23,7 +24,7 @@ class CurrencyGraph:
         self.edge_transaction_property = \
             self.G.new_edge_property("vector<string>")
         # This dictionary stores the inverse mapping of vertex_name_property
-        self.vertex_name_to_vertex_index = {}  # type: Dict[str, int]
+        self.vertex_name_to_vertex_index = {}  # type: Dict[Cluster, int]
         self.original_nodes = []  # type: List[int]
 
         for address in list_of_addresses:
@@ -34,7 +35,7 @@ class CurrencyGraph:
 
         self.original_nodes_names_list = list_of_addresses
 
-    def get_original_nodes(self) -> List[str]:
+    def get_original_nodes(self) -> List[Cluster]:
         return self.original_nodes_names_list
 
     def get_edge(self, u: int, v: int) -> Optional[Edge]:
@@ -45,7 +46,7 @@ class CurrencyGraph:
             pass
         return edge
 
-    def get_node(self, address: str) -> Optional[int]:
+    def get_node(self, address: Cluster) -> Optional[int]:
         v_index = None
         try:
             v_index = self.vertex_name_to_vertex_index[address]
@@ -53,7 +54,8 @@ class CurrencyGraph:
             pass
         return v_index
 
-    def add_str_edge(self, u: str, v: str, **kwargs: Dict[str, Any]) -> bool:
+    def add_str_edge(self, u: Cluster, v: Cluster, **kwargs: Dict[str, Any]) \
+            -> bool:
         u_vertex = self.vertex_name_to_vertex_index[u]
         v_vertex = self.vertex_name_to_vertex_index[v]
 
@@ -100,7 +102,7 @@ class CurrencyGraph:
                 self.edge_transaction_property[e].append(t)
         return e
 
-    def add_node(self, address: str) -> Vertex:
+    def add_node(self, address: Cluster) -> Vertex:
         """Add a node to the multidigraph"""
         v_index = self.get_node(address)
         if v_index is None:
@@ -109,7 +111,10 @@ class CurrencyGraph:
             self.vertex_name_to_vertex_index[address] = v_index
         return v_index
 
-    def connected_components_non_trivial(self, blacklist=[]) -> PropertyMap:
+    def connected_components_non_trivial(self,
+                                         blacklist: List[Cluster]=[]) \
+            -> PropertyMap:
+
         c = label_components(self.G, directed=False)
         components = c[0]
         hist = c[1]

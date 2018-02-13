@@ -88,7 +88,7 @@ class BtcTransactionRetriever:
         return in_out
 
     def get_input_output_addresses(self, address: str) -> \
-            Tuple[Dict[str, int],  Dict[str, int]]:
+            Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
         """Given an address it returns ALL transactions performed
         by the address"""
 
@@ -97,6 +97,7 @@ class BtcTransactionRetriever:
 
         inputs_dict = {}  # type: Dict[str, int]
         outputs_dict = {}  # type: Dict[str, int]
+        connected_dict = {}  # type: Dict[str, int]
 
         resp = json.loads(raw_response)  # type: Dict[str, Any]
 
@@ -145,6 +146,7 @@ class BtcTransactionRetriever:
                         inputs_dict[a] += 1
                     else:
                         inputs_dict[a] = 1
+
             if address in tmp_inputs_list:
                 for a in out_addr:
                     if a in outputs_dict:
@@ -152,7 +154,15 @@ class BtcTransactionRetriever:
                     else:
                         outputs_dict[a] = 1
 
-        return inputs_dict, outputs_dict
+            if address in tmp_inputs_list:
+                for a in in_addr:
+                    if a != address:
+                        if a in connected_dict:
+                            connected_dict[a] += 1
+                        else:
+                            connected_dict[a] = 1
+
+        return inputs_dict, outputs_dict, connected_dict
 
 
 
