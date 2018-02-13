@@ -1,8 +1,5 @@
-from typing import Iterable
-
+from typing import Iterable, Set
 from dao.wallet import Wallet
-
-from . import Cluster as Cluster_Type
 
 
 class Cluster:
@@ -16,22 +13,22 @@ class Cluster:
             self._inferred_addresses.add(w)
 
     @property
-    def original_address(self) -> Wallet:
+    def original_address(self) -> Set[Wallet]:
         return self._original_addresses
 
     @property
-    def inferred_addresses(self) -> Iterable[Wallet]:
+    def inferred_addresses(self) -> Set[Wallet]:
         return self._inferred_addresses
 
-    def add_inffered_address(self, address: Wallet):
+    def add_inferred_address(self, address: Wallet):
         self._inferred_addresses.add(address)
 
-    def merge_original_list(self, other: Cluster_Type):
-        self.original_address.update(other.original_address)
+    def merge_original_list(self, other: 'Cluster'):
+        (self.original_address).update(other.original_address)
 
-    def merge(self, other: Cluster_Type) -> Cluster_Type:
-        originals = self.original_address.union(other.original_address)
-        inferred = self.inferred_addresses.union(other.inferred_addresses)
+    def merge(self, other: 'Cluster') -> 'Cluster':
+        originals = (self.original_address).union(other.original_address)
+        inferred = (self.inferred_addresses).union(other.inferred_addresses)
         return Cluster(originals, inferred)
 
     def __hash__(self):
