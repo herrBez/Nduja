@@ -45,8 +45,8 @@ def transfer_data(oldDb : str, newDb : str) -> None:
                             AND Wallet = ?''', (row[1], row[2],))
             data = cnew.fetchone()
             if data is None:
-                cnew.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
-                                VALUES (?,?,?)''',
+                cnew.execute('''INSERT INTO AccountWallet(Account, Wallet,
+                                RawURL) VALUES (?,?,?)''',
                              (str(idAccount[row[1]]), row[2], row[3],))
         except Error:
             traceback.print_exc()
@@ -54,9 +54,9 @@ def transfer_data(oldDb : str, newDb : str) -> None:
     cold.execute("SELECT * FROM Wallet")
     for row in cold:
         try:
-            cnew.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                         VALUES (?,?,?)''',
-                         (row[0], row[1], row[2],))
+            cnew.execute('''INSERT INTO Wallet(Address, Currency, Status,
+                            Inferred) VALUES (?,?,?,?)''',
+                         (row[0], row[1], row[2], row[3],))
         except Error:
             traceback.print_exc()
     cnew.execute('''DELETE FROM Information WHERE Information._id NOT IN (
@@ -75,6 +75,7 @@ def init_db(c : Cursor) -> Cursor:
         Address VARCHAR(128) PRIMARY KEY,
         Currency VARCHAR(4),
         Status NUMERIC,
+        Inferred NUMERIC,
         FOREIGN KEY (Currency) REFERENCES Currency(Name)
     )''')
     c.execute('''CREATE TABLE IF NOT EXISTS Information(
@@ -114,9 +115,9 @@ def init_db(c : Cursor) -> Cursor:
         with open(path + '/known_addresses_btc', 'r') as btcwallets:
             for w in btcwallets.readlines():
                 try:
-                    c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                              VALUES (?,?,?)''',
-                              (str(w), "BTC", "-1",))
+                    c.execute('''INSERT INTO Wallet(Address, Currency, Status,
+                                 Inferred) VALUES (?,?,?,?)''',
+                              (str(w), "BTC", "-1", 0,))
                 except Error:
                     traceback.print_exc()
     except Error:
