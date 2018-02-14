@@ -13,11 +13,12 @@ from typing import List
 from address_checkers.eth_address_checker import EthAddressChecker
 from db.db_manager import DbManager
 from result_parser.parsing_results import Parser
-from user_info_retriever.info_retriever import InfoRetriever
 from wallet_collectors.github_wallet_collector import GithubWalletCollector
-from wallet_collectors.searchcode_wallet_collector import \
-    SearchcodeWalletCollector
+from wallet_collectors.searchcode_wallet_collector \
+    import SearchcodeWalletCollector
 from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
+from user_info_retriever.info_retriever import InfoRetriever
+from utility.print_utility import print_json
 
 
 def search_searchcode(formatfile):
@@ -34,6 +35,7 @@ def search_github(formatfile, tokens):
                                      tokens
                                      )
                .collect_address())
+    print_json(results)
     logging.info("Finish Search Github")
     Parser().parseString(results)
     return "ok search_github"
@@ -43,7 +45,6 @@ def search_twitter(formatfile, tokens):
     results = (TwitterWalletCollector(formatfile,
                                       tokens)
                .collect_address())
-
     Parser().parseString(results)
 
     return "ok search_twitter"
@@ -61,7 +62,7 @@ def print_help():
 
 def main(argv: List[str]) -> int:
     """ This is executed when run from the command line """
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     tasks = 0
     configfile = 'conf.json'
     if len(argv) > 0:

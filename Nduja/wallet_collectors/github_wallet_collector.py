@@ -6,7 +6,7 @@ from time import sleep
 import pause
 import logging
 from utility.print_utility import print_json
-from utility.github_utility import perform_request
+from utility.github_utility import perform_github_request
 
 from requests import Response
 from grequests import AsyncRequest
@@ -26,11 +26,6 @@ class GithubWalletCollector(AbsWalletCollector):
         self.current_token = 0
         self.tokens = tokens
 
-    def request_url(self, url: str, token: str =None) -> str:
-        r = super().request_url(url, self.tokens[self.current_token])
-        self.current_token = (self.current_token + 1) % len(self.tokens)
-        return r
-
     def get_next_token(self) -> str:
         token = self.tokens[self.current_token]
         self.current_token = (self.current_token + 1) % len(self.tokens)
@@ -39,73 +34,22 @@ class GithubWalletCollector(AbsWalletCollector):
     def collect_raw_result(self, queries: List[str]) -> List[Dict[str, Any]]:
         raw_results_with_url = []  # type: List[Dict[str, Any]]
 
-        max_index = 0
+
 
         # We proceed sequentially to avoid to be blocked for abuses of
         # api.
-        while max_index < len(queries):
-            min_index = max_index
-            max_index = min(max_index + len(self.tokens),
-                            len(queries))
+        for query in queries:
+            response = perform_github_request(query, self.get_next_token())
 
-            logging.debug("Q[" + str(min_index) + ":" + str(max_index) + "] A")
+            items = response.json()["items"]
 
-            rs = (grequests.get(q,
-                                headers={
-                                    'Authorization': 'token '
-                                                     + self.get_next_token()
-                                },
-                                timeout=300,
-                                ) for q in queries[min_index:max_index]
-                  )
+            res_urls = []  # type: List[Response]
 
-            raw_results = perform_request(rs)
+            for item in items:
+                tmp_res_url = perform_github_request(item["url"],
+                                                     self.get_next_token())
 
-            # Filter out None responses
-            raw_results = [r for r in raw_results if r is not None]
-
-            for r1 in raw_results:
-                if "items" not in r1.json():
-                    print_json(dict(r1.json()))
-                    sleep(30)
-
-            raw_result_items = list(
-                map(lambda r1:
-                    # print_json(r.json()["items"]),
-                    r1.json()["items"],
-                    raw_results
-                    )
-            )
-
-            raw_results_dict = flatten(raw_result_items)
-            logging.debug("Q[" + str(min_index) + ":" + str(max_index) + "] B")
-
-            r_max_index = 0
-
-            res_urls = [] # type: List[Response]
-
-            while r_max_index < len(raw_results):
-                r_min_index = r_max_index
-                r_max_index = min(r_max_index + len(self.tokens),
-                                len(raw_results))
-
-                logging.debug(
-                    "RES_URL["
-                    + str(r_min_index)
-                    + ":"
-                    + str(r_max_index)
-                    + "] A")
-
-                tmp_res_url = (grequests.get(response["url"],
-                                          headers={
-                                              'Authorization': 'token '
-                                              + self.get_next_token()
-                                          },
-                                          timeout=200
-                                          ) for response in raw_results_dict[r_min_index:r_max_index]
-                            )
-
-                res_urls = res_urls + perform_request(tmp_res_url)
+                res_urls.append(tmp_res_url)
 
             for i in range(0, len(res_urls)):
                 if res_urls[i] is not None:
@@ -120,7 +64,7 @@ class GithubWalletCollector(AbsWalletCollector):
                     # ** = all item in a dict
                     raw_results_with_url.append(
                         {
-                            **raw_results_dict[i],
+                            **items[i],
                             **tmp
                         }
                     )
@@ -147,35 +91,15 @@ class GithubWalletCollector(AbsWalletCollector):
     def extract_content(self, responses) -> List[str]:
         logging.debug("Entering extract Content")
         contents = []  # type: List[str]
-        max_index = 0
 
-        while max_index < len(responses):
+        for response in responses:
+            file_content_response = self.request_url(response["known_raw_url"],
+                                                     self.get_next_token())
 
-            min_index = max_index
-            max_index = min(max_index + len(self.tokens),
-                            len(responses))
+            file_contents = "" if file_content_response is None else \
+                            file_content_response.text
 
-            logging.debug("R[" + str(min_index) + ":" + str(max_index) + "]")
-
-            download_urls = (grequests.get(response["known_raw_url"],
-                                           headers={
-                                               'Authorization': 'token '
-                                                                + self.get_next_token()
-                                           },
-                                           timeout=300,
-                                           ) for response in
-                             responses[min_index:max_index]
-                             )
-
-            file_contents_responses = perform_request(download_urls)
-
-            file_contents = list(
-                map(lambda f:
-                    "" if f is None else f.text,
-                    file_contents_responses
-                    )
-                )
-            contents += file_contents
+            contents.append(file_contents)
 
         return contents
 
