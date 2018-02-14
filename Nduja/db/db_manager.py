@@ -34,6 +34,7 @@ class DbManager:
             Address VARCHAR(128) PRIMARY KEY,
             Currency VARCHAR(4),
             Status NUMERIC,
+            Inferred NUMERIC,
             FOREIGN KEY (Currency) REFERENCES Currency(Name)
         )''')
         c.execute('''CREATE TABLE IF NOT EXISTS Information(
@@ -87,23 +88,28 @@ class DbManager:
         self.conn.commit()
         self.conn.close()
 
-    def insertWallet(self, address: str, currency: str, status: int) -> bool:
+    def insertWallet(self, address: str, currency: str, status: int,
+                     inferred: bool = False) -> bool:
         c = self.conn.cursor()
+        int_inferred = 1 if inferred else 0  # type: int
         try:
-            c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                VALUES (?,?,?)''', (str(address), str(currency), status,))
+            c.execute('''INSERT INTO Wallet(Address, Currency, Status, Inferred)
+                VALUES (?,?,?,?)''', (str(address), str(currency), status,
+                                      int_inferred,))
         except Error:
             traceback.print_exc()
             return False
         return True
 
     def insertWalletWithAccount(self, address: str, currency: str,
-                                status: int,
-                                account: int, url: str) -> bool:
+                                status: int, account: int, url: str,
+                                inferred: bool = False) -> bool:
         c = self.conn.cursor()
+        int_inferred = 1 if inferred else 0 # type: int
         try:
-            c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                VALUES (?,?,?)''', (str(address), str(currency), status,))
+            c.execute('''INSERT INTO Wallet(Address, Currency, Status, Inferred)
+                VALUES (?,?,?,?)''', (str(address), str(currency), status,
+                                      int_inferred,))
         except Error:
             traceback.print_exc()
             return False
@@ -249,19 +255,36 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
+    def getAllInferredWallets(self) -> List[Wallet]:
+        c = self.conn.cursor()
+        wallets = []
+        try:
+            c.execute('''SELECT * FROM Wallet WHERE Inferred!=0''')
+            for row in c:
+                wallets.append(Wallet(row[0], row[1], None, row[2], row[3]))
+        except Error:
+            traceback.print_exc()
+        return wallets
+
+
 # try:
 #     os.remove('./db.db')
 # except OSError:
 #     pass
-# manager = DbManager()
-# manager.insertWallet("aaa", "BTC", "NA")
+# DbManager.setDBFileName('attempt')
+# manager = DbManager.getInstance()
+# manager.initConnection()
+# manager.insertWallet("aaa", "BTC", 1)
 # info = manager.insertInformation("nome", "sito", "email", "json")
 # acc = manager.insertAccount("host", "user", info)
 # manager.insertAccountWallet(acc, "aaa", "file")
-# acc2 = manager.insertNewInfo('bbb2', 'ETH', 'SI', 'nome cognome2',
-#                                'sito.com2', 'email2', 'json2', 'host2',
-#                                'username2', 'path2')
-# x = [Wallet('bbb21', 'BTC', 'path21', 'NA'),
-#      Wallet('bbb22', 'BCH', 'path22', 'NO')]
+# acc2 = manager.insertNewInfo('bbb2', 'ETH', 1, 'nome cognome2',
+#                              'sito.com2', 'email2', 'json2', 'host2',
+#                              'username2', 'path2')
+# x = [Wallet('bbb21', 'BTC', 'path21', 0, False),
+#      Wallet('bbb22', 'BCH', 'path22', 1, True)]
+# for w in x:
+#     print(w)
 # manager.insertMultipleAddresses(acc2, x)
+# manager.saveChanges()
 #

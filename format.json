@@ -5,5 +5,33 @@
         "alternative_symbol": "XBT",
         "wallet_regexp": "\\b([13][0-9A-Za-z]{24,35})\\b",
         "group": "1"
+    },
+    {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "alternative_symbol": " ",
+        "wallet_regexp": "\\b(0x)?([0-9a-fA-F]{40})\\b",
+        "group": "2"
+    },
+    {
+        "name": "litecoin",
+        "symbol": "LTC",
+        "alternative_symbol": " ",
+        "wallet_regexp": "\\b([LM][0-9A-Za-z]{24,35})\\b",
+        "group": "1"
+    },
+    {
+        "name": "monero",
+        "symbol": "XMR",
+        "alternative_symbol": " ",
+        "wallet_regexp": "\\b(4[0-9A-Za-z]{94})\\b",
+        "group": "1"
+    },
+    {
+        "name": "dogecoin",
+        "symbol": "DOGE",
+        "alternative_symbol": " ",
+        "wallet_regexp": "\\b(D[0-9A-Za-z]{33})\\b",
+        "group": "1"
     }
 ]
