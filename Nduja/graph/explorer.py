@@ -173,10 +173,14 @@ def main2():
 
     black_list = [w for w in db.getAllKnownWallets()]
 
-    clusters = [Cluster([w]) for w in db.getAllWalletsByCurrency("BTC")[3:5] if
+    clusters = [Cluster([w]) for w in db.getAllWalletsByCurrency("BTC")[0:5] if
                 w not in black_list]
 
-    cluster_black_list = [Cluster([w]) for w in black_list]
+    clusters_help = [Cluster([w]) for w in
+                     db.getAllWalletsByCurrency("BTC")[0:2] if
+                     w not in black_list]
+
+    # cluster_black_list = [Cluster([w]) for w in black_list]
 
     print()
     print()
@@ -184,13 +188,17 @@ def main2():
 
     db.closeDb()
 
-    fill_clusters(clusters, black_list=[])
+    for cluster in clusters:
+        cluster.fill_cluster()
 
     clusters_set = merge_clusters(clusters)
 
     clusters = list(clusters_set)
 
     graph = ClusterGraph(clusters_set)
+
+
+
 
     graph.plot()
     print("Done")
