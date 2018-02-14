@@ -4,9 +4,9 @@ import traceback
 from sqlite3 import Error
 from dao.account import Account
 from dao.wallet import Wallet
+from graph.Cluster import Cluster
 
-from typing import List
-
+from typing import List, Iterable, Optional
 
 
 class DbManager:
@@ -266,6 +266,44 @@ class DbManager:
             traceback.print_exc()
         return wallets
 
+    def findAccountsByWallet(self, wallet: Wallet) -> List[int]:
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT AccountWallet.Account 
+                         FROM AccountWallet INNER JOIN Wallet
+                         WHERE AccountWallet.Wallet = Wallet.Address AND
+                         AccountWallet.Wallet = ? AND
+                         Wallet.Currency = ?''',
+                      (wallet.address, wallet.currency))
+            for row in c:
+                accounts.append(row[0])
+        except Error:
+            traceback.print_exc()
+        return accounts
+
+    def insertClusters(self, clusters: Iterable[Cluster]) -> None:
+        for cluster in clusters:
+            accounts = []
+            for wallet in cluster.original_address:
+                account_related = self.findAccountsByWallet(wallet)
+                # TODO think if it is possible that len(account_related)==0
+                #      or the original wallet is not present in the db
+                accounts.extend(account_related)
+                assert len(account_related)>0
+                assert self.findWallet(wallet.address)
+            first_addr = accounts[0]
+            for wallet in cluster.inferred_addresses:
+                acc = self.findAccountsByWallet(wallet)
+                if len(acc) > 0:
+                    accounts.extend(acc)
+                else:
+                    self.insertWalletWithAccount(wallet.address,
+                                                 wallet.currency,
+                                                 wallet.status,
+                                                 first_addr, "",
+                                                 wallet.inferred == 1)
+            # TODO Add all accounts in a 'correlated accounts table'
 
 # try:
 #     os.remove('./db.db')
