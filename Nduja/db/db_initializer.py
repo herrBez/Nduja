@@ -4,7 +4,7 @@ import os
 
 
 class DbInitializer:
-    def init_db(self, db_name : str) -> None:
+    def init_db(self, db_name: str) -> None:
         conn = sqlite3.connect(db_name)
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS Currency(
