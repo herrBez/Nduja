@@ -19,29 +19,28 @@ class ClusterGraph:
             self._cluster_to_vertex[cluster] = v
             self._vertex_to_cluster[v] = cluster
 
-    def add_vertex(self, cluster : Cluster):
+    def add_vertex(self, cluster: Cluster) -> Vertex:
         """This function take a cluster. Check if it is already present
         a cluster that has some intersection. And if it is the case
         it binds them"""
-        cluster.fill_single_cluster()
         present = False
         for k in self._cluster_to_vertex:
-            if cluster == k:
+            if cluster.intersect(k):
                 k.merge(cluster)
                 present = True
+                v = self._cluster_to_vertex[k]
                 break
         if not present:
+            cluster.fill_cluster()
             v = self._graph.add_vertex()
             self._cluster_to_vertex[cluster] = v
             self._vertex_to_cluster[v] = cluster
+        return v
 
     def add_edge(self, cluster_from: Cluster, cluster_to: Cluster):
         """This function add two edges. If the """
-        self.add_vertex(cluster_from)
-        self.add_vertex(cluster_to)
-
-        vertex_from = self._cluster_to_vertex[cluster_from]
-        vertex_to = self._cluster_to_vertex[cluster_to]
+        vertex_from = self.add_vertex(cluster_from)
+        vertex_to = self.add_vertex(cluster_to)
 
         if self._graph.edge(vertex_from, vertex_to) is None:
             self._graph.add_edge(vertex_from, vertex_to)
@@ -64,7 +63,7 @@ class ClusterGraph:
                               "shape": "oval",
                               "label": cluster_size,
                               "fontsize": 100,
-                              "fixedsize=false": False},
+                              },
                       eprops={"arrowsize": 7, "color": "black", "penwidth": 7},
                       output=output_file_name,
                       fork=True,
