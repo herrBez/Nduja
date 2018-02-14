@@ -21,8 +21,8 @@ class GithubWalletCollector(AbsWalletCollector):
     def __init__(self, format_file, tokens) -> None:
         super().__init__(format_file)
         self.format_object = json.load(open(format_file))
-        self.max_page = 1
-        self.per_page = 10
+        self.max_page = 10
+        self.per_page = 100
         self.current_token = 0
         self.tokens = tokens
 
@@ -99,7 +99,7 @@ class GithubWalletCollector(AbsWalletCollector):
             file_contents = "" if file_content_response is None else \
                             file_content_response.text
 
-            contents += file_contents
+            contents.append(file_contents)
 
         return contents
 
