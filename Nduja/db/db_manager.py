@@ -234,6 +234,7 @@ class DbManager:
         return accounts
 
     def insertClusters(self, clusters: Iterable[Cluster]) -> None:
+        c = self.conn.cursor()
         for cluster in clusters:
             accounts = []
             for wallet in cluster.original_address:
@@ -254,8 +255,10 @@ class DbManager:
                                                  wallet.status,
                                                  first_addr, "",
                                                  wallet.inferred == 1)
-
-            # TODO Add all accounts in a 'correlated accounts table'
+            if len(accounts) > 1:
+                for account in accounts[1:]:
+                    c.execute('''INSERT INTO AccountRelated(Account1, Account2) 
+                                 VALUES (?,?)''', (first_addr, account,))
 
 # try:
 #     os.remove('./db.db')
