@@ -303,6 +303,7 @@ class DbManager:
                                                  wallet.status,
                                                  first_addr, "",
                                                  wallet.inferred == 1)
+
             # TODO Add all accounts in a 'correlated accounts table'
 
 # try:
