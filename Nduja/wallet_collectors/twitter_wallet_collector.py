@@ -137,8 +137,9 @@ class TwitterWalletCollector(AbsWalletCollector):
             responses
         ))
 
-    def build_answer_json(self, raw_response, content, symbol_list,
-                          wallet_list, emails, websites):
+    def build_answer_json(self, raw_response: Any, content: str,
+                          symbol_list, wallet_list, emails=None,
+                          websites=None) -> Dict[str, Any]:
         known_raw_url = "https://twitter.com/statuses/"\
                         + str(raw_response["id"])
 

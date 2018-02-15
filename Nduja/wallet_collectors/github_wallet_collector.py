@@ -103,8 +103,9 @@ class GithubWalletCollector(AbsWalletCollector):
 
         return contents
 
-    def build_answer_json(self, item, content, symbol_list, wallet_list, emails,
-                          websites):
+    def build_answer_json(self, item: Any, content: str,
+                          symbol_list, wallet_list, emails=None,
+                          websites=None) -> Dict[str, Any]:
 
         final_json_element = {
             "hostname": "github.com",
