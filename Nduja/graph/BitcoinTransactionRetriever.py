@@ -4,6 +4,7 @@ import logging
 
 from graph.graph_builder import CurrencyGraph
 
+
 def print_json(s):
     """pretty print a json string"""
     print(json.dumps(s, indent=2))
@@ -11,37 +12,30 @@ def print_json(s):
 
 class BtcTransactionRetriever:
 
-    BITCOININFO = 'https://blockchain.info/rawaddr/'
+    BITCOIN_INFO = 'https://blockchain.info/rawaddr/'
 
     @staticmethod
-    def address_search(addr):
+    def address_search(address):
         '''Checks if the bitcoin address exists'''
-        r = requests.get(BtcTransactionRetriever.BITCOININFO + addr)
+        r = requests.get(BtcTransactionRetriever.BITCOIN_INFO + address)
         resp = r.text
-
         in_out = []
-
-
         try:
             resp = json.loads(resp)
-
-
-
             txs = resp["txs"]
-
             for t in txs:
                 # On bitcoin.info there are transactions that contains errors:
                 # https://blockchain.info/tx/d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
-                out_addr = {}
-                in_addr = {}
+                out_address = {}
+                in_address = {}
 
-                for o in t["out"]:
+                for out in t["out"]:
                     try:
-                        e = o["addr"]
-                        if e in out_addr:
-                            out_addr[e] = out_addr[e] + o["value"]
+                        e = out["addr"]
+                        if e in out_address:
+                            out_address[e] = out_address[e] + out["value"]
                         else:
-                            out_addr[e] = o["value"]
+                            out_address[e] = out["value"]
 
                     except KeyError:
                         logging.error("Corrupted content in bitcoin api:"
@@ -52,33 +46,30 @@ class BtcTransactionRetriever:
                 for i in t["inputs"]:
                     try:
                         e = i["prev_out"]["addr"]
-                        if e in out_addr:
-                            in_addr[e] = in_addr[e] + i["prev_out"]["value"]
+                        if e in out_address:
+                            in_address[e] = in_address[e] +\
+                                            i["prev_out"]["value"]
                         else:
-                            in_addr[e] = i["prev_out"]["value"]
+                            in_address[e] = i["prev_out"]["value"]
                     except KeyError:
                         logging.error("Corrupted content in bitcoin api:"
                                       + "One input address in transaction: "
                                       + t["hash"]
                                       + " is not valid. Skip this input")
 
-                in_addr = in_addr.items()
-                out_addr = out_addr.items()
-
-
-
-                if addr in in_addr and addr in out_addr:
+                in_address = in_address.items()
+                out_address = out_address.items()
+                if address in in_address and address in out_address:
                     logging.warning("In btc transaction " + t["hash"] + " " +
-                                    addr + " is in both input and output")
+                                    address + " is in both input and output")
 
-                tmp = [(i1, o1, t["hash"]) for i1 in in_addr for o1 in out_addr]
+                tmp = [(i1, o1, t["hash"])
+                       for i1 in in_address
+                       for o1 in out_address]
                 in_out += list(set(tmp))
-
-
         except ValueError:
-            return (0,0,0)
-
-        return (addr, in_out)
+            return 0, 0, 0
+        return address, in_out
 
 
 # Usage example

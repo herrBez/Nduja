@@ -28,7 +28,8 @@ class EthAddressChecker(AbsAddressChecker):
     def address_check(self, address: str) -> bool:
         return False
 
-    def address_search(self, address: str) -> bool:
+    @staticmethod
+    def address_search(address: str) -> bool:
         r = Response()
         while True:
             exception_raised = False
@@ -49,4 +50,4 @@ class EthAddressChecker(AbsAddressChecker):
 
     def address_valid(self, address: str) -> bool:
         """Check if addr is a valid Ethereum address using web3"""
-        return self.address_search(address)
+        return EthAddressChecker.address_search(address)
