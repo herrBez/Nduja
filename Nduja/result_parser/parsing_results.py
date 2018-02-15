@@ -16,7 +16,7 @@ class Parser:
     CURRENCIES = ['BTC', 'BCH', 'DOGE', 'XMR', 'LTC', 'ETH']
 
     def __init__(self) -> None:
-        Parser.dbManager = DbManager.getInstance()
+        Parser.dbManager = DbManager.get_instance()
 
     def parseString(self, string: str) -> None:
         return self.parse(json.loads(string))
@@ -29,7 +29,7 @@ class Parser:
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
             account_id = None
-            Parser.dbManager.initConnection()
+            Parser.dbManager.init_connection()
             for i in range(0, len(symbols)):
                 s = symbols[i]
                 w = wallets[i]
@@ -37,22 +37,22 @@ class Parser:
                 if checker.address_valid(w):
                     if account_id is None:
                         account_id = (Parser.dbManager.
-                                     findAccount(res[Parser.HOST],
-                                                 res[Parser.USERNAME]))
+                                      find_account(res[Parser.HOST],
+                                                   res[Parser.USERNAME]))
                         if account_id == -1:
-                            account_id = Parser.dbManager.insertAccountNoInfo(
+                            account_id = Parser.dbManager.insert_account_no_info(
                                 res[Parser.HOST],
                                 res[Parser.USERNAME])
-                    if not Parser.dbManager.findWallet(w):
+                    if not Parser.dbManager.find_wallet(w):
                         status = 0
                         if checker.address_check(w):
                             status = 1
                         if s in Parser.NOT_SURE_CHECK:
                                 status = 0
                         (Parser.dbManager.
-                         insertWalletWithAccount(w, s, status, account_id,
-                                                 res[Parser.URL]))
-            Parser.dbManager.saveChanges()
+                         insert_wallet_with_account(w, s, status, account_id,
+                                                    res[Parser.URL]))
+            Parser.dbManager.save_changes()
 
     def validWallets(self, wallets: List[str],
                      checker: AbsAddressChecker) -> List[str]:
