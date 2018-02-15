@@ -19,12 +19,13 @@ class Parser:
         Parser.dbManager = DbManager.get_instance()
 
     def parse_string(self, string: str) -> None:
-        return self.parse(json.loads(string))
+        return Parser.parse(json.loads(string))
 
     def parse_file(self, path: str) -> None:
-        return self.parse(json.load(open(path)))
+        return Parser.parse(json.load(open(path)))
 
-    def parse(self, results: Dict[str, Any]) -> None:
+    @staticmethod
+    def parse(results: Dict[str, Any]) -> None:
         for res in results[Parser.RESULTS]:
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
@@ -33,7 +34,7 @@ class Parser:
             for i in range(0, len(symbols)):
                 s = symbols[i]
                 w = wallets[i]
-                checker = self.retrieve_checker(s)
+                checker = Parser.retrieve_checker(s)
                 if checker.address_valid(w):
                     if account_id is None:
                         account_id = (Parser.dbManager.
@@ -54,7 +55,8 @@ class Parser:
                                                     res[Parser.URL]))
             Parser.dbManager.save_changes()
 
-    def valid_wallets(self, wallets: List[str],
+    @staticmethod
+    def valid_wallets(wallets: List[str],
                       checker: AbsAddressChecker) -> List[str]:
         valid_wallets = []
         for wallet in wallets:
@@ -62,15 +64,17 @@ class Parser:
                 valid_wallets.append(wallet)
         return valid_wallets
 
-    def retrieve_checker(self, currency: str) -> AbsAddressChecker:
+    @staticmethod
+    def retrieve_checker(currency: str) -> AbsAddressChecker:
         if currency in Parser.CURRENCIES:
-            return self.get_class('address_checkers.' +
+            return Parser.get_class('address_checkers.' +
                                   currency.lower() + "_address_checker." +
                                   currency.lower().title() + "AddressChecker")()
         else:
             return None
 
-    def get_class(self, name) -> Callable:
+    @staticmethod
+    def get_class(name) -> Callable:
         parts = name.split('.')
         module = ".".join(parts[:-1])
         m = __import__(module)
