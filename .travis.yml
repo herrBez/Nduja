@@ -1,3 +1,6 @@
+git:
+  submodules: true
+
 language: python
 
 python:
@@ -11,8 +14,7 @@ install:
 
 before_script:
   - cd Nduja
-  - git clone https://github.com/python/typeshed.git
-  - export MYPYPATH=$(pwd)/.stub:$(pwd):$(pwd)/typeshed
+  - export MYPYPATH=$(pwd)/.stub:$(pwd):$(pwd)/../typeshed
   
 
 script:

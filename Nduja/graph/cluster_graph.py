@@ -9,11 +9,11 @@ from graph.BitcoinTransactionRetriever import BtcTransactionRetriever
 
 class ClusterGraph:
 
-    def __init__(self, cluster_list: Iterable[Cluster]) -> None:
+    def __init__(self, cluster_list):
         self._cluster_to_vertex = {}  # type: Dict[Cluster, Vertex]
         self._graph = Graph()
 
-        self._vertex_to_cluster = self._graph.new_vertex_property("object")
+        self._vertex_to_cluster = self._graph.new_vertex_property("int")
         for cluster in cluster_list:
             v = self._graph.add_vertex()
             self._cluster_to_vertex[cluster] = v

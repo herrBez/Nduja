@@ -2,6 +2,8 @@ from time import sleep
 from typing import List
 from typing import Set
 from typing import Tuple
+from typing import Dict
+from typing import Any
 
 from dao.wallet import Wallet
 from graph.BitcoinTransactionRetriever import BtcTransactionRetriever
@@ -9,6 +11,7 @@ from db.db_manager import DbManager
 # from graph.graph_builder import CurrencyGraph
 from graph.cluster import Cluster
 from graph.cluster_graph import ClusterGraph
+
 
 
 # # Performing a Breadth First Search
@@ -100,19 +103,19 @@ def fill_clusters(clusters, black_list=[]):
 def explore_output(clusters: List[Cluster]):
     btc_transaction_retriever = BtcTransactionRetriever()
     for c in clusters:
-        output_lists = {}
+        output_lists = {} # type: Dict[str, Any]
         output_cluster_list = []
         for w in c.inferred_addresses:
             a, output, siblings = btc_transaction_retriever.get_input_output_addresses(w.address)
             for k in output:  # Take the keys, i.e. the addresses
-                output_cluster_list.append(Cluster(Wallet(k, "BTC", "", 1, True)))
+                output_cluster_list.append(Cluster([Wallet(k, "BTC", "", 1, True)]))
                 fill_clusters(Cluster)
 
 
 
 def merge_clusters(clusters: List[Cluster]) -> Set[Cluster]:
 
-    clusters_set = list(set(clusters))
+    clusters_set = set(clusters)
 
     for c in clusters:
         for d in clusters_set:

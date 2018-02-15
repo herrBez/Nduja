@@ -7,19 +7,20 @@ from address_checkers.abs_address_checker import AbsAddressChecker
 class DogeAddressChecker(AbsAddressChecker):
     """Doge address checker"""
 
-    CHAINSO = "https://chain.so/api/v2/is_address_valid/DOGE/"
+    CHAIN_SO = "https://chain.so/api/v2/is_address_valid/DOGE/"
     STATUS = "status"
     SUCCESS = "success"
     DATA = "data"
     ISVALID = "is_valid"
 
-    def address_search(self, address: str) -> bool:
+    @staticmethod
+    def address_search(address: str) -> bool:
         """Use chain.so API to check if an address is valid"""
         r = None
         while True:
             exception_raised = False
             try:
-                r = requests.get(DogeAddressChecker.CHAINSO + address)
+                r = requests.get(DogeAddressChecker.CHAIN_SO + address)
                 # WARNING: chain.so API give 5request/sec for free
             except requests.exceptions.ConnectionError:
                 sleep(1)
@@ -45,5 +46,5 @@ class DogeAddressChecker(AbsAddressChecker):
     def address_check(self, address: str) -> bool:
         """Check if a Doge address is valid"""
         if self.address_valid(address):
-            return self.address_search(address)
+            return DogeAddressChecker.address_search(address)
         return False

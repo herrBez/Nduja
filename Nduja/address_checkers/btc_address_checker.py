@@ -9,9 +9,10 @@ class BtcAddressChecker(AbsAddressChecker):
 
     DIGITS58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     # Used for searching the address in the blockchain
-    BITCOININFO = "https://blockchain.info/rawaddr/"
+    BITCOIN_INFO = "https://blockchain.info/rawaddr/"
 
-    def decode_base58(self, bc: str, length: int) -> bytes:
+    @staticmethod
+    def decode_base58(bc: str, length: int) -> bytes:
         """Returns the base 58 econding of the wallet"""
         n = 0
         for char in bc:
@@ -22,15 +23,16 @@ class BtcAddressChecker(AbsAddressChecker):
         """Checks if the string passed could be a valid address for a bitcoin
         wallet"""
         try:
-            bcbytes = self.decode_base58(bc, 25)
+            bcbytes = BtcAddressChecker.decode_base58(bc, 25)
             return bcbytes[-4:] == \
                 sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
         except Exception:
             return False
 
-    def address_search(self, address):
+    @staticmethod
+    def address_search(address):
         """Checks if the bitcoin address exists"""
-        r = requests.get(BtcAddressChecker.BITCOININFO + address)
+        r = requests.get(BtcAddressChecker.BITCOIN_INFO + address)
         resp = r.text
         try:
             resp = json.loads(resp)
@@ -42,7 +44,7 @@ class BtcAddressChecker(AbsAddressChecker):
     def address_check(self, address):
         """Check if the bitcoin address is valid and exists"""
         if self.address_valid(address):
-            return self.address_search(address)
+            return BtcAddressChecker.address_search(address)
         else:
             return False
 

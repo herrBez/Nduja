@@ -1,0 +1,20 @@
+cd Nduja
+export MYPYPATH=$(pwd)/.stub:$(pwd):$(pwd)/../typeshed
+
+# Redirect output to stderr.
+exec 1>&2
+
+errors_modules=$(mypy --python-version 3.6 */*.py)
+errors_main=$(mypy --python-version 3.6 __main__.py)
+
+if [ "x${errors_modules}x" != "xx" ]; then
+    printf '\033[31m%s\nCommit cannot be performed\033[0m\n' "${errors_modules}"
+    exit 1
+elif [ "x${errors_main}x" != "xx" ]; then
+    printf '\033[31m%s\nCommit cannot be performed\033[0m\n' "${errors_main}"
+    exit 1
+fi
+
+printf '\033[35m%s\033[0m\n' "Type checking passed"
+exit 0
+

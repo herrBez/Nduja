@@ -5,6 +5,7 @@ import json
 # https://github.com/kennethreitz/grequests/issues/103
 import grequests
 import requests
+from requests import Response
 import re
 from functools import reduce
 import traceback
@@ -15,6 +16,9 @@ from typing import List
 from typing import Tuple
 from typing import Any
 from typing import Dict
+from typing import Optional
+from typing import TypeVar
+from typing import Generic
 
 from typing import TypeVar
 
@@ -83,11 +87,11 @@ def match_personal_website(text: str) -> List[str]:
 T = TypeVar('T')
 
 
-def flatten(l : List[List[T]]) -> List[T]:
+def flatten(li: List[List[T]]) -> List[T]:
     """It takes as input a list of lists and returns a list"""
     return reduce(
         lambda x, y: x + y,
-        l,
+        li,
         []
     )
 
@@ -108,15 +112,17 @@ class AbsWalletCollector:
     def patterns(self, value: List[Pattern]) -> None:
         self._patterns = value
 
-    def request_url(self, url: str, token: str=None) -> str:
+    def request_url(self, url: str, token: str=None) -> Optional[Response]:
         """ Request an url synchronously and returns the json response"""
         data = None
         if token is not None:
             data = {'Authorization': 'token ' + token}
-        r = requests.get(url, headers=data)
-        resp = r.text
-        # ~ json.loads(resp) # if it is not well formatted exit
-        return resp
+        try:
+            response = requests.get(url, headers=data)
+        except requests.exceptions.MissingSchema:
+            response = None
+            traceback.print_exc()
+        return response
 
     @abstractmethod
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
@@ -134,8 +140,11 @@ class AbsWalletCollector:
 
     @abstractmethod
     def build_answer_json(self, raw_response: Any, content: str,
-                          symbol_list, wallet_list, emails=None,
-                          websites=None) -> Dict[str, Any]:
+                          symbol_list: List[str],
+                          wallet_list: List[str],
+                          emails: Optional[List[str]] =None,
+                          websites: Optional[List[str]] =None)\
+            -> Dict[str, Any]:
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
 
@@ -154,23 +163,22 @@ class AbsWalletCollector:
         for i in range(len(contents)):
             if contents[i] != "":
                 try:
-
+                    print(contents[i])
                     emails = match_email(contents[i])
                     websites = match_personal_website(contents[i])
-
+                    
                     # Retrieve the list of matches
                     match_list = \
                         flatten(
-                            list(
-                                map(lambda x:
-                                    x.match(contents[i]), self.patterns)
-                            )
+                            [x.match(contents[i]) for x in self.patterns]
                         )
 
                     # A match was found
                     if len(match_list) > 0:
                         match_list = list(set(match_list))
-                        symbol_list, wallet_list = map(list, zip(*match_list))
+                        tmp_list = zip(*match_list)
+                        symbol_list = tmp_list[0]
+                        wallet_list = tmp_list[1]
 
                         element = self.build_answer_json(raw_results[i],
                                                          contents[i],
