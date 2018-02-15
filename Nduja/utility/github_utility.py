@@ -8,18 +8,32 @@ import logging
 import pause
 from utility.print_utility import print_json
 
+from time import sleep
 from typing import Iterable
 from typing import List
 from typing import Callable
 
 
-def perform_github_request(query: str, token: str) -> Response:
-    response = requests.get(query,
-                            headers={
-                                'Authorization': 'token ' + token
-                            },
-                            timeout=300,
-                            )
+def perform_github_request(query: str, token: str, max_retries:int = 5)\
+    -> Response:
+
+    retries = 0
+
+    while retries < max_retries:
+        try:
+            response = requests.get(query,
+                                    headers={
+                                        'Authorization': 'token ' + token
+                                    },
+                                    timeout=300,
+                                    )
+            break
+        except ConnectionError:
+            retries += 1
+            sleep(2)
+        except TimeoutError:
+            retries += 1
+            sleep(2)
 
     if response is not None:
         try:
