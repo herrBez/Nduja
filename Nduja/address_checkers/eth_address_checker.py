@@ -14,10 +14,10 @@ class EthAddressChecker(AbsAddressChecker):
     RESULT = "result"
 
     @staticmethod
-    def setToken(token: str):
+    def set_token(token: str):
         EthAddressChecker.token = token
 
-    def createURL(self, address: str) -> str:
+    def create_url(self, address: str) -> str:
         url = (EthAddressChecker.P1 + address + EthAddressChecker.P2 +
                (EthAddressChecker.token[EthAddressChecker.token_index]))
         EthAddressChecker.token_index = ((EthAddressChecker.token_index + 1) %
@@ -32,7 +32,7 @@ class EthAddressChecker(AbsAddressChecker):
         while True:
             exception_raised = False
             try:
-                r = requests.get(self.createURL(address))
+                r = requests.get(self.create_url(address))
             except requests.exceptions.ConnectionError:
                 sleep(1)
                 exception_raised = True

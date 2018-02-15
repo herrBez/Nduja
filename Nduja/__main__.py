@@ -88,7 +88,7 @@ def main(argv: List[str]) -> int:
         sys.exit(2)
 
     DbManager.setDBFileName(config["dbname"])
-    EthAddressChecker.setToken(config["tokens"]["etherscan"])
+    EthAddressChecker.set_token(config["tokens"]["etherscan"])
 
     if tasks in (0, 1):
         executor = ThreadPoolExecutor(max_workers=4)
