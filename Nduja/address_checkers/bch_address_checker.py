@@ -10,12 +10,13 @@ class BchAddressChecker(AbsAddressChecker):
 
     DIGITS58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     # Used for searching the address in the blockchain
-    BCHCHAIN = "https://bch-chain.api.btc.com/v3/address/"
-    ERRNO = "err_no"
-    NOERRORS = 0
+    BCH_CHAIN = "https://bch-chain.api.btc.com/v3/address/"
+    ERR_NO = "err_no"
+    NO_ERRORS = 0
     DATA = "data"
 
-    def decode_base58(self, bc: str, length: int) -> bytes:
+    @staticmethod
+    def decode_base58(bc: str, length: int) -> bytes:
         """Returns the base 58 econding of the wallet"""
         n = 0
         for char in bc:
@@ -26,20 +27,21 @@ class BchAddressChecker(AbsAddressChecker):
         """Checks if the string passed could be a valid address for a bitcoin
         wallet"""
         try:
-            bcbytes = self.decode_base58(bc, 25)
+            bcbytes = BchAddressChecker.decode_base58(bc, 25)
             return bcbytes[-4:] == \
                 sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
         except Exception:
             return False
 
-    def address_search(self, address: str) -> bool:
+    @staticmethod
+    def address_search(address: str) -> bool:
         """Checks if the bitcoin address exists"""
-        r = requests.get(BchAddressChecker.BCHCHAIN + address)
+        r = requests.get(BchAddressChecker.BCH_CHAIN + address)
         resp = r.text
         try:
             json_resp = json.loads(resp)
-            return ((json_resp[BchAddressChecker.ERRNO] ==
-                     BchAddressChecker.NOERRORS) and
+            return ((json_resp[BchAddressChecker.ERR_NO] ==
+                     BchAddressChecker.NO_ERRORS) and
                     (json_resp[BchAddressChecker.DATA]
                      is not None))
         except ValueError:
@@ -50,6 +52,6 @@ class BchAddressChecker(AbsAddressChecker):
         if address.startswith("bitcoincash:"):
             return True
         elif self.address_valid(address):
-            return self.address_search(address)
+            return BchAddressChecker.address_search(address)
         else:
             return True

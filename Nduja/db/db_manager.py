@@ -16,11 +16,11 @@ class DbManager:
     instance = None
 
     @staticmethod
-    def setDBFileName(filename: str):
+    def set_db_file_name(filename: str):
         DbManager.db = filename
 
     @staticmethod
-    def getInstance():
+    def get_instance():
         if DbManager.instance is None:
             DbManager.instance = DbManager()
         return DbManager.instance
@@ -29,18 +29,18 @@ class DbManager:
         self.conn = None  # type: Optional[sqlite3.Connection]
         DbInitializer().init_db(DbManager.db)
 
-    def initConnection(self) -> None:
+    def init_connection(self) -> None:
         self.conn = sqlite3.connect(DbManager.db)
 
-    def closeDb(self) -> None:
+    def close_db(self) -> None:
         self.conn.close()
 
-    def saveChanges(self) -> None:
+    def save_changes(self) -> None:
         self.conn.commit()
         self.conn.close()
 
-    def insertWallet(self, address: str, currency: str, status: int,
-                     inferred: bool = False) -> bool:
+    def insert_wallet(self, address: str, currency: str, status: int,
+                      inferred: bool = False) -> bool:
         c = self.conn.cursor()
         int_inferred = 1 if inferred else 0  # type: int
         try:
@@ -52,9 +52,9 @@ class DbManager:
             return False
         return True
 
-    def insertWalletWithAccount(self, address: str, currency: str,
-                                status: int, account: int, url: str,
-                                inferred: bool = False) -> bool:
+    def insert_wallet_with_account(self, address: str, currency: str,
+                                   status: int, account: int, url: str,
+                                   inferred: bool = False) -> bool:
         c = self.conn.cursor()
         int_inferred = 1 if inferred else 0 # type: int
         try:
@@ -65,10 +65,10 @@ class DbManager:
             traceback.print_exc()
             return False
 
-        return self.insertAccountWallet(account, address, url) >= 0
+        return self.insert_account_wallet(account, address, url) >= 0
 
-    def insertInformation(self, name: str, website: str, email: str,
-                          json: str) -> int:
+    def insert_information(self, name: str, website: str, email: str,
+                           json: str) -> int:
         c = self.conn.cursor()
         if email is None or email.isspace():
             email = " "
@@ -83,7 +83,7 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def insertAccount(self, host: str, username: str, info: int) -> int:
+    def insert_account(self, host: str, username: str, info: int) -> int:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username, Info)
@@ -95,7 +95,7 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def insertAccountNoInfo(self, host: str, username: str) -> int:
+    def insert_account_no_info(self, host: str, username: str) -> int:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO Account(Host, Username)
@@ -107,7 +107,7 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def insertAccountWallet(self, account: int, wallet: str, url: str) -> int:
+    def insert_account_wallet(self, account: int, wallet: str, url: str) -> int:
         c = self.conn.cursor()
         try:
             c.execute('''INSERT INTO AccountWallet(Account, Wallet, RawURL)
@@ -119,13 +119,13 @@ class DbManager:
         max_id = c.fetchone()[0]
         return max_id
 
-    def findWallet(self, address: str) -> bool:
+    def find_wallet(self, address: str) -> bool:
         c = self.conn.cursor()
         c.execute("SELECT * FROM Wallet WHERE address = ?", (address,))
         data = c.fetchone()
         return data is not None
 
-    def findAccount(self, host: str, username: str) -> int:
+    def find_account(self, host: str, username: str) -> int:
         c = self.conn.cursor()
         c.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                   (host, username,))
@@ -135,23 +135,23 @@ class DbManager:
         else:
             return data[0]
 
-    def insertNewInfo(self, address: str, currency: str, status: int,
-                      name: str, website: str, email: str, json: str,
-                      host: str, username: str, url: str):
+    def insert_new_info(self, address: str, currency: str, status: int,
+                        name: str, website: str, email: str, json: str,
+                        host: str, username: str, url: str):
 
-        self.insertWallet(address, currency, status)
-        info = self.insertInformation(name, website, email, json)  # type: int
-        acc = self.insertAccount(host, username, info)
-        self.insertAccountWallet(acc, address, url)
+        self.insert_wallet(address, currency, status)
+        info = self.insert_information(name, website, email, json)  # type: int
+        acc = self.insert_account(host, username, info)
+        self.insert_account_wallet(acc, address, url)
         return acc
 
-    def insertMultipleAddresses(self, acc: int,
-                                wallets: List[Wallet]) -> None:
+    def insert_multiple_addresses(self, acc: int,
+                                  wallets: List[Wallet]) -> None:
         for wallet in wallets:
-            self.insertWallet(wallet.address, wallet.currency, wallet.status)
-            self.insertAccountWallet(acc, wallet.address, wallet.file)
+            self.insert_wallet(wallet.address, wallet.currency, wallet.status)
+            self.insert_account_wallet(acc, wallet.address, wallet.file)
 
-    def getAllAccounts(self) -> List[Account]:
+    def get_all_accounts(self) -> List[Account]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -162,7 +162,7 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def addInfoToAccount(self, accountId: int, infoId: int) -> bool:
+    def add_info_to_account(self, accountId: int, infoId: int) -> bool:
         c = self.conn.cursor()
         try:
             c.execute('''UPDATE Account SET Info = ? WHERE _id = ?''',
@@ -172,7 +172,7 @@ class DbManager:
             return False
         return True
 
-    def getAllWallets(self) -> List[Wallet]:
+    def get_all_wallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -183,7 +183,7 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def getAllWalletsByCurrency(self, currency : str) -> List[Wallet]:
+    def get_all_wallets_by_currency(self, currency : str) -> List[Wallet]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -195,7 +195,7 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def getAllKnownWallets(self) -> List[Wallet]:
+    def get_all_known_wallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -206,7 +206,7 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def getAllInferredWallets(self) -> List[Wallet]:
+    def get_all_inferred_wallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         wallets = []
         try:
@@ -217,7 +217,7 @@ class DbManager:
             traceback.print_exc()
         return wallets
 
-    def findAccountsByWallet(self, wallet: Wallet) -> List[int]:
+    def find_accounts_by_wallet(self, wallet: Wallet) -> List[int]:
         c = self.conn.cursor()
         accounts = []
         try:
@@ -233,28 +233,26 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
-    def insertClusters(self, clusters: Iterable[Cluster]) -> None:
+    def insert_clusters(self, clusters: Iterable[Cluster]) -> None:
         c = self.conn.cursor()
         for cluster in clusters:
             accounts = []
             for wallet in cluster.original_address:
-                account_related = self.findAccountsByWallet(wallet)
-                # TODO think if it is possible that len(account_related)==0
-                #      or the original wallet is not present in the db
+                account_related = self.find_accounts_by_wallet(wallet)
                 accounts.extend(account_related)
                 assert len(account_related)>0
-                assert self.findWallet(wallet.address)
+                assert self.find_wallet(wallet.address)
             first_addr = accounts[0]
             for wallet in cluster.inferred_addresses:
-                acc = self.findAccountsByWallet(wallet)
+                acc = self.find_accounts_by_wallet(wallet)
                 if len(acc) > 0:
                     accounts.extend(acc)
                 else:
-                    self.insertWalletWithAccount(wallet.address,
-                                                 wallet.currency,
-                                                 wallet.status,
-                                                 first_addr, "",
-                                                 wallet.inferred == 1)
+                    self.insert_wallet_with_account(wallet.address,
+                                                    wallet.currency,
+                                                    wallet.status,
+                                                    first_addr, "",
+                                                    wallet.inferred == 1)
             if len(accounts) > 1:
                 for account in accounts[1:]:
                     c.execute('''INSERT INTO AccountRelated(Account1, Account2) 

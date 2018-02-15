@@ -14,16 +14,16 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
     twitters = []  # type: List[Twython]
 
     @staticmethod
-    def getTwython() -> Twython:
-        resTwhython = (TwitterInfoRetriever.
-                       twitters[TwitterInfoRetriever.twitter_index])
+    def get_twython() -> Twython:
+        res_twhython = (TwitterInfoRetriever.
+                        twitters[TwitterInfoRetriever.twitter_index])
         TwitterInfoRetriever.twitter_index = \
             ((TwitterInfoRetriever.twitter_index + 1) %
              len(TwitterInfoRetriever.twitters))
-        return resTwhython
+        return res_twhython
 
     @staticmethod
-    def setToken(tokens: Dict) -> None:
+    def set_token(tokens: Dict) -> None:
         print("Set token")
         for i in range(len(tokens["twitter_app_key"])):
             TwitterInfoRetriever.twitters.append(Twython(
@@ -37,7 +37,7 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
         """This method fetches the information for a single Account
         and is specific for each subclass"""
         print("twitter" + account.username)
-        result = twitter_safe_call(TwitterInfoRetriever.getTwython().show_user,
+        result = twitter_safe_call(TwitterInfoRetriever.get_twython().show_user,
                                    screen_name=account.username)
         info = None
         if result is not None:
