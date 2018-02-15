@@ -104,10 +104,10 @@ def main(argv: List[str]) -> int:
 
     if tasks in (0, 2):
         try:
-            InfoRetriever.setTokens(config["tokens"])
+            InfoRetriever.set_tokens(config["tokens"])
         except KeyError:
             print()
-        InfoRetriever().retrieveInfoForAccountSaved()
+        InfoRetriever().retrieve_info_for_account_saved()
     return 0
 
 

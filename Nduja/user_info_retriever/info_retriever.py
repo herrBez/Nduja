@@ -13,19 +13,19 @@ class InfoRetriever:
     tokens = None
 
     @staticmethod
-    def setTokens(tokens: Dict) -> None:
+    def set_tokens(tokens: Dict) -> None:
         try:
-            GithubInfoRetriever.setToken(tokens['github'])
+            GithubInfoRetriever.set_token(tokens['github'])
         except KeyError:
             pass
         try:
-            TwitterInfoRetriever.setToken(tokens)
+            TwitterInfoRetriever.set_token(tokens)
         except KeyError as ke:
             print(ke)
             traceback.print_exc()
             sys.exit(12)
 
-    def retrieveInfoForAccountSaved(self) -> None:
+    def retrieve_info_for_account_saved(self) -> None:
         db = DbManager.get_instance()
         db.init_connection()
         accounts = db.get_all_accounts()
