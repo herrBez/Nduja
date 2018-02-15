@@ -6,8 +6,8 @@ from sqlite3 import Cursor
 from db.db_initializer import DbInitializer
 
 
-def transfer_data(old_db: str, new_db: str) -> None:
-    DbInitializer().init_db(new_db)
+def transfer_data(old_db: str, new_db: str, config_file: str) -> None:
+    DbInitializer().init_db(new_db, config_file)
     old = sqlite3.connect(old_db)
     new = sqlite3.connect(new_db)
     c_new = new.cursor()

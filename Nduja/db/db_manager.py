@@ -12,8 +12,13 @@ from typing import List, Iterable, Optional
 
 class DbManager:
 
+    config = 'format.json'
     db = 'db.db'
     instance = None
+
+    @staticmethod
+    def set_config_file(filename: str):
+        DbManager.config = filename
 
     @staticmethod
     def set_db_file_name(filename: str):
@@ -27,7 +32,7 @@ class DbManager:
 
     def __init__(self) -> None:
         self.conn = None  # type: Optional[sqlite3.Connection]
-        DbInitializer().init_db(DbManager.db)
+        DbInitializer().init_db(DbManager.db, DbManager.config)
 
     def init_connection(self) -> None:
         self.conn = sqlite3.connect(DbManager.db)
@@ -236,17 +241,18 @@ class DbManager:
     def insert_clusters(self, clusters: Iterable[Cluster]) -> None:
         c = self.conn.cursor()
         for cluster in clusters:
-            accounts = []
+            accounts = set([])
             for wallet in cluster.original_address:
                 account_related = self.find_accounts_by_wallet(wallet)
-                accounts.extend(account_related)
-                assert len(account_related)>0
+                accounts.update(set(account_related))
+                assert len(account_related) > 0
                 assert self.find_wallet(wallet.address)
-            first_addr = accounts[0]
+            first_addr = accounts.pop()
+            accounts.add(first_addr)
             for wallet in cluster.inferred_addresses:
                 acc = self.find_accounts_by_wallet(wallet)
                 if len(acc) > 0:
-                    accounts.extend(acc)
+                    accounts.update(acc)
                 else:
                     self.insert_wallet_with_account(wallet.address,
                                                     wallet.currency,
@@ -254,7 +260,8 @@ class DbManager:
                                                     first_addr, "",
                                                     wallet.inferred == 1)
             if len(accounts) > 1:
-                for account in accounts[1:]:
+                accounts.remove(first_addr)
+                for account in accounts:
                     c.execute('''INSERT INTO AccountRelated(Account1, Account2) 
                                  VALUES (?,?)''', (first_addr, account,))
 

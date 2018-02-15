@@ -1,10 +1,12 @@
+import json
 import sqlite3
+import traceback
 from sqlite3 import Error
 import os
 
 
 class DbInitializer:
-    def init_db(self, db_name: str) -> None:
+    def init_db(self, db_name: str, format_file: str) -> None:
         conn = sqlite3.connect(db_name)
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS Currency(
@@ -42,19 +44,20 @@ class DbInitializer:
         c.execute('''CREATE TABLE IF NOT EXISTS AccountRelated(
                      Account1 INT,
                      Account2 INT,
-                     FOREIGN KEY Account1 REFERENCES Account(_id)
-                     FOREIGN KEY Account2 REFERENCES Account(_id)
+                     FOREIGN KEY (Account1) REFERENCES Account(_id),
+                     FOREIGN KEY (Account2) REFERENCES Account(_id)
                      )''')
         try:
-            c.execute('''INSERT INTO Currency VALUES ("BTC")''')
-            c.execute('''INSERT INTO Currency VALUES ("ETH")''')
-            c.execute('''INSERT INTO Currency VALUES ("ETC")''')
-            c.execute('''INSERT INTO Currency VALUES ("XMR")''')
-            c.execute('''INSERT INTO Currency VALUES ("BCH")''')
-            c.execute('''INSERT INTO Currency VALUES ("LTC")''')
-            c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
+            with open(format_file, 'r') as format:
+                content = format.read()
+                content_json = json.loads(content)
+                for obj in content_json:
+                    currency_symbol = obj["symbol"]
+                    c.execute('''INSERT INTO Currency VALUES (?)''',
+                              (currency_symbol,))
         except Error:
-            print()
+            traceback.print_exc()
+
         try:
             path = os.path.dirname(os.path.abspath(__file__))
             with open(path + '/known_addresses_btc', 'r') as btcwallets:
