@@ -9,7 +9,6 @@ from typing import Any
 from utility.twython_utility import twitter_safe_call
 
 
-
 class TwitterWalletCollector(AbsWalletCollector):
 
     def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
@@ -126,14 +125,15 @@ class TwitterWalletCollector(AbsWalletCollector):
         print(queries)
         return queries
 
-    def extract_content_single(self, response) -> str:
+    @staticmethod
+    def extract_content_single(response) -> str:
         # print(response["full_text"])
         return response["full_text"]
 
     def extract_content(self, responses) -> List[str]:
         return list(map(
             lambda r:
-            self.extract_content_single(r),
+            TwitterWalletCollector.extract_content_single(r),
             responses
         ))
 
