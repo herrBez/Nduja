@@ -25,7 +25,7 @@ def search_searchcode(formatfile):
     logging.info("Search Code")
     results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
-    Parser().parseString(results)
+    Parser().parse_string(results)
     return "ok searchcode"
 
 
@@ -37,7 +37,7 @@ def search_github(formatfile, tokens):
                .collect_address())
     print_json(results)
     logging.info("Finish Search Github")
-    Parser().parseString(results)
+    Parser().parse_string(results)
     return "ok search_github"
 
 
@@ -45,7 +45,7 @@ def search_twitter(formatfile, tokens):
     results = (TwitterWalletCollector(formatfile,
                                       tokens)
                .collect_address())
-    Parser().parseString(results)
+    Parser().parse_string(results)
 
     return "ok search_twitter"
 

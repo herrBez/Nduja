@@ -18,10 +18,10 @@ class Parser:
     def __init__(self) -> None:
         Parser.dbManager = DbManager.get_instance()
 
-    def parseString(self, string: str) -> None:
+    def parse_string(self, string: str) -> None:
         return self.parse(json.loads(string))
 
-    def parseFile(self, path: str) -> None:
+    def parse_file(self, path: str) -> None:
         return self.parse(json.load(open(path)))
 
     def parse(self, results: Dict[str, Any]) -> None:
@@ -33,7 +33,7 @@ class Parser:
             for i in range(0, len(symbols)):
                 s = symbols[i]
                 w = wallets[i]
-                checker = self.retrieveChecker(s)
+                checker = self.retrieve_checker(s)
                 if checker.address_valid(w):
                     if account_id is None:
                         account_id = (Parser.dbManager.
@@ -54,23 +54,23 @@ class Parser:
                                                     res[Parser.URL]))
             Parser.dbManager.save_changes()
 
-    def validWallets(self, wallets: List[str],
-                     checker: AbsAddressChecker) -> List[str]:
+    def valid_wallets(self, wallets: List[str],
+                      checker: AbsAddressChecker) -> List[str]:
         valid_wallets = []
         for wallet in wallets:
             if checker.address_valid(wallet):
                 valid_wallets.append(wallet)
         return valid_wallets
 
-    def retrieveChecker(self, currency: str) -> AbsAddressChecker:
+    def retrieve_checker(self, currency: str) -> AbsAddressChecker:
         if currency in Parser.CURRENCIES:
-            return self.getClass('address_checkers.' +
-                                 currency.lower() + "_address_checker." +
-                                 currency.lower().title() + "AddressChecker")()
+            return self.get_class('address_checkers.' +
+                                  currency.lower() + "_address_checker." +
+                                  currency.lower().title() + "AddressChecker")()
         else:
             return None
 
-    def getClass(self, name) -> Callable:
+    def get_class(self, name) -> Callable:
         parts = name.split('.')
         module = ".".join(parts[:-1])
         m = __import__(module)
