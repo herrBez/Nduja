@@ -8,7 +8,7 @@ from wallet_collectors.abs_wallet_collector import flatten
 from utility.print_utility import print_json
 import logging
 
-from typing import Dict
+from typing import Dict, Optional
 from typing import Any
 from typing import List
 
@@ -66,8 +66,11 @@ class SearchcodeWalletCollector(AbsWalletCollector):
         ))
 
     def build_answer_json(self, item: Any, content: str,
-                          symbol_list, wallet_list, emails=None,
-                          websites=None) -> Dict[str, Any]:
+                          symbol_list: List[str],
+                          wallet_list: List[str],
+                          emails: Optional[List[str]]=None,
+                          websites: Optional[List[str]]=None)\
+            -> Dict[str, Any]:
         repo = item["repo"]
         username_pattern = re.compile("(https?|git)://([^/]*)/([^/]*)/([^/]*)")
         my_match = username_pattern.search(repo)
