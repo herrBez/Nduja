@@ -176,10 +176,6 @@ def main2():
     clusters = [Cluster([w]) for w in db.getAllWalletsByCurrency("BTC")[0:5] if
                 w not in black_list]
 
-    clusters_help = [Cluster([w]) for w in
-                     db.getAllWalletsByCurrency("BTC")[0:2] if
-                     w not in black_list]
-
     # cluster_black_list = [Cluster([w]) for w in black_list]
 
     print()
@@ -197,6 +193,20 @@ def main2():
 
     graph = ClusterGraph(clusters_set)
 
+    btc_transaction_retriever = BtcTransactionRetriever()
+
+
+    for cluster in clusters:
+        for wallet in cluster.inferred_addresses:
+            input_dict, output_dict, _ = \
+                btc_transaction_retriever.\
+                get_input_output_addresses(wallet.address)
+            for k in input_dict:
+                tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
+                graph.add_edge(tmp, cluster)
+            for k in output_dict:
+                tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
+                graph.add_edge(cluster, tmp)
 
 
 
