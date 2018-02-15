@@ -17,6 +17,8 @@ from typing import Tuple
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import TypeVar
+from typing import Generic
 
 from typing import TypeVar
 
@@ -138,8 +140,11 @@ class AbsWalletCollector:
 
     @abstractmethod
     def build_answer_json(self, raw_response: Any, content: str,
-                          symbol_list, wallet_list, emails=None,
-                          websites=None) -> Dict[str, Any]:
+                          symbol_list: List[str],
+                          wallet_list: List[str],
+                          emails: Optional[List[str]] =None,
+                          websites: Optional[List[str]] =None)\
+            -> Dict[str, Any]:
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
 
@@ -165,16 +170,15 @@ class AbsWalletCollector:
                     # Retrieve the list of matches
                     match_list = \
                         flatten(
-                            list(
-                                map(lambda x:
-                                    x.match(contents[i]), self.patterns)
-                            )
+                            [x.match(contents[i]) for x in self.patterns]
                         )
 
                     # A match was found
                     if len(match_list) > 0:
                         match_list = list(set(match_list))
-                        symbol_list, wallet_list = map(list, zip(*match_list))
+                        tmp_list = zip(*match_list)
+                        symbol_list = tmp_list[0]
+                        wallet_list = tmp_list[1]
 
                         element = self.build_answer_json(raw_results[i],
                                                          contents[i],

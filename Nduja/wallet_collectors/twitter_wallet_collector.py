@@ -3,7 +3,7 @@ from furl import furl
 from twython import Twython
 import logging
 from utility.print_utility import print_json
-from typing import List
+from typing import List, Optional, Iterable
 from typing import Dict
 from typing import Any
 from utility.twython_utility import twitter_safe_call
@@ -137,8 +137,12 @@ class TwitterWalletCollector(AbsWalletCollector):
             responses
         ))
 
-    def build_answer_json(self, raw_response, content, symbol_list,
-                          wallet_list, emails, websites):
+    def build_answer_json(self, raw_response: Any, content: str,
+                          symbol_list: List[str],
+                          wallet_list: List[str],
+                          emails: Optional[List[str]] =None,
+                          websites: Optional[List[str]] =None) \
+            -> Dict[str, Any]:
         known_raw_url = "https://twitter.com/statuses/"\
                         + str(raw_response["id"])
 

@@ -11,7 +11,7 @@ from utility.github_utility import perform_github_request
 from requests import Response
 from grequests import AsyncRequest
 
-from typing import List
+from typing import List, Iterable, Optional
 from typing import Any
 from typing import Dict
 
@@ -103,8 +103,12 @@ class GithubWalletCollector(AbsWalletCollector):
 
         return contents
 
-    def build_answer_json(self, item, content, symbol_list, wallet_list, emails,
-                          websites):
+    def build_answer_json(self, item: Any, content: str,
+                          symbol_list: List[str],
+                          wallet_list: List[str],
+                          emails: Optional[List[str]] =None,
+                          websites: Optional[List[str]]=None) \
+            -> Dict[str, Any]:
 
         final_json_element = {
             "hostname": "github.com",
