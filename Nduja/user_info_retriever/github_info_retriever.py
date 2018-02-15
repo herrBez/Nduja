@@ -29,11 +29,12 @@ class GithubInfoRetriever(PersonalInfoRetriever):
         return t
 
     def retrieve_info_from_account(self, account: Account) -> PersonalInfo:
-        res = requests.get(self.format_url(account.username),
+        res = requests.get(GithubInfoRetriever.format_url(account.username),
                            GithubInfoRetriever.get_token())
-        return self.parse_result(res)
+        return GithubInfoRetriever.parse_result(res)
 
-    def format_url(self, username: str) -> str:
+    @staticmethod
+    def format_url(username: str) -> str:
         if username is None or username.isspace():
             return None
         else:
@@ -48,7 +49,8 @@ class GithubInfoRetriever(PersonalInfoRetriever):
                     % len(GithubInfoRetriever.token)
             return to_return
 
-    def parse_result(self, result: Response) -> PersonalInfo:
+    @staticmethod
+    def parse_result(result: Response) -> PersonalInfo:
         info = None
         if result is not None:
             try:
