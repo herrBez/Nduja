@@ -92,7 +92,8 @@ class BtcTransactionRetriever:
         """Given an address it returns ALL transactions performed
         by the address"""
 
-        r = requests.get(BtcTransactionRetriever.BITCOININFO + address)
+        r = requests.get(BtcTransactionRetriever.BITCOININFO + address,
+                         timeout=120)
         raw_response = r.text
 
         inputs_dict = {}  # type: Dict[str, int]

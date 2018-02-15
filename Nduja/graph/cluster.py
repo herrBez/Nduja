@@ -1,6 +1,7 @@
 from typing import Iterable
 from typing import Set
 from typing import Any
+from typing import List
 
 from dao.wallet import Wallet
 
@@ -19,7 +20,8 @@ class Cluster:
         self._inferred_addresses = set(inferred_addresses)
         for w in self._original_addresses:
             self._inferred_addresses.add(w)
-        self.filed = False
+        self.filled = False
+        self.accounts = []  # type: List[int]
 
     @property
     def original_addresses(self) -> Set[Wallet]:
@@ -62,7 +64,7 @@ class Cluster:
         Fill cluster is an expensive operation. Therefore it should be done
         only once. Indeed it requires a time proportional to the number
         of inferred addresses * their transactions"""
-        if not self.filed:
+        if not self.filled:
 
             btc_transaction_retriever = BtcTransactionRetriever()
 
@@ -82,5 +84,5 @@ class Cluster:
                     if w not in black_list and w not in tmp_black_list:
                         stack.add(w)
 
-            self.filed = True
+            self.filled = True
 

@@ -13,7 +13,7 @@ class ClusterGraph:
         self._cluster_to_vertex = {}  # type: Dict[Cluster, Vertex]
         self._graph = Graph()
 
-        self._vertex_to_cluster = self._graph.new_vertex_property("int")
+        self._vertex_to_cluster = self._graph.new_vertex_property("object")
         for cluster in cluster_list:
             v = self._graph.add_vertex()
             self._cluster_to_vertex[cluster] = v
@@ -31,7 +31,10 @@ class ClusterGraph:
                 v = self._cluster_to_vertex[k]
                 break
         if not present:
+            print("cluster_graph: cluster : begin" + str(cluster.original_addresses.copy().pop()))
+
             cluster.fill_cluster()
+            print("cluster_graph: cluster : end")
             v = self._graph.add_vertex()
             self._cluster_to_vertex[cluster] = v
             self._vertex_to_cluster[v] = cluster
@@ -46,6 +49,8 @@ class ClusterGraph:
             self._graph.add_edge(vertex_from, vertex_to)
 
     def plot(self, output_file_name="/tmp/graphviz.svg", blacklist=[]):
+        print("Plotting")
+
         cluster_size = self._graph.new_vertex_property("int32_t")
 
         for v in self._graph.vertices():

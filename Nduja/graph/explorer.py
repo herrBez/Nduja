@@ -127,9 +127,9 @@ def merge_clusters(clusters: List[Cluster]) -> Set[Cluster]:
 
 def main() -> None:
 
-    DbManager.setDBFileName("nduja.db")
+    DbManager.set_db_file_name("nduja.db")
 
-    db = DbManager.getInstance()
+    db = DbManager.get_instance()
 
     db.initConnection()
 
@@ -167,30 +167,29 @@ def main() -> None:
 
     # explore(addresses, black_list, max_hop=0)
 
-def main2():
-    DbManager.setDBFileName("nduja.db")
+def main2() -> None:
+    DbManager.set_db_file_name("nduja.db")
 
-    db = DbManager.getInstance()
+    db = DbManager.get_instance()
 
-    db.initConnection()
+    db.init_connection()
 
-    black_list = [w for w in db.getAllKnownWallets()]
+    black_list = [w for w in db.get_all_known_wallets()]
 
-    clusters = [Cluster([w]) for w in db.getAllWalletsByCurrency("BTC")[0:5] if
-                w not in black_list]
+    clusters = [Cluster([w]) for w in db.get_all_wallets_by_currency("BTC")[215:216]
+                if w not in black_list]
 
     # cluster_black_list = [Cluster([w]) for w in black_list]
 
-    print()
-    print()
-    print()
-
-    db.closeDb()
-
+    db.close_db()
+    print("qui ci siamo")
     for cluster in clusters:
         cluster.fill_cluster()
+        print(len(cluster.inferred_addresses))
+    print("Filled")
 
-    clusters_set = merge_clusters(clusters)
+
+    clusters_set = set(clusters)
 
     clusters = list(clusters_set)
 
@@ -198,23 +197,39 @@ def main2():
 
     btc_transaction_retriever = BtcTransactionRetriever()
 
-
+    print("oki")
     for cluster in clusters:
         for wallet in cluster.inferred_addresses:
+            print("Vabbuo")
             input_dict, output_dict, _ = \
                 btc_transaction_retriever.\
                 get_input_output_addresses(wallet.address)
+            print("ok - vabbuo")
             for k in input_dict:
                 tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
                 graph.add_edge(tmp, cluster)
+                #clusters_set.add(tmp)
             for k in output_dict:
                 tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
                 graph.add_edge(cluster, tmp)
+                #clusters_set.add(tmp)
+            print("Fatt'")
 
 
-
-    graph.plot()
+    print("oki")
+    # graph.plot()
     print("Done")
+
+    db.init_connection()
+
+    for c in clusters_set:
+        print([str(c1) for c1 in c.inferred_addresses])
+
+    db.insert_clusters(clusters_set)
+
+    db.save_changes()
+
+    db.close_db()
 
 
 main2()

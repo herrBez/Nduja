@@ -42,8 +42,8 @@ class DbInitializer:
         c.execute('''CREATE TABLE IF NOT EXISTS AccountRelated(
                      Account1 INT,
                      Account2 INT,
-                     FOREIGN KEY Account1 REFERENCES Account(_id)
-                     FOREIGN KEY Account2 REFERENCES Account(_id)
+                     FOREIGN KEY (Account1) REFERENCES Account(_id),
+                     FOREIGN KEY (Account2) REFERENCES Account(_id)
                      )''')
         try:
             c.execute('''INSERT INTO Currency VALUES ("BTC")''')
