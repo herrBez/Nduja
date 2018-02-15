@@ -13,7 +13,8 @@ class BtcTransactionRetriever:
 
     BITCOININFO = 'https://blockchain.info/rawaddr/'
 
-    def address_search(self, addr):
+    @staticmethod
+    def address_search(addr):
         '''Checks if the bitcoin address exists'''
         r = requests.get(BtcTransactionRetriever.BITCOININFO + addr)
         resp = r.text
@@ -84,7 +85,7 @@ class BtcTransactionRetriever:
 c = BtcTransactionRetriever()
 addr = '1NBakuExebh2M9atfS3QuSmRPPtYU398VN'
 
-addr, tr = c.address_search(addr)
+addr, tr = BtcTransactionRetriever.address_search(addr)
 
 print(tr)
 
