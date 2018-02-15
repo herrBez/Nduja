@@ -15,12 +15,12 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
 
     @staticmethod
     def get_twython() -> Twython:
-        resTwhython = (TwitterInfoRetriever.
-                       twitters[TwitterInfoRetriever.twitter_index])
+        res_twhython = (TwitterInfoRetriever.
+                        twitters[TwitterInfoRetriever.twitter_index])
         TwitterInfoRetriever.twitter_index = \
             ((TwitterInfoRetriever.twitter_index + 1) %
              len(TwitterInfoRetriever.twitters))
-        return resTwhython
+        return res_twhython
 
     @staticmethod
     def set_token(tokens: Dict) -> None:
