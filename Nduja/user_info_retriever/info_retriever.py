@@ -42,19 +42,21 @@ class InfoRetriever:
                     twitters.append(account)
                 else:
                     logging.warning(account.host + " not yet supported.")
-        infos = []  # type: List[PersonalInfo]
+        info_list = []  # type: List[PersonalInfo]
         if len(githubs) > 0:
-            infos = infos + GithubInfoRetriever().retrieve_info(githubs)
+            info_list = info_list + GithubInfoRetriever().retrieve_info(githubs)
         if len(bitbuckets) > 0:
-            infos = infos + BitbucketInfoRetriever().retrieve_info(bitbuckets)
+            info_list = info_list + \
+                        BitbucketInfoRetriever().retrieve_info(bitbuckets)
         if len(twitters) > 0:
-            infos = infos + TwitterInfoRetriever().retrieve_info(twitters)
+            info_list = info_list + \
+                        TwitterInfoRetriever().retrieve_info(twitters)
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
-        acc_infos = zip(accounts, infos)
-        for (account, info) in acc_infos:
+        acc_info_list = zip(accounts, info_list)
+        for (account, info) in acc_info_list:
             if info is not None:
-                infoId = (db.insert_information(info.name, info.website,
-                                                info.email, info.json))
-                db.add_info_to_account(account.ID, infoId)
+                info_id = (db.insert_information(info.name, info.website,
+                                                 info.email, info.json))
+                db.add_info_to_account(account.ID, info_id)
         db.save_changes()
