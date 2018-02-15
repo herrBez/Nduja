@@ -13,22 +13,22 @@ class InfoRetriever:
     tokens = None
 
     @staticmethod
-    def setTokens(tokens: Dict) -> None:
+    def set_tokens(tokens: Dict) -> None:
         try:
-            GithubInfoRetriever.setToken(tokens['github'])
+            GithubInfoRetriever.set_token(tokens['github'])
         except KeyError:
             pass
         try:
-            TwitterInfoRetriever.setToken(tokens)
+            TwitterInfoRetriever.set_token(tokens)
         except KeyError as ke:
             print(ke)
             traceback.print_exc()
             sys.exit(12)
 
-    def retrieveInfoForAccountSaved(self) -> None:
-        db = DbManager.getInstance()
-        db.initConnection()
-        accounts = db.getAllAccounts()
+    def retrieve_info_for_account_saved(self) -> None:
+        db = DbManager.get_instance()
+        db.init_connection()
+        accounts = db.get_all_accounts()
         githubs = []
         bitbuckets = []
         twitters = []
@@ -42,19 +42,21 @@ class InfoRetriever:
                     twitters.append(account)
                 else:
                     logging.warning(account.host + " not yet supported.")
-        infos = []  # type: List[PersonalInfo]
+        info_list = []  # type: List[PersonalInfo]
         if len(githubs) > 0:
-            infos = infos + GithubInfoRetriever().retrieve_info(githubs)
+            info_list = info_list + GithubInfoRetriever().retrieve_info(githubs)
         if len(bitbuckets) > 0:
-            infos = infos + BitbucketInfoRetriever().retrieve_info(bitbuckets)
+            info_list = info_list + \
+                        BitbucketInfoRetriever().retrieve_info(bitbuckets)
         if len(twitters) > 0:
-            infos = infos + TwitterInfoRetriever().retrieve_info(twitters)
+            info_list = info_list + \
+                        TwitterInfoRetriever().retrieve_info(twitters)
         accounts = []
         accounts = accounts + githubs + bitbuckets + twitters
-        acc_infos = zip(accounts, infos)
-        for (account, info) in acc_infos:
+        acc_info_list = zip(accounts, info_list)
+        for (account, info) in acc_info_list:
             if info is not None:
-                infoId = (db.insertInformation(info.name, info.website,
-                                               info.email, info.json))
-                db.addInfoToAccount(account.ID, infoId)
-        db.saveChanges()
+                info_id = (db.insert_information(info.name, info.website,
+                                                 info.email, info.json))
+                db.add_info_to_account(account.ID, info_id)
+        db.save_changes()

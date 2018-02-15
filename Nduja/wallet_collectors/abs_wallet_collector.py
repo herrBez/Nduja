@@ -87,11 +87,11 @@ def match_personal_website(text: str) -> List[str]:
 T = TypeVar('T')
 
 
-def flatten(l : List[List[T]]) -> List[T]:
+def flatten(li: List[List[T]]) -> List[T]:
     """It takes as input a list of lists and returns a list"""
     return reduce(
         lambda x, y: x + y,
-        l,
+        li,
         []
     )
 

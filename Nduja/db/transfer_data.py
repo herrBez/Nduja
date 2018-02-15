@@ -5,61 +5,61 @@ import traceback
 import os
 
 
-def transfer_data(oldDb : str, newDb : str) -> None:
-    old = sqlite3.connect(oldDb)
-    new = sqlite3.connect(newDb)
-    cnew = new.cursor()
-    cnew = init_db(cnew)
+def transfer_data(old_db : str, new_db : str) -> None:
+    old = sqlite3.connect(old_db)
+    new = sqlite3.connect(new_db)
+    c_new = new.cursor()
+    c_new = init_db(c_new)
     cold = old.cursor()
-    idInfo = {}
+    id_info = {}
     cold.execute("SELECT * FROM Information")
     for row in cold:
-        cnew.execute('''INSERT INTO Information(Name, Website, Email, Json)
+        c_new.execute('''INSERT INTO Information(Name, Website, Email, Json)
                 VALUES (?,?,?,?)''', (row[1], row[2], row[3], row[4],))
-        cnew.execute('SELECT max(_id) FROM Information')
-        idInfo[row[0]] = cnew.fetchone()[0]
+        c_new.execute('SELECT max(_id) FROM Information')
+        id_info[row[0]] = c_new.fetchone()[0]
     new.commit()
     cold.execute("SELECT * FROM Account")
-    idAccount = {}
+    id_account = {}
     for row in cold:
-        cnew.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
+        c_new.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
                      (row[1], row[2],))
-        data = cnew.fetchone()
+        data = c_new.fetchone()
         if data is None:
             newid = None
             try:
-                newid = idInfo[row[3]]
+                newid = id_info[row[3]]
             except KeyError:
                 print()
-            cnew.execute('''INSERT INTO Account(Host, Username, Info)
+            c_new.execute('''INSERT INTO Account(Host, Username, Info)
                          VALUES (?,?,?)''', (row[1], row[2], newid,))
-            cnew.execute('SELECT max(_id) FROM Account')
-            idAccount[row[0]] = cnew.fetchone()[0]
+            c_new.execute('SELECT max(_id) FROM Account')
+            id_account[row[0]] = c_new.fetchone()[0]
         else:
-            idAccount[row[0]] = data[0]
+            id_account[row[0]] = data[0]
     new.commit()
     cold.execute("SELECT * FROM AccountWallet")
     for row in cold:
         try:
-            cnew.execute('''SELECT * FROM AccountWallet WHERE Account = ?
+            c_new.execute('''SELECT * FROM AccountWallet WHERE Account = ?
                             AND Wallet = ?''', (row[1], row[2],))
-            data = cnew.fetchone()
+            data = c_new.fetchone()
             if data is None:
-                cnew.execute('''INSERT INTO AccountWallet(Account, Wallet,
+                c_new.execute('''INSERT INTO AccountWallet(Account, Wallet,
                                 RawURL) VALUES (?,?,?)''',
-                             (str(idAccount[row[1]]), row[2], row[3],))
+                             (str(id_account[row[1]]), row[2], row[3],))
         except Error:
             traceback.print_exc()
     new.commit()
     cold.execute("SELECT * FROM Wallet")
     for row in cold:
         try:
-            cnew.execute('''INSERT INTO Wallet(Address, Currency, Status,
+            c_new.execute('''INSERT INTO Wallet(Address, Currency, Status,
                             Inferred) VALUES (?,?,?,?)''',
                          (row[0], row[1], row[2], row[3],))
         except Error:
             traceback.print_exc()
-    cnew.execute('''DELETE FROM Information WHERE Information._id NOT IN (
+    c_new.execute('''DELETE FROM Information WHERE Information._id NOT IN (
                     SELECT Account.Info FROM Account
                     WHERE Account.Info NOTNULL)''')
     new.commit()

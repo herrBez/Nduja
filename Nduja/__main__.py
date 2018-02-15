@@ -25,7 +25,7 @@ def search_searchcode(formatfile):
     logging.info("Search Code")
     results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
-    Parser().parseString(results)
+    Parser().parse_string(results)
     return "ok searchcode"
 
 
@@ -37,7 +37,7 @@ def search_github(formatfile, tokens):
                .collect_address())
     print_json(results)
     logging.info("Finish Search Github")
-    Parser().parseString(results)
+    Parser().parse_string(results)
     return "ok search_github"
 
 
@@ -45,7 +45,7 @@ def search_twitter(formatfile, tokens):
     results = (TwitterWalletCollector(formatfile,
                                       tokens)
                .collect_address())
-    Parser().parseString(results)
+    Parser().parse_string(results)
 
     return "ok search_twitter"
 
@@ -87,8 +87,8 @@ def main(argv: List[str]) -> int:
         logging.error("Configuration file not found")
         sys.exit(2)
 
-    DbManager.setDBFileName(config["dbname"])
-    EthAddressChecker.setToken(config["tokens"]["etherscan"])
+    DbManager.set_db_file_name(config["dbname"])
+    EthAddressChecker.set_token(config["tokens"]["etherscan"])
 
     if tasks in (0, 1):
         executor = ThreadPoolExecutor(max_workers=4)
@@ -104,10 +104,10 @@ def main(argv: List[str]) -> int:
 
     if tasks in (0, 2):
         try:
-            InfoRetriever.setTokens(config["tokens"])
+            InfoRetriever.set_tokens(config["tokens"])
         except KeyError:
             print()
-        InfoRetriever().retrieveInfoForAccountSaved()
+        InfoRetriever().retrieve_info_for_account_saved()
     return 0
 
 

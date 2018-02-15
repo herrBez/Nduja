@@ -7,19 +7,20 @@ from address_checkers.abs_address_checker import AbsAddressChecker
 class LtcAddressChecker(AbsAddressChecker):
     """Litecoin Address Checker"""
 
-    CHAINSO = "https://chain.so/api/v2/is_address_valid/LTC/"
+    CHAIN_SO = "https://chain.so/api/v2/is_address_valid/LTC/"
     STATUS = "status"
     SUCCESS = "success"
     DATA = "data"
     ISVALID = "is_valid"
 
-    def address_search(self, address: str) -> bool:
+    @staticmethod
+    def address_search(address: str) -> bool:
         """Use chain.so API to check if an address is valid"""
         r = None
         while True:
             exception_raised = False
             try:
-                r = requests.get(LtcAddressChecker.CHAINSO + address)
+                r = requests.get(LtcAddressChecker.CHAIN_SO + address)
                 # WARNING: chain.so API give 5request/sec for free
             except requests.exceptions.ConnectionError:
                 sleep(1)
@@ -46,5 +47,5 @@ class LtcAddressChecker(AbsAddressChecker):
     def address_check(self, address: str) -> bool:
         """Check if a litecoin address is valid"""
         if self.address_valid(address):
-            return self.address_search(address)
+            return LtcAddressChecker.address_search(address)
         return False

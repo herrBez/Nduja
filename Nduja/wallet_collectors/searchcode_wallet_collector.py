@@ -51,7 +51,8 @@ class SearchcodeWalletCollector(AbsWalletCollector):
             for page in range(0, self.max_page)
         ]
 
-    def extract_content_single(self, response) -> str:
+    @staticmethod
+    def extract_content_single(response) -> str:
         res = ""
         lines = response["lines"]
         for key in lines:
@@ -61,7 +62,7 @@ class SearchcodeWalletCollector(AbsWalletCollector):
     def extract_content(self, responses: List[Any]) -> List[str]:
         return list(map(
             lambda r:
-            self.extract_content_single(r),
+            SearchcodeWalletCollector.extract_content_single(r),
             responses
         ))
 
