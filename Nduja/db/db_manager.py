@@ -12,8 +12,13 @@ from typing import List, Iterable, Optional
 
 class DbManager:
 
+    config = 'format.json'
     db = 'db.db'
     instance = None
+
+    @staticmethod
+    def set_config_file(filename: str):
+        DbManager.config = filename
 
     @staticmethod
     def set_db_file_name(filename: str):
@@ -27,7 +32,7 @@ class DbManager:
 
     def __init__(self) -> None:
         self.conn = None  # type: Optional[sqlite3.Connection]
-        DbInitializer().init_db(DbManager.db)
+        DbInitializer().init_db(DbManager.db, DbManager.config)
 
     def init_connection(self) -> None:
         self.conn = sqlite3.connect(DbManager.db)
