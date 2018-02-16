@@ -112,7 +112,9 @@ class BtcTransactionRetriever:
                 resp = json.loads(raw_response)  # type: Dict[str, Any]
             except json.decoder.JSONDecodeError:
                 print("Response is not a valid JSON")
-                print(u"" + r.text)
+                with open('invalid_json.txt', 'a') as the_file:
+                    the_file.write(query + "\n")
+                print(u' '.join(r.text).encode('utf-8').strip())
                 sleep(1)
                 return inputs_dict, outputs_dict, connected_dict
 
