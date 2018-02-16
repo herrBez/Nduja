@@ -5,6 +5,7 @@
 # https://blockchain.info/tx/
 # d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
 import logging
+from asyncio import sleep
 from typing import Dict
 from typing import List
 from typing import Any
@@ -12,6 +13,7 @@ from typing import Tuple
 
 import json
 import requests
+from utility.safe_requests import safe_requests_get
 
 
 class BtcTransactionRetriever:
@@ -92,75 +94,87 @@ class BtcTransactionRetriever:
         """Given an address it returns ALL transactions performed
         by the address"""
 
-        r = requests.get(BtcTransactionRetriever.BITCOININFO + address,
-                         timeout=120)
-        raw_response = r.text
+        query=BtcTransactionRetriever.BITCOININFO + address
+        r = safe_requests_get(query=query,
+                              token=None)
 
         inputs_dict = {}  # type: Dict[str, int]
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
 
-        resp = json.loads(raw_response)  # type: Dict[str, Any]
+        if r is None:
+            logging.warning("BTCTransactionRetriever " + query + " failed")
+        else:
 
-        txs = resp["txs"]  # type: Any
+            raw_response = r.text
+
+            try:
+                resp = json.loads(raw_response)  # type: Dict[str, Any]
+            except json.decoder.JSONDecodeError:
+                print("Response is not a valid JSON")
+                print(u"" + r.text)
+                sleep(1)
+                return inputs_dict, outputs_dict, connected_dict
+
+            txs = resp["txs"]  # type: Any
 
 
-        for t in txs:
-            out_addr = {}  # type: Dict[str, int]
-            in_addr = {}  # type: Dict[str, int]
+            for t in txs:
+                out_addr = {}  # type: Dict[str, int]
+                in_addr = {}  # type: Dict[str, int]
 
-            tmp_inputs_list = []
-            tmp_outputs_list = []
+                tmp_inputs_list = []
+                tmp_outputs_list = []
 
 
-            for o in t["out"]:
-                try:
-                    e = o["addr"]
-                    tmp_outputs_list.append(e)
-                    out_addr[e] = 1
-                except KeyError:
-                    logging.error("Corrupted content in bitcoin api:"
-                                  + "One output address in transaction: "
-                                  + t["hash"]
-                                  + " is not valid. Skip this output")
+                for o in t["out"]:
+                    try:
+                        e = o["addr"]
+                        tmp_outputs_list.append(e)
+                        out_addr[e] = 1
+                    except KeyError:
+                        logging.error("Corrupted content in bitcoin api:"
+                                      + "One output address in transaction: "
+                                      + t["hash"]
+                                      + " is not valid. Skip this output")
 
-            for i in t["inputs"]:
-                try:
-                    e = i["prev_out"]["addr"]
-                    tmp_inputs_list.append(e)
-                    in_addr[e] = 1
-                except KeyError:
-                    logging.error("Corrupted content in bitcoin api:"
-                                  + "One input address in transaction: "
-                                  + t["hash"]
-                                  + " is not valid. Skip this input")
+                for i in t["inputs"]:
+                    try:
+                        e = i["prev_out"]["addr"]
+                        tmp_inputs_list.append(e)
+                        in_addr[e] = 1
+                    except KeyError:
+                        logging.error("Corrupted content in bitcoin api:"
+                                      + "One input address in transaction: "
+                                      + t["hash"]
+                                      + " is not valid. Skip this input")
 
-            if set(tmp_outputs_list).intersection(set(tmp_inputs_list)):
-                with open("suspect_transactions.txt", "a") as myfile:
-                    myfile.write("===\n")
-                    myfile.write(t["hash"] + "\n")
-                    myfile.write("===\n")
+                if set(tmp_outputs_list).intersection(set(tmp_inputs_list)):
+                    with open("suspect_transactions.txt", "a") as myfile:
+                        myfile.write("===\n")
+                        myfile.write(t["hash"] + "\n")
+                        myfile.write("===\n")
 
-            if address in tmp_outputs_list:
-                for a in in_addr:
-                    if a in inputs_dict:
-                        inputs_dict[a] += 1
-                    else:
-                        inputs_dict[a] = 1
-
-            if address in tmp_inputs_list:
-                for a in out_addr:
-                    if a in outputs_dict:
-                        outputs_dict[a] += 1
-                    else:
-                        outputs_dict[a] = 1
-
-            if address in tmp_inputs_list:
-                for a in tmp_inputs_list:
-                    if a != address:
-                        if a in connected_dict:
-                            connected_dict[a] += 1
+                if address in tmp_outputs_list:
+                    for a in in_addr:
+                        if a in inputs_dict:
+                            inputs_dict[a] += 1
                         else:
-                            connected_dict[a] = 1
+                            inputs_dict[a] = 1
+
+                if address in tmp_inputs_list:
+                    for a in out_addr:
+                        if a in outputs_dict:
+                            outputs_dict[a] += 1
+                        else:
+                            outputs_dict[a] = 1
+
+                if address in tmp_inputs_list:
+                    for a in tmp_inputs_list:
+                        if a != address:
+                            if a in connected_dict:
+                                connected_dict[a] += 1
+                            else:
+                                connected_dict[a] = 1
 
         return inputs_dict, outputs_dict, connected_dict

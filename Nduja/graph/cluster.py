@@ -15,13 +15,24 @@ class Cluster:
 
     def __init__(self,
                  addresses: Iterable[Wallet],
-                 inferred_addresses: Iterable[Wallet] = []) -> None:
+                 inferred_addresses: Iterable[Wallet] = [],
+                 ids: Iterable[int] = [-1]) -> None:
         self._original_addresses = set(addresses)
         self._inferred_addresses = set(inferred_addresses)
         for w in self._original_addresses:
             self._inferred_addresses.add(w)
         self.filled = False
         self.accounts = []  # type: List[int]
+        self._belongs_to_blacklist = False
+        self._ids = set(ids)
+
+    @property
+    def ids(self):
+        return self._ids
+
+    @property
+    def belongsToBlackList(self) -> bool:
+        return self._belongs_to_blacklist
 
     @property
     def original_addresses(self) -> Set[Wallet]:
@@ -40,6 +51,7 @@ class Cluster:
     def merge(self, other: 'Cluster') -> None:
         self._original_addresses = self.original_addresses.union(other.original_addresses)
         self._inferred_addresses = self.inferred_addresses.union(other.inferred_addresses)
+        self._ids = self._ids.union(other.ids)
 
     def __hash__(self):
         return hash(frozenset(self._inferred_addresses))
@@ -56,7 +68,7 @@ class Cluster:
         return len(self.inferred_addresses.
                    intersection(other.inferred_addresses)) > 0
 
-    def fill_cluster(self, black_list=[]):
+    def fill_cluster(self, black_list: 'Cluster') -> bool:
         """
         This function fills the cluster by finding all the siblings, i.e.,
         addresses that belongs (or are supposed to belong) to a single physical
@@ -76,13 +88,21 @@ class Cluster:
             while len(stack) > 0:
                 elem = stack.pop()
                 self.add_inferred_address(elem)
+                if elem is black_list.inferred_addresses:
+                    black_list.merge(self)
+                    self.filled = True
+                    self._belongs_to_blacklist = True
+                    return False
+
                 tmp_black_list.append(elem)
                 a, b, siblings = btc_transaction_retriever. \
                     get_input_output_addresses(elem.address)
                 for s in siblings:
                     w = Wallet(s, "BTC", "", 1, True)
-                    if w not in black_list and w not in tmp_black_list:
+                    if w not in black_list.inferred_addresses \
+                            and w not in tmp_black_list:
                         stack.add(w)
 
             self.filled = True
+        return True
 

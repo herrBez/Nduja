@@ -176,24 +176,28 @@ def main2() -> None:
 
     black_list = [w for w in db.get_all_known_wallets()]
 
-    clusters = [Cluster([w]) for w in db.get_all_wallets_by_currency("BTC")[215:216]
+    clusters = [Cluster([w], [], db.find_accounts_by_wallet(w))
+                for w in db.get_all_wallets_by_currency("BTC")
                 if w not in black_list]
 
-    # cluster_black_list = [Cluster([w]) for w in black_list]
+    black_list_cluster = Cluster(black_list, [], [99999])
 
     db.close_db()
     print("qui ci siamo")
+
     for cluster in clusters:
-        cluster.fill_cluster()
-        print(len(cluster.inferred_addresses))
+        cluster.fill_cluster(black_list_cluster)
+        print(list(cluster.inferred_addresses))
     print("Filled")
 
+    clusters = [cluster for cluster in clusters
+                if not cluster.belongsToBlackList]
 
     clusters_set = set(clusters)
 
     clusters = list(clusters_set)
 
-    graph = ClusterGraph(clusters_set)
+    graph = ClusterGraph(list(clusters_set), black_list_cluster)
 
     btc_transaction_retriever = BtcTransactionRetriever()
 
@@ -208,22 +212,19 @@ def main2() -> None:
             for k in input_dict:
                 tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
                 graph.add_edge(tmp, cluster)
-                #clusters_set.add(tmp)
+                # clusters_set.add(tmp)
             for k in output_dict:
                 tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
                 graph.add_edge(cluster, tmp)
-                #clusters_set.add(tmp)
+                # clusters_set.add(tmp)
             print("Fatt'")
 
 
     print("oki")
-    # graph.plot()
+    graph.plot()
     print("Done")
 
     db.init_connection()
-
-    for c in clusters_set:
-        print([str(c1) for c1 in c.inferred_addresses])
 
     db.insert_clusters(clusters_set)
 
