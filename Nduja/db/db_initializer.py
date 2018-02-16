@@ -63,7 +63,8 @@ class DbInitializer:
             with open(path + '/known_addresses_btc', 'r') as btcwallets:
                 for w in btcwallets.readlines():
                     c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                                 VALUES (?,?,?,?)''', (str(w), 'BTC', -1,))
+                                 VALUES (?,?,?,?)''',
+                              (str(w).strip(), 'BTC', -1,))
         except Error:
             print()
         conn.commit()
