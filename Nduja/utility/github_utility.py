@@ -1,21 +1,18 @@
 import sys
 import datetime
-import grequests
 import requests
-from grequests import AsyncRequest
+
 from requests import Response
+from requests.exceptions import ReadTimeout
 import logging
 import pause
 from utility.print_utility import print_json
 
 from time import sleep
-from typing import Iterable
-from typing import List
-from typing import Callable
 
 
-def perform_github_request(query: str, token: str, max_retries:int = 5)\
-    -> Response:
+def perform_github_request(query: str, token: str, max_retries: int= 5) \
+        -> Response:
 
     retries = 0
 
@@ -25,13 +22,10 @@ def perform_github_request(query: str, token: str, max_retries:int = 5)\
                                     headers={
                                         'Authorization': 'token ' + token
                                     },
-                                    timeout=300,
+                                    timeout=1,
                                     )
             break
-        except ConnectionError:
-            retries += 1
-            sleep(2)
-        except TimeoutError:
+        except (ConnectionError, TimeoutError, ReadTimeout):
             retries += 1
             sleep(2)
 
