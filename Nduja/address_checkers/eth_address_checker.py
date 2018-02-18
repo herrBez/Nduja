@@ -1,8 +1,11 @@
+from typing import List
+
 from address_checkers.abs_address_checker import AbsAddressChecker
 import requests
 import json
 from time import sleep
 from requests import Response
+import logging
 
 class EthAddressChecker(AbsAddressChecker):
     """Ethereum address checker"""
@@ -14,7 +17,7 @@ class EthAddressChecker(AbsAddressChecker):
     RESULT = "result"
 
     @staticmethod
-    def set_token(token: str):
+    def set_token(token: List[str]):
         EthAddressChecker.token = token
 
     @staticmethod
@@ -48,6 +51,36 @@ class EthAddressChecker(AbsAddressChecker):
             return False
         return True
 
+    @staticmethod
+    def is_contract(address: str) -> bool:
+        """This method takes as input an ethereum address and returns True
+        if it is a contract address, False otherwise"""
+
+        base_url = 'https://api.etherscan.io/api?'
+
+        payload = {'module': 'contract',
+                   'action': 'getabi',
+                   'address': address,
+                   'apikey':
+                       EthAddressChecker.token[EthAddressChecker.token_index]
+                   }
+
+        while True:
+            exception_raised = False
+            try:
+                response = requests.get(base_url, params=payload)
+            except requests.exceptions.ConnectionError:
+                sleep(1)
+                exception_raised = True
+            if not exception_raised:
+                break
+
+        resp = response.text
+        json_resp = json.loads(resp)
+
+        return json_resp["message"] == "OK"
+
     def address_valid(self, address: str) -> bool:
         """Check if addr is a valid Ethereum address using web3"""
-        return EthAddressChecker.address_search(address)
+        return EthAddressChecker.address_search(address) and \
+            not EthAddressChecker.is_contract(address)
