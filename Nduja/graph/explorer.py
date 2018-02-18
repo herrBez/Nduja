@@ -78,8 +78,8 @@ def fill_clusters(clusters, black_list=[]):
     for c in clusters:
         progress = 100*processed/clusters_length
 
-        print("\033[K" + f"processed\t {processed:d} / {clusters_length:d}\t"
-              + f"{progress:.2f}%\r", sep=' ', end='', flush=True)
+        #print("\033[K" + f"processed\t {processed:d} / {clusters_length:d}\t"
+        #      + f"{progress:.2f}%\r", sep=' ', end='', flush=True)
         processed += 1
         stack = set([])
         tmp_black_list = []
@@ -131,11 +131,12 @@ def main() -> None:
 
     db = DbManager.get_instance()
 
-    db.initConnection()
+    db.init_connection()
 
-    black_list = [w for w in db.getAllKnownWallets()]
+    black_list = [w for w in db.get_all_known_wallets()]
 
-    clusters = [Cluster([w]) for w in db.getAllWalletsByCurrency("BTC")[3:4] if
+    clusters = [Cluster([w]) for w
+                in db.get_all_wallets_by_currency("BTC")[3:4] if
                 w not in black_list]
 
 
@@ -146,13 +147,13 @@ def main() -> None:
     print()
     print()
 
-    db.closeDb()
+    db.close_db()
 
     fill_clusters(cluster_black_list, black_list=[])
 
     clusters_set = merge_clusters(clusters)
 
-    print(f"Before {len(clusters):d}: After {len(clusters_set)}")
+    # print(f"Before {len(clusters):d}: After {len(clusters_set)}")
 
     # for c in clusters_set:
     #     print("===")
