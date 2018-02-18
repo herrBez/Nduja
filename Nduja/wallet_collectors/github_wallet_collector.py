@@ -38,6 +38,10 @@ class GithubWalletCollector(AbsWalletCollector):
         # api.
         for query in queries:
             response = perform_github_request(query, self.get_next_token())
+            if response is None:
+                with open("none_github_response.txt", "a") as out:
+                    out.write(query + "\n")
+                continue
 
             items = response.json()["items"]
 
