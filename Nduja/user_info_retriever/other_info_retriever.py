@@ -4,12 +4,11 @@ from utility.pattern import *
 import sqlite3
 import requests
 import os
-import time
 
 
 def other_info_retriever(db_name: str):
     path = os.path.dirname(os.path.abspath(__file__))
-    db_conn = sqlite3.connect(path + '/nduja.db')
+    db_conn = sqlite3.connect(path + '/' + db_name)
     db_cur = db_conn.cursor()
     db_cur.execute('''SELECT Account, RawURL FROM AccountWallet''')
     account_email_dict = {}  # type: Dict[int, str]
