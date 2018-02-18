@@ -5,7 +5,7 @@ from time import sleep
 import grequests
 import requests
 from wallet_collectors.abs_wallet_collector import flatten
-from utility.print_utility import print_json
+from utility.safe_requests import safe_requests_get
 import logging
 
 from typing import Dict, Optional
@@ -21,32 +21,41 @@ class SearchcodeWalletCollector(AbsWalletCollector):
 
     def __init__(self, format_file):
         super().__init__(format_file)
-        self.max_page = 10
+        self.max_page = 50
         self.per_page = 20
+        # Although the api documentation states that the maximum limit is 100
+        # the real limit is 20
 
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
-        rs = (grequests.get(q) for q in queries)
-        raw_responses = grequests.imap(rs, exception_handler=exception_handler)
-        raw_results = list(
-            map(lambda r:
-                r.json()["results"],
-                raw_responses
-                )
-        )
+        raw_results = []
 
+        for query in queries:
+            r = safe_requests_get(query)
+            if r is not None:
+                try:
+                    json_content = r.json()
+                    if "results" in json_content:
+                        raw_results.append(json_content["results"])
+
+                except ValueError:
+                    pass  # r.json() failed
         return flatten(raw_results)
 
     def construct_queries(self) -> List[str]:
+        word_list = ["donation", "donate", "donating",
+                     "contribution", "contribute", "contributing"]
         return [
             "https://searchcode.com/api/codesearch_I/?"
             + "q="
             + pattern.symbol
-            + "+Donation"
+            + "+"
+            + word
             + "&p="
             + str(page)
             + "&per_page"
             + str(self.per_page)
             + "&loc=0"
+            for word in word_list
             for pattern in self.patterns
             for page in range(0, self.max_page)
         ]
