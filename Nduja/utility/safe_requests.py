@@ -4,10 +4,12 @@ import requests
 from requests import Response
 from requests.exceptions import ReadTimeout
 from time import sleep
+import json
 
 
 def safe_requests_get(query: str, token: Optional[str] = None,
-                      timeout: int = 120, max_retries: int = 10) -> \
+                      timeout: int = 120, max_retries: int = 10,
+                      jsoncheck: bool = False) -> \
         Optional[Response]:
     retries = 0
     response = None  # type: Optional[Response]
@@ -25,6 +27,8 @@ def safe_requests_get(query: str, token: Optional[str] = None,
                                     headers=headers,
                                     timeout=timeout,
                                     )
+            if jsoncheck:
+                json.loads(response.text)
             break
         except (ConnectionError, TimeoutError, ReadTimeout):
             retries += 1
