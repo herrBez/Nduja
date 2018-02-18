@@ -1,19 +1,10 @@
 import traceback
 
-from urlparse import urlparse
 from utility.pattern import *
 import sqlite3
 import requests
 import os
 import time
-
-
-def uri_validator(x):
-    try:
-        result = urlparse(x)
-        return result.scheme and result.netloc and result.path
-    except:
-        return False
 
 
 def other_info_retriever(db_name: str):
@@ -26,7 +17,7 @@ def other_info_retriever(db_name: str):
     for row in db_cur:
         try:
             resp_text = None
-            if row[1] is not None and uri_validator(row[1]):
+            if row[1] is not None:
                 try:
                     response = requests.get(row[1])
                     resp_text = response.text
@@ -35,8 +26,10 @@ def other_info_retriever(db_name: str):
             if resp_text is not None:
                 email_list = match_email(resp_text)
                 website_list = match_personal_website(resp_text)
-                # print(str(row[0]) + " " + str(email_list) + " " + str(website_list))
-                time.sleep(1)
+                email_list = [email for email in email_list
+                              if len(email.strip()) > 0]
+                website_list = [website for website in website_list
+                                if len(website.strip()) > 0]
                 emails = ''
                 if len(email_list) == 1:
                     emails = email_list[0]
@@ -58,10 +51,17 @@ def other_info_retriever(db_name: str):
         db_cur.execute('''SELECT Info FROM Account WHERE _id = ?''', (id_acc,))
         info = db_cur.fetchone()[0]
         if isinstance(info, int):
-            db_cur.execute('''SELECT * FROM Info WHERE _id = ?''', (info,))
+            db_cur.execute('''SELECT * FROM Information WHERE _id = ?''',
+                           (info,))
             row = db_cur.fetchone()
-            websites = ','.join([row[2], account_website_dict[id_acc]])
-            emails = ','.join([row[3], account_email_dict[id_acc]])
+            if len((row[2]).strip()) > 0:
+                websites = ','.join([row[2], account_website_dict[id_acc]])
+            else:
+                websites = account_website_dict[id_acc]
+            if len((row[3]).strip()) > 0:
+                emails = ','.join([row[3], account_email_dict[id_acc]])
+            else:
+                emails = account_email_dict[id_acc]
             db_cur.execute('''UPDATE Information
                               SET Website = ?, Email = ?
                               WHERE _id = ?''', (websites, emails, info,))
