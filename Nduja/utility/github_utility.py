@@ -15,7 +15,7 @@ def perform_github_request(query: str, token: str, max_retries: int= 5) \
         -> Response:
 
     retries = 0
-
+    response = None
     while retries < max_retries:
         try:
             response = requests.get(query,
