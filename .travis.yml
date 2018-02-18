@@ -35,4 +35,4 @@ script:
   - pylint -d "C" -d "R" -d "W" utility/*.py
   - pylint -d "C" -d "R" -d "W" wallet_collectors/*.py
   - pylint -d "C" -d "R" -d "W" __main__.py
-  - pylint -d "C" -d "R" -d "W" graph/*.py
+  - pylint --ignore=cluster_graph.py -d "C" -d "R" -d "W" graph/*.py
