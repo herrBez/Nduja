@@ -54,7 +54,8 @@ class ChainSoTransactionRetriever:
         connected_dict = {}  # type: Dict[str, int]
 
         query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
-        r = safe_requests_get(query=query_input, token=None)
+        r = safe_requests_get(query=query_input, token=None, timeout=30,
+                              jsoncheck=True)
         resp = ChainSoTransactionRetriever.manage_request(query_input, r)
         if resp is None:
             return inputs_dict, outputs_dict, connected_dict
@@ -65,7 +66,8 @@ class ChainSoTransactionRetriever:
         sleep(1)
 
         query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
-        r = safe_requests_get(query=query_output, token=None)
+        r = safe_requests_get(query=query_output, token=None, timeout=30,
+                              jsoncheck=True)
         resp = ChainSoTransactionRetriever.manage_request(query_input, r)
         if resp is None:
             return inputs_dict, outputs_dict, connected_dict
@@ -78,7 +80,8 @@ class ChainSoTransactionRetriever:
         txid_set = in_txid_set.union(out_txid_set)
         for txid in txid_set:
             transaction_query = self.CHAIN_SO_TRANSACTION_INFO + str(txid)
-            r = safe_requests_get(query=transaction_query, token=None)
+            r = safe_requests_get(query=transaction_query, token=None,
+                                  timeout=30, jsoncheck=True)
             resp = ChainSoTransactionRetriever.\
                 manage_request(transaction_query, r)
             if resp is None:
