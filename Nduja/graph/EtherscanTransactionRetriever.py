@@ -24,7 +24,7 @@ class EtherscanTransactionRetriever:
                      'module=account&action=txlist&address='
     ETHERSCAN_TOKEN_API = 'apikey='
 
-    def __init__(self, token: str = None):
+    def __init__(self, token: str = None) -> None:
         self.token = token
 
     def build_query(self, address: str):
