@@ -62,7 +62,7 @@ class ChainSoTransactionRetriever:
         in_txid_set = set([str(t["txid"]) for t in txs if t["time"] < time]) \
         # type: Set[str]
 
-        sleep(0.2)
+        sleep(1)
 
         query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
         r = safe_requests_get(query=query_output, token=None)
@@ -73,7 +73,7 @@ class ChainSoTransactionRetriever:
         out_txid_set = set([str(t["txid"]) for t in txs if t["time"] < time]) \
         # type: Set[str]
 
-        sleep(0.2)
+        sleep(1)
 
         txid_set = in_txid_set.union(out_txid_set)
         for txid in txid_set:
@@ -137,5 +137,5 @@ class ChainSoTransactionRetriever:
                             connected_dict[a] += 1
                         else:
                             connected_dict[a] = 1
-            sleep(0.2)
+            sleep(1)
         return inputs_dict, outputs_dict, connected_dict
