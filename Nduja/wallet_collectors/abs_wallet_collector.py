@@ -110,7 +110,9 @@ class AbsWalletCollector:
                     # A match was found
                     if len(match_list) > 0:
                         match_list = list(set(match_list))
-                        tmp_list = zip(*match_list)
+                        logging.debug(str(match_list))
+                        tmp_list = list(zip(*match_list))
+                        logging.debug(str(tmp_list))
                         symbol_list = tmp_list[0]
                         wallet_list = tmp_list[1]
 
