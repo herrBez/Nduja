@@ -5,7 +5,7 @@
 # https://blockchain.info/tx/
 # d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
 import logging
-from asyncio import sleep
+from time import sleep
 from typing import Dict
 from typing import List
 from typing import Any
@@ -44,6 +44,9 @@ class EtherscanTransactionRetriever:
         query = self.build_query(address)
         r = safe_requests_get(query=query,
                               token=None)
+
+        sleep(0.15)
+
         inputs_dict = {}  # type: Dict[str, int]
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
