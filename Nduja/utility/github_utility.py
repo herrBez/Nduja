@@ -12,6 +12,8 @@ from utility.print_utility import print_json
 
 from time import sleep
 
+from utility.safe_requests import safe_requests_get
+
 
 def perform_github_request(query: str, token: str, max_retries: int= 5) \
         -> Optional[Response]:
@@ -20,7 +22,7 @@ def perform_github_request(query: str, token: str, max_retries: int= 5) \
     while not is_valid:
         is_valid = True
 
-        response = perform_github_request(query, token, 5, jsoncheck=True)
+        response = safe_requests_get(query, token, 5, jsoncheck=True)
 
         if response is not None:
             if response.status_code == requests.codes.forbidden:
