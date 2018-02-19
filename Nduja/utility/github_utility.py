@@ -16,43 +16,39 @@ from time import sleep
 def perform_github_request(query: str, token: str, max_retries: int= 5) \
         -> Optional[Response]:
 
-    retries = 0
-    response = None
-    while retries < max_retries:
-        try:
-            response = requests.get(query,
-                                    headers={
-                                        'Authorization': 'token ' + token
-                                    },
-                                    timeout=1,
-                                    )
-            break
-        except (ConnectionError, TimeoutError, ReadTimeout):
-            retries += 1
-            sleep(2)
+    is_valid = False
+    while not is_valid:
+        is_valid = True
 
-    if response is not None:
-        try:
-            remaining_calls = int(dict(response.headers)["X-RateLimit-Remaining"])
-        except KeyError:
-            print(query)
-            print_json(dict(response.headers))
-            sys.exit(1)
+        response = perform_github_request(query, token, 5, jsoncheck=True)
 
-        if remaining_calls < 1:
-            total_calls = int(dict(response.headers)["X-RateLimit-Limit"])
+        if response is not None:
+            if response.status_code == requests.codes.forbidden:
+                retry_after = int(dict(response.headers)["Retry-After"])
+                sleep(retry_after + 1)
+                is_valid = False
 
-            reset_time = int(dict(response.headers)["X-RateLimit-Reset"])
+    try:
+        remaining_calls = int(dict(response.headers)["X-RateLimit-Remaining"])
+    except KeyError:
+        print(query)
+        print_json(dict(response.headers))
+        return None
 
-            next_reset_date_str = datetime.datetime. \
-                fromtimestamp(reset_time) \
-                .strftime('%H:%M:%S %Y-%m-%d')
+    if remaining_calls < 1:
+        total_calls = int(dict(response.headers)["X-RateLimit-Limit"])
 
-            logging.warning("Rate Limit reached (/"
-                            + str(total_calls)
-                            + ": Pause until: "
-                            + next_reset_date_str)
+        reset_time = int(dict(response.headers)["X-RateLimit-Reset"])
 
-            pause.until(reset_time)
+        next_reset_date_str = datetime.datetime. \
+            fromtimestamp(reset_time) \
+            .strftime('%H:%M:%S %Y-%m-%d')
+
+        logging.warning("Rate Limit reached (/"
+                        + str(total_calls)
+                        + ": Pause until: "
+                        + next_reset_date_str)
+
+        pause.until(reset_time)
 
     return response
