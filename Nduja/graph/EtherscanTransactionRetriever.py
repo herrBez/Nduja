@@ -24,13 +24,17 @@ class EtherscanTransactionRetriever:
                      'module=account&action=txlist&address='
     ETHERSCAN_TOKEN_API = 'apikey='
 
-    def __init__(self, token: str = None) -> None:
-        self.token = token
+    def __init__(self, tokens: List[str] = None) -> None:
+        self.tokens = tokens
+        self.token_index = 0
 
     def build_query(self, address: str):
         query = EtherscanTransactionRetriever.ETHERSCAN_INFO + address
-        if self.token is not None:
-            query += EtherscanTransactionRetriever.ETHERSCAN_INFO + self.token
+        if self.tokens is not None and len(self.tokens) > 0:
+            query += (EtherscanTransactionRetriever.ETHERSCAN_INFO +
+                      self.tokens[self.token_index])
+            self.token_index = ((self.token_index + 1) %
+                                len(self.tokens))
         return query
 
     def get_input_output_addresses(self, address: str) -> \
