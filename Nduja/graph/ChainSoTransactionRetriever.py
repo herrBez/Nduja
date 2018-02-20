@@ -15,6 +15,7 @@ class ChainSoTransactionRetriever:
     CHAIN_SO_INPUT_TRANSACTION = 'https://chain.so/api/v2/get_tx_received/'
     CHAIN_SO_OUTPUT_TRANSACTION = 'https://chain.so/api/v2/get_tx_spent/'
     CHAIN_SO_TRANSACTION_INFO = 'https://chain.so/api/v2/get_tx/'
+    timestamp_class = None  # type: Optional[int]
 
     def __init__(self, currency: str) -> None:
         self.CHAIN_SO_INPUT_TRANSACTION = \
@@ -45,10 +46,15 @@ class ChainSoTransactionRetriever:
                 sleep(1)
         return resp
 
-    def get_input_output_addresses(self, address: str, time: int =get_epoch()) \
+    def get_input_output_addresses(self, address: str,
+                                   timestamp: Optional[int] = None) \
             -> Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
         """Given an address it returns ALL transactions performed
         by the address"""
+
+        timestamp = ChainSoTransactionRetriever.timestamp_class \
+            if timestamp is None else timestamp
+
         inputs_dict = {}  # type: Dict[str, int]
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
@@ -60,7 +66,7 @@ class ChainSoTransactionRetriever:
         if resp is None:
             return inputs_dict, outputs_dict, connected_dict
         txs = resp["data"]["txs"]  # type: Any
-        in_txid_set = set([str(t["txid"]) for t in txs if t["time"] < time]) \
+        in_txid_set = set([str(t["txid"]) for t in txs if t["time"] < timestamp]) \
         # type: Set[str]
 
         sleep(1)
@@ -72,7 +78,7 @@ class ChainSoTransactionRetriever:
         if resp is None:
             return inputs_dict, outputs_dict, connected_dict
         txs = resp["data"]["txs"]
-        out_txid_set = set([str(t["txid"]) for t in txs if t["time"] < time]) \
+        out_txid_set = set([str(t["txid"]) for t in txs if t["time"] < timestamp]) \
         # type: Set[str]
 
         sleep(1)

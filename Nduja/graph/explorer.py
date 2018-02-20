@@ -4,9 +4,10 @@ from typing import Set
 from typing import Tuple
 from typing import Dict
 from typing import Any
-
+import time
 from dao.wallet import Wallet
 from graph.BitcoinTransactionRetriever import BtcTransactionRetriever
+from graph.ChainSoTransactionRetriever import ChainSoTransactionRetriever
 from db.db_manager import DbManager
 # from graph.graph_builder import CurrencyGraph
 from graph.cluster import Cluster
@@ -168,8 +169,18 @@ def main() -> None:
 
     # explore(addresses, black_list, max_hop=0)
 
+
+def get_epoch() -> int:
+    return int(time.time())
+
+
 def main2() -> None:
     DbManager.set_db_file_name("nduja.db")
+
+    epoch = get_epoch()
+
+    BtcTransactionRetriever.timestamp_class = epoch
+    ChainSoTransactionRetriever.timestamp_class = epoch
 
     db = DbManager.get_instance()
 
@@ -191,39 +202,13 @@ def main2() -> None:
         print(list(cluster.inferred_addresses))
     print("Filled")
 
+
     clusters = [cluster for cluster in clusters
                 if not cluster.belongsToBlackList]
 
     clusters_set = set(clusters)
 
     clusters = list(clusters_set)
-
-    graph = ClusterGraph(list(clusters_set), black_list_cluster)
-
-    btc_transaction_retriever = BtcTransactionRetriever()
-
-    print("oki")
-    for cluster in clusters:
-        for wallet in cluster.inferred_addresses:
-            print("Vabbuo")
-            input_dict, output_dict, _ = \
-                btc_transaction_retriever.\
-                get_input_output_addresses(wallet.address)
-            print("ok - vabbuo")
-            for k in input_dict:
-                tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
-                graph.add_edge(tmp, cluster)
-                # clusters_set.add(tmp)
-            for k in output_dict:
-                tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
-                graph.add_edge(cluster, tmp)
-                # clusters_set.add(tmp)
-            print("Fatt'")
-
-
-    print("oki")
-    graph.plot()
-    print("Done")
 
     db.init_connection()
 
@@ -232,6 +217,33 @@ def main2() -> None:
     db.save_changes()
 
     db.close_db()
+
+#    graph = ClusterGraph(list(clusters_set), black_list_cluster)
+#
+#    btc_transaction_retriever = BtcTransactionRetriever()
+#
+#    print("oki")
+#    for cluster in clusters:
+#        for wallet in cluster.inferred_addresses:
+#            print("Vabbuo")
+#            input_dict, output_dict, _ = \
+#                btc_transaction_retriever.\
+#                get_input_output_addresses(wallet.address)
+#            print("ok - vabbuo")
+#            for k in input_dict:
+#                tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
+#                graph.add_edge(tmp, cluster)
+#                # clusters_set.add(tmp)
+#            for k in output_dict:
+#                tmp = Cluster([Wallet(k, "BTC", "", 1, True)])
+#                graph.add_edge(cluster, tmp)
+#                # clusters_set.add(tmp)
+#            print("Fatt'")
+#
+#
+#    print("oki")
+#    graph.plot()
+    print("Done")
 
 
 main2()

@@ -6,11 +6,11 @@
 # d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
 import logging
 from asyncio import sleep
-from typing import Dict
+from typing import Dict, Optional
 from typing import List
 from typing import Any
 from typing import Tuple
-
+import time
 import json
 import requests
 from utility.safe_requests import safe_requests_get
@@ -22,6 +22,7 @@ class BtcTransactionRetriever:
     """
 
     BITCOININFO = 'https://blockchain.info/rawaddr/'
+    timestamp_class = None  # type: Optional[int]
 
     # def address_search(self, address: str) -> \
     #         Dict[str, Tuple[List[str], List[str]]]:
@@ -89,10 +90,14 @@ class BtcTransactionRetriever:
     #
     #     return in_out
 
-    def get_input_output_addresses(self, address: str) -> \
+    def get_input_output_addresses(self, address: str,
+                                   timestamp: Optional[int] = None) -> \
             Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
         """Given an address it returns ALL transactions performed
         by the address"""
+
+        timestamp = BtcTransactionRetriever.timestamp_class \
+            if timestamp is None else timestamp
 
         query=BtcTransactionRetriever.BITCOININFO + address
         r = safe_requests_get(query=query,
@@ -120,6 +125,7 @@ class BtcTransactionRetriever:
 
             txs = resp["txs"]  # type: Any
 
+            txs = [t for t in txs if t["time"] < timestamp]
 
             for t in txs:
                 out_addr = {}  # type: Dict[str, int]
