@@ -95,9 +95,10 @@ class AbsWalletCollector:
         logging.debug("Contents extracted")
 
         for i in range(len(contents)):
+            contents[i] = bytes(contents[i], 'utf-8').decode('utf-8', 'ignore')
+
             if contents[i] != "":
                 try:
-                    print(contents[i])
                     emails = match_email(contents[i])
                     websites = match_personal_website(contents[i])
                     
