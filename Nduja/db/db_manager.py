@@ -4,15 +4,21 @@ import traceback
 from sqlite3 import Error
 from dao.account import Account
 from dao.wallet import Wallet
+from graph.Cluster import Cluster
+from db.db_initializer import DbInitializer
 
-from typing import List
-
+from typing import List, Iterable, Optional
 
 
 class DbManager:
 
+    config = 'format.json'
     db = 'db.db'
     instance = None
+
+    @staticmethod
+    def set_config_file(filename: str):
+        DbManager.config = filename
 
     @staticmethod
     def set_db_file_name(filename: str):
@@ -25,58 +31,8 @@ class DbManager:
         return DbManager.instance
 
     def __init__(self) -> None:
-        self.init_connection()
-        c = self.conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS Currency(
-            Name VARCHAR(4) PRIMARY KEY
-        )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS Wallet(
-            Address VARCHAR(128) PRIMARY KEY,
-            Currency VARCHAR(4),
-            Status NUMERIC,
-            Inferred NUMERIC,
-            FOREIGN KEY (Currency) REFERENCES Currency(Name)
-        )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS Information(
-            _id INTEGER PRIMARY KEY,
-            Name TEXT,
-            Website TEXT,
-            Email TEXT,
-            Json LONGTEXT
-        )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS Account(
-            _id INTEGER PRIMARY KEY,
-            Host VARCHAR(255),
-            Username VARCHAR(255),
-            Info INT,
-            FOREIGN KEY (Info) REFERENCES Information(ID)
-        )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS AccountWallet(
-            _id INTEGER PRIMARY KEY,
-            Account INT,
-            Wallet VARCHAR(128),
-            RawURL VARCHAR(500),
-            FOREIGN KEY (Account) REFERENCES Account(ID),
-            FOREIGN KEY (Wallet) REFERENCES Wallet(Address)
-        )''')
-        try:
-            c.execute('''INSERT INTO Currency VALUES ("BTC")''')
-            c.execute('''INSERT INTO Currency VALUES ("ETH")''')
-            c.execute('''INSERT INTO Currency VALUES ("ETC")''')
-            c.execute('''INSERT INTO Currency VALUES ("XMR")''')
-            c.execute('''INSERT INTO Currency VALUES ("BCH")''')
-            c.execute('''INSERT INTO Currency VALUES ("LTC")''')
-            c.execute('''INSERT INTO Currency VALUES ("DOGE")''')
-        except Error:
-            print()
-        try:
-            path = os.path.dirname(os.path.abspath(__file__))
-            with open(path + '/known_addresses_btc', 'r') as btcwallets:
-                for w in btcwallets.readlines():
-                    self.insert_wallet(str(w), "BTC", -1)
-        except Error:
-            traceback.print_exc()
-        self.save_changes()
+        self.conn = None  # type: Optional[sqlite3.Connection]
+        DbInitializer().init_db(DbManager.db, DbManager.config)
 
     def init_connection(self) -> None:
         self.conn = sqlite3.connect(DbManager.db)
@@ -266,6 +222,48 @@ class DbManager:
             traceback.print_exc()
         return wallets
 
+    def find_accounts_by_wallet(self, wallet: Wallet) -> List[int]:
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT AccountWallet.Account 
+                         FROM AccountWallet INNER JOIN Wallet
+                         WHERE AccountWallet.Wallet = Wallet.Address AND
+                         AccountWallet.Wallet = ? AND
+                         Wallet.Currency = ?''',
+                      (wallet.address, wallet.currency))
+            for row in c:
+                accounts.append(row[0])
+        except Error:
+            traceback.print_exc()
+        return accounts
+
+    def insert_clusters(self, clusters: Iterable[Cluster]) -> None:
+        c = self.conn.cursor()
+        for cluster in clusters:
+            accounts = set([])
+            for wallet in cluster.original_address:
+                account_related = self.find_accounts_by_wallet(wallet)
+                accounts.update(set(account_related))
+                assert len(account_related) > 0
+                assert self.find_wallet(wallet.address)
+            first_addr = accounts.pop()
+            accounts.add(first_addr)
+            for wallet in cluster.inferred_addresses:
+                acc = self.find_accounts_by_wallet(wallet)
+                if len(acc) > 0:
+                    accounts.update(acc)
+                else:
+                    self.insert_wallet_with_account(wallet.address,
+                                                    wallet.currency,
+                                                    wallet.status,
+                                                    first_addr, "",
+                                                    wallet.inferred == 1)
+            if len(accounts) > 1:
+                accounts.remove(first_addr)
+                for account in accounts:
+                    c.execute('''INSERT INTO AccountRelated(Account1, Account2) 
+                                 VALUES (?,?)''', (first_addr, account,))
 
 # try:
 #     os.remove('./db.db')
