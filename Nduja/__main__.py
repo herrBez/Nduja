@@ -87,6 +87,7 @@ def main(argv: List[str]) -> int:
         logging.error("Configuration file not found")
         sys.exit(2)
 
+    DbManager.set_config_file("format.json")
     DbManager.set_db_file_name(config["dbname"])
     EthAddressChecker.set_token(config["tokens"]["etherscan"])
 
