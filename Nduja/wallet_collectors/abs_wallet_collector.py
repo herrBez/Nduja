@@ -55,7 +55,7 @@ class AbsWalletCollector:
             response = requests.get(url, headers=data)
         except requests.exceptions.MissingSchema:
             response = None
-            traceback.print_exc()
+            # traceback.print_exc()
         return response
 
     @abstractmethod
