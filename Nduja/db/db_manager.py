@@ -4,7 +4,7 @@ import traceback
 from sqlite3 import Error
 from dao.account import Account
 from dao.wallet import Wallet
-from graph.Cluster import Cluster
+from graph.cluster import Cluster
 from db.db_initializer import DbInitializer
 
 from typing import List, Iterable, Optional
@@ -242,9 +242,10 @@ class DbManager:
         c = self.conn.cursor()
         for cluster in clusters:
             accounts = set([])
-            for wallet in cluster.original_address:
+            for wallet in cluster.original_addresses:
                 account_related = self.find_accounts_by_wallet(wallet)
                 accounts.update(set(account_related))
+                print(str(wallet))
                 assert len(account_related) > 0
                 assert self.find_wallet(wallet.address)
             first_addr = accounts.pop()

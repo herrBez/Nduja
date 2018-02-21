@@ -26,6 +26,7 @@ script:
   - mypy --python-version 3.6 utility/*.py
   - mypy --python-version 3.6 wallet_collectors/*.py
   - mypy --python-version 3.6 __main__.py
+  - mypy --python-version 3.6 graph/*.py
   - pylint -d "C" -d "R" -d "W" address_checkers/*.py
   - pylint -d "C" -d "R" -d "W" dao/*.py
   - pylint -d "C" -d "R" -d "W" db/*.py
@@ -34,3 +35,4 @@ script:
   - pylint -d "C" -d "R" -d "W" utility/*.py
   - pylint -d "C" -d "R" -d "W" wallet_collectors/*.py
   - pylint -d "C" -d "R" -d "W" __main__.py
+  - pylint -d "C" -d "R" -d "W" graph/*.py

@@ -1,114 +1,169 @@
-import logging
-
-
-class CurrencyGraph:
-    """This class represent the transition graph for a single currency"""
-
-    def __init__(self, list_of_addresses):
-        self.G = nx.DiGraph()
-        self.G.add_nodes_from(list_of_addresses)
-        self.original_nodes = list_of_addresses
-
-    def get_original_nodes(self):
-        return self.original_nodes
-
-    def add_edge(self, u, v, **kargs):
-        """Add an edge from u to v containing the number of transactions
-        from u to v"""
-        t = kargs["trx"]
-        ivalue = kargs["ivalue"]
-        ovalue = kargs["ovalue"]
-
-        if not self.G.has_edge(u, v):
-            self.G.add_edge(u, v,
-                            w=1,
-                            trxs=[t],
-                            ivalues=[ivalue],
-                            ovalues=[ovalue]
-                            )
-            print(self.G.edges(data=True))
-        else:
-            d = self.G.get_edge_data(u, v)
-            transactions = d["trxs"]
-            # if t in trxs it is already present in the graph
-            if t not in transactions:
-                w = d["w"]
-                ivalues_list = d["ivalues"]
-                ivalues_list.append(ivalue)
-                ovalues_list = d["ovalues"]
-                ovalues_list.append(ovalue)
-                transactions.append(t)
-                self.G.add_edge(u, v, w=(w + 1),
-                                trxs=transactions,
-                                ivalues=[ivalues_list],
-                                ovalues=[ovalues_list])
-
-    def add_node(self, u):
-        """Add a node to the multidigraph"""
-        self.G.add_node(u)
-
-
-    def plot_multigraph(self, node = None):
-        """Plot the multigraph marking the original nodes with red and the new
-        ones with black. If a node is provided. It plots only the weak component
-        containing the given node"""
-        g = self.G
-        if node is not None:
-            g = self.get_connected_component_for_node(node)
-
-        node_colours = ["red" if node in self.original_nodes else "blue"
-                        for node in g.nodes]
-
-
-        shells = [
-            [n for n in g.nodes if n in self.original_nodes],
-            [n for n in g.nodes if n not in self.original_nodes]
-            ]
-
-        node_size = [200 if n in self.original_nodes else 100 for n in g.nodes]
-
-        pos = nx.shell_layout(g, shells)
-        nx.draw(g,
-                pos,
-                node_color=node_colours,
-                alpha=1.0,
-                # with_labels=True,
-                widths=2,
-                node_size=node_size,
-                linewidths=0.7
-                )
-
-        edge_labels = dict([((u, v), d['w'])
-                            for u, v, d in g.edges(data=True)])
-
-        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels,
-                                     label_pos=0.3, font_size=7)
-
-        plt.show()
-
-    def get_connected_component_for_node(self, node):
-        """This function should return the subgraph for a specific node"""
-        if node not in list(self.G.nodes):
-            logging.warning("The given node is not contained in the graph")
-            ret = nx.DiGraph()
-        else:
-            wcc = nx.weakly_connected_component_subgraphs(self.G)
-
-            for w in wcc:
-                if node in list(w.nodes):
-                    ret = w
-                    break
-        return ret
-
-    pass
-
-
-# g = CurrencyGraph([1, 2, 3])
-# g.add_edge(4, 5, 10)
-# g.add_edge(5, 4, 4)
-# g.add_edge(4, 1, 5)
+# from typing import Any
+# from typing import Dict
+# from typing import List
+# from typing import Optional
 #
-# # g.plot_multigraph(2)
-# g.plot_multigraph(4)
-
-
+# from dao.wallet import Wallet
+# from graph.Cluster import Cluster
+#
+# from graph_tool.all import *
+# from graph_tool.all import Edge
+# from graph_tool.all import Vertex
+# from graph_tool.all import PropertyMap
+#
+#
+# class CurrencyGraph:
+#     """This class represent the transition graph for a single currency"""
+#
+#     def __init__(self, list_of_addresses: List[Cluster]) -> None:
+#         self.G = Graph()
+#         self.vertex_name_property = self.G.new_vertex_property("python::object")
+#         self.edge_ivalue_property = self.G.new_edge_property("vector<int64_t>")
+#         self.edge_ovalue_property = self.G.new_edge_property("vector<int64_t>")
+#         self.edge_weight_property = self.G.new_edge_property("int32_t")
+#         self.edge_transaction_property = \
+#             self.G.new_edge_property("vector<string>")
+#         # This dictionary stores the inverse mapping of vertex_name_property
+#         self.vertex_name_to_vertex_index = {}  # type: Dict[Cluster, Vertex]
+#         self.original_nodes = []  # type: List[Vertex]
+#
+#         for address in list_of_addresses:
+#             v_index = self.G.add_vertex()
+#             self.vertex_name_property[v_index] = address
+#             self.vertex_name_to_vertex_index[address] = v_index
+#             self.original_nodes.append(v_index)
+#
+#         self.original_nodes_names_list = list_of_addresses
+#
+#     def get_original_nodes(self) -> List[Cluster]:
+#         return self.original_nodes_names_list
+#
+#     def get_edge(self, u: Vertex, v: Vertex) -> Optional[Edge]:
+#         edge = None
+#         try:
+#             edge = self.G.edge(u, v)
+#         except ValueError:
+#             pass
+#         return edge
+#
+#     def get_node(self, address: Cluster) -> Optional[Vertex]:
+#         v_index = None
+#         try:
+#             v_index = self.vertex_name_to_vertex_index[address]
+#         except KeyError:
+#             pass
+#         return v_index
+#
+#     def add_str_edge(self, u: Cluster, v: Cluster, **kwargs: Dict[str, Any]) \
+#             -> bool:
+#         u_vertex = self.vertex_name_to_vertex_index[u]
+#         v_vertex = self.vertex_name_to_vertex_index[v]
+#
+#         e = self.get_edge(u_vertex,
+#                           v_vertex
+#                           )
+#
+#         if e is None:
+#             e = self.G.add_edge(u_vertex, v_vertex)
+#             self.edge_weight_property[e] = kwargs["weight"]
+#         else:
+#             self.edge_weight_property[e] += kwargs["weight"]
+#         return True
+#
+#     def add_edge(self, u: Vertex, v: Vertex, **kargs: Dict[str, Any]) -> Edge:
+#         """Add an edge from u to v containing the number of transactions
+#         from u to v. Return the Edge instance"""
+#         t = kargs["trx"]
+#         ivalue = kargs["ivalue"]
+#         ovalue = kargs["ovalue"]
+#
+#         u_index = self.add_node(u)
+#         v_index = self.add_node(v)
+#
+#         e = self.get_edge(u_index,
+#                           v_index
+#                           )
+#
+#         if e is None:
+#
+#             e = self.G.add_edge(u_index, v_index)
+#             self.edge_transaction_property[e] = [t]
+#             self.edge_ivalue_property[e].append(ivalue)
+#             self.edge_ovalue_property[e].append(ovalue)
+#             self.edge_weight_property[e] = 1
+#
+#         else:
+#
+#             # The transaction was already added
+#             if t not in self.edge_transaction_property[e]:
+#                 self.edge_weight_property[e] += 1
+#                 self.edge_ivalue_property[e].append(ivalue)
+#                 self.edge_ovalue_property[e].append(ovalue)
+#                 self.edge_transaction_property[e].append(t)
+#         return e
+#
+#     def add_node(self, address: Cluster) -> Vertex:
+#         """Add a node to the multidigraph"""
+#         v_index = self.get_node(address)
+#         if v_index is None:
+#             v_index = self.G.add_vertex()
+#             self.vertex_name_property[v_index] = address
+#             self.vertex_name_to_vertex_index[address] = v_index
+#         return v_index
+#
+#     def connected_components_non_trivial(self,
+#                                          blacklist: List[Cluster]=[]) \
+#             -> PropertyMap:
+#
+#         c = label_components(self.G, directed=False)
+#         components = c[0]
+#         hist = c[1]
+#         # PropertyMap containing all vertices in a component with more than two
+#         # vertices and the vertex is in the initial list
+#         vfilt = self.G.new_vertex_property('bool')
+#
+#         for i in range(len(list(components.a))):
+#             if hist[components.a[i]] > 1:
+#                 vfilt[i] = True
+#             elif self.vertex_name_property[i] in self.original_nodes_names_list\
+#                     and not self.vertex_name_property[i] in blacklist:
+#                 vfilt[i] = True
+#             else:
+#                 vfilt[i] = False
+#         return vfilt
+#
+#     def plot(self, output_file_name="/tmp/graphviz.svg", blacklist=[]):
+#         vfilt = self.connected_components_non_trivial(blacklist)
+#
+#         gv = GraphView(self.G, vfilt=vfilt)
+#
+#         graphviz_draw(gv,
+#                       overlap=False,
+#                       # splines = True
+#                       elen=1,
+#                       sep=1,
+#                       vprops={"width": 4,
+#                               "height": 4,
+#                               "fillcolor": "red",
+#                               "shape": "oval"},
+#                       eprops={"arrowsize": 7, "color": "black", "penwidth": 7},
+#                       output=output_file_name,
+#                       fork=True,
+#                       gprops={"bgcolor": "white"}
+#                       # splines=True
+#                       )
+#         print("Output written in " + output_file_name)
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
