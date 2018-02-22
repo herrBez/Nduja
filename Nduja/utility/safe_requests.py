@@ -38,6 +38,4 @@ def safe_requests_get(query: str, token: Optional[str] = None,
             retries += 1
             response = None
             sleep(10)
-
-
     return response

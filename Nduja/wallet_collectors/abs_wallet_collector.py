@@ -55,7 +55,7 @@ class AbsWalletCollector:
             response = requests.get(url, headers=data)
         except requests.exceptions.MissingSchema:
             response = None
-            traceback.print_exc()
+            # traceback.print_exc()
         return response
 
     @abstractmethod
@@ -95,6 +95,8 @@ class AbsWalletCollector:
         logging.debug("Contents extracted")
 
         for i in range(len(contents)):
+            contents[i] = bytes(contents[i], 'utf-8').decode('utf-8', 'ignore')
+
             if contents[i] != "":
                 try:
                     print("**********************")
@@ -112,7 +114,9 @@ class AbsWalletCollector:
                     # A match was found
                     if len(match_list) > 0:
                         match_list = list(set(match_list))
-                        tmp_list = zip(*match_list)
+                        logging.debug(str(match_list))
+                        tmp_list = list(zip(*match_list))
+                        logging.debug(str(tmp_list))
                         symbol_list = tmp_list[0]
                         wallet_list = tmp_list[1]
 

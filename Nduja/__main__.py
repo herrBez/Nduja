@@ -26,7 +26,7 @@ def search_searchcode(formatfile):
     results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
     Parser().parse_string(results)
-    return "ok searchcode"
+    return results
 
 
 def search_github(formatfile, tokens):
@@ -35,19 +35,16 @@ def search_github(formatfile, tokens):
                                      tokens
                                      )
                .collect_address())
-    print_json(results)
-    logging.info("Finish Search Github")
-    Parser().parse_string(results)
-    return "ok search_github"
+    return results
 
 
 def search_twitter(formatfile, tokens):
     results = (TwitterWalletCollector(formatfile,
                                       tokens)
                .collect_address())
-    Parser().parse_string(results)
 
-    return "ok search_twitter"
+
+    return results
 
 
 def print_help():
@@ -62,12 +59,13 @@ def print_help():
 
 def main(argv: List[str]) -> int:
     """ This is executed when run from the command line """
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     tasks = 0
     configfile = 'conf.json'
     if len(argv) > 0:
         try:
-            opts, args = getopt.getopt(argv, "ht:c:", ["help", "task=", "config="])
+            opts, args = getopt.getopt(argv, "ht:c:",
+                                       ["help", "task=", "config="])
         except getopt.GetoptError:
             print_help()
             sys.exit(2)
@@ -94,14 +92,19 @@ def main(argv: List[str]) -> int:
     if tasks in (0, 1):
         executor = ThreadPoolExecutor(max_workers=4)
         f1 = executor.submit(search_github, config["format"],
-                             config["tokens"]["github"])
-        f2 = executor.submit(search_twitter, config["format"],
+                            config["tokens"]["github"])
+        f2 = executor.submit(search_searchcode, config["format"])
+
+        f3 = executor.submit(search_twitter, config["format"],
                              config["tokens"])
-        f3 = executor.submit(search_searchcode, config["format"])
-        print("Let's wait")
-        print(f1.result())
-        print(f2.result())
-        print(f3.result())
+
+        logging.info("Let's wait")
+
+        Parser().parse_string(f1.result())
+        Parser().parse_string(f2.result())
+        Parser().parse_string(f3.result())
+
+
 
     if tasks in (0, 2):
         try:
