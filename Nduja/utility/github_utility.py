@@ -7,27 +7,15 @@ from requests.exceptions import ReadTimeout
 import logging
 import pause
 from utility.print_utility import print_json
-
+from utility.safe_requests import safe_requests_get
 from time import sleep
 
 
 def perform_github_request(query: str, token: str, max_retries: int= 5) \
         -> Response:
 
-    retries = 0
-
-    while retries < max_retries:
-        try:
-            response = requests.get(query,
-                                    headers={
-                                        'Authorization': 'token ' + token
-                                    },
-                                    timeout=1,
-                                    )
-            break
-        except (ConnectionError, TimeoutError, ReadTimeout):
-            retries += 1
-            sleep(2)
+    response = safe_requests_get(query, token=token, timeout=1,
+                                 jsoncheck=False, max_retries=max_retries)
 
     if response is not None:
         try:
