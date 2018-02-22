@@ -97,7 +97,9 @@ class AbsWalletCollector:
         for i in range(len(contents)):
             if contents[i] != "":
                 try:
+                    print("**********************")
                     print(contents[i])
+                    print("**********************")
                     emails = match_email(contents[i])
                     websites = match_personal_website(contents[i])
                     
@@ -124,7 +126,7 @@ class AbsWalletCollector:
                         final_result.append(element)
 
                 except Exception:
-                    logging.error("Error on: " + str(traceback), file=sys.stderr)
+                    logging.error("Error on: " + str(traceback))
             else:
                 logging.warning("content[" + str(i) + "] empty")
 
