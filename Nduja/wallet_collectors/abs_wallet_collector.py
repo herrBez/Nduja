@@ -126,7 +126,7 @@ class AbsWalletCollector:
                         final_result.append(element)
 
                 except Exception:
-                    logging.error("Error on: " + str(traceback))
+                    logging.error("Error on: " + str(traceback.format_exc()))
             else:
                 logging.warning("content[" + str(i) + "] empty")
 
