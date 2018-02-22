@@ -40,7 +40,8 @@ class GithubWalletCollector(AbsWalletCollector):
         # api.
         for query in queries:
             response = perform_github_request(query, self.get_next_token())
-
+            if response is None:
+                continue
             items = response.json()["items"]
 
             res_urls = []  # type: List[Response]

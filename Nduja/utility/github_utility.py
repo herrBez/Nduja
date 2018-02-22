@@ -1,5 +1,7 @@
 import sys
 import datetime
+from typing import Optional
+
 import requests
 
 from requests import Response
@@ -12,7 +14,7 @@ from time import sleep
 
 
 def perform_github_request(query: str, token: str, max_retries: int= 5) \
-        -> Response:
+        -> Optional[Response]:
 
     response = safe_requests_get(query, token=token, timeout=1,
                                  jsoncheck=False, max_retries=max_retries)
