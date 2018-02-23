@@ -78,10 +78,12 @@ class GithubWalletCollector(AbsWalletCollector):
     def construct_queries(self) -> list:
         word_list = ["donation", "donate", "donating",
                      "contribution", "contribute", "contributing"]
+        string_to_search = [p.name for p in self.patterns] + \
+                           [p.symbol for p in self.patterns]
         return [
             "https://api.github.com/search/code?"
             + "q="
-            + pattern.symbol
+            + s
             + "+"
             + word
             + "&page="
@@ -89,7 +91,7 @@ class GithubWalletCollector(AbsWalletCollector):
             + "&per_page="
             + str(self.per_page)
             for word in word_list
-            for pattern in self.patterns
+            for s in string_to_search
             for page in range(1, self.max_page+1)
         ]
 
