@@ -13,6 +13,7 @@ from typing import Tuple
 import time
 import json
 import requests
+from utility.print_utility import escape_utf8
 from utility.safe_requests import safe_requests_get
 
 
@@ -119,7 +120,8 @@ class BtcTransactionRetriever:
                 print("Response is not a valid JSON")
                 with open('invalid_json.txt', 'a') as the_file:
                     the_file.write(query + "\n")
-                print(u' '.join(r.text).encode('utf-8').strip())
+
+                print(escape_utf8(r.text))
                 sleep(1)
                 return inputs_dict, outputs_dict, connected_dict
 
