@@ -62,10 +62,10 @@ class DbInitializer:
             path = os.path.dirname(os.path.abspath(__file__))
             with open(path + '/known_addresses_btc', 'r') as btcwallets:
                 for w in btcwallets.readlines():
-                    c.execute('''INSERT INTO Wallet(Address, Currency, Status)
-                                 VALUES (?,?,?,?)''',
-                              (str(w).strip(), 'BTC', -1,))
+                    c.execute('''INSERT INTO Wallet(Address, Currency, Status, 
+                                 Inferred) VALUES (?,?,?,?)''',
+                              (str(w).strip(), 'BTC', -1, 0,))
         except Error:
-            print()
+            traceback.print_exc()
         conn.commit()
         conn.close()
