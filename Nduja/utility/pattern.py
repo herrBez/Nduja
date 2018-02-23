@@ -37,13 +37,7 @@ class Pattern:
 
     def match(self, content: str) -> List[Tuple[str, str]]:
         matches_iterator = self.pattern.finditer(content)
-        matches = list(
-            map(
-                lambda x:
-                (self.symbol, x.group()),
-                matches_iterator
-            )
-        )
+        matches = [(self.symbol, x.group()) for x in matches_iterator]
         return matches
 
 
