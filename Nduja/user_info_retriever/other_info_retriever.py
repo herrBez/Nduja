@@ -53,13 +53,17 @@ def other_info_retriever(db_name: str):
             db_cur.execute('''SELECT * FROM Information WHERE _id = ?''',
                            (info,))
             row = db_cur.fetchone()
-            if row[2] is not None and len((row[2]).strip()) > 0:
-                websites = ','.join([row[2], account_website_dict[id_acc]])
+            if row is not None:
+                if row[2] is not None and len((row[2]).strip()) > 0:
+                    websites = ','.join([row[2], account_website_dict[id_acc]])
+                else:
+                    websites = account_website_dict[id_acc]
+                if row[3] is not None and len((row[3]).strip()) > 0:
+                    emails = ','.join([row[3], account_email_dict[id_acc]])
+                else:
+                    emails = account_email_dict[id_acc]
             else:
                 websites = account_website_dict[id_acc]
-            if row[3] is not None and len((row[3]).strip()) > 0:
-                emails = ','.join([row[3], account_email_dict[id_acc]])
-            else:
                 emails = account_email_dict[id_acc]
             db_cur.execute('''UPDATE Information
                               SET Website = ?, Email = ?
