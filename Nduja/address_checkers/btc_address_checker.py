@@ -2,6 +2,7 @@ import json
 from hashlib import sha256
 import requests
 from address_checkers.abs_address_checker import AbsAddressChecker
+from utility.safe_requests import safe_requests_get
 
 
 class BtcAddressChecker(AbsAddressChecker):
@@ -34,12 +35,13 @@ class BtcAddressChecker(AbsAddressChecker):
     @staticmethod
     def address_search(address: str):
         """Checks if the bitcoin address exists"""
-        r = requests.get(BtcAddressChecker.BITCOIN_INFO + address)
+        query = BtcAddressChecker.BITCOIN_INFO + address
+        r = safe_requests_get(query, jsoncheck=True, max_retries=10,
+                              jsonerror_pause=4)
         resp_txt = r.text
         try:
-            resp = json.loads(resp_txt)
-            n_tx = resp["n_tx"]  # type: int
-            return n_tx > 0
+            json.loads(resp_txt)
+            return True
         except ValueError:
             return False
 
@@ -51,7 +53,9 @@ class BtcAddressChecker(AbsAddressChecker):
             return False
 
     def get_status(self, address: str) -> int:
-        r = requests.get(BtcAddressChecker.BITCOIN_INFO + address)
+        query = BtcAddressChecker.BITCOIN_INFO + address
+        r = safe_requests_get(query, jsoncheck=True, max_retries=10,
+                              jsonerror_pause=4)
         resp_txt = r.text
         try:
             resp = json.loads(resp_txt)
