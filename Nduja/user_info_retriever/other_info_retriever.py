@@ -20,15 +20,15 @@ def other_info_retriever(db_name: str):
                 try:
                     response = requests.get(row[1])
                     resp_text = response.text
-                except:
+                except Exception:
                     traceback.print_exc()
             if resp_text is not None:
                 email_list = match_email(resp_text)
                 website_list = match_personal_website(resp_text)
-                email_list = [email for email in email_list
-                              if len(email.strip()) > 0]
-                website_list = [website for website in website_list
-                                if len(website.strip()) > 0]
+                email_list = list(set([email.lower() for email in email_list
+                                       if len(email.strip()) > 0]))
+                website_list = list(set([website for website in website_list
+                                         if len(website.strip()) > 0]))
                 emails = ''
                 if len(email_list) == 1:
                     emails = email_list[0]
@@ -54,11 +54,25 @@ def other_info_retriever(db_name: str):
                            (info,))
             row = db_cur.fetchone()
             if len((row[2]).strip()) > 0:
-                websites = ','.join([row[2], account_website_dict[id_acc]])
+                new_website_list = account_website_dict[id_acc].split(',')
+                new_website_list = [web for web in new_website_list
+                                    if len(web.strip()) > 0]
+                old_website_list = row[2].split(',')
+                old_website_list = [web for web in old_website_list
+                                    if len(web.strip()) > 0]
+                website_list = list(set(old_website_list + new_website_list))
+                websites = ','.join(website_list)
             else:
                 websites = account_website_dict[id_acc]
             if len((row[3]).strip()) > 0:
-                emails = ','.join([row[3], account_email_dict[id_acc]])
+                new_email_list = account_email_dict[id_acc].split(',')
+                new_email_list = [email for email in new_email_list
+                                  if len(email.strip()) > 0]
+                old_email_list = row[3].split(',')
+                old_email_list = [email for email in old_email_list
+                                  if len(email.strip()) > 0]
+                email_list = list(set(old_email_list + new_email_list))
+                emails = ','.join(email_list)
             else:
                 emails = account_email_dict[id_acc]
             db_cur.execute('''UPDATE Information
