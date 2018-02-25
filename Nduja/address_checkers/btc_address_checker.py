@@ -1,4 +1,5 @@
 import json
+import logging
 from hashlib import sha256
 import requests
 from address_checkers.abs_address_checker import AbsAddressChecker
@@ -38,6 +39,10 @@ class BtcAddressChecker(AbsAddressChecker):
         query = BtcAddressChecker.BITCOIN_INFO + address
         r = safe_requests_get(query, jsoncheck=True, max_retries=10,
                               jsonerror_pause=4)
+        if r is None:
+            logging.warning(address + " Keep the result because the API is" +
+                            "temporary not available")
+            return True
         resp_txt = r.text
         try:
             json.loads(resp_txt)
@@ -56,6 +61,10 @@ class BtcAddressChecker(AbsAddressChecker):
         query = BtcAddressChecker.BITCOIN_INFO + address
         r = safe_requests_get(query, jsoncheck=True, max_retries=10,
                               jsonerror_pause=4)
+        if r is None:
+            logging.warning(address + " Result 0 because the API is" +
+                            "temporary not available")
+            return 0
         resp_txt = r.text
         try:
             resp = json.loads(resp_txt)

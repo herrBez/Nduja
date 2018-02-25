@@ -59,6 +59,8 @@ class LtcAddressChecker(AbsAddressChecker):
         r = safe_requests_get(query, jsoncheck=True, max_retries=10,
                               jsonerror_pause=4)
         if r is None:
+            logging.warning(address + " Result 0 because the API is" +
+                            "temporary not available")
             return 0
         resp = r.text
         try:
