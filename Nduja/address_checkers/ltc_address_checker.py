@@ -1,10 +1,12 @@
 from typing import List
 from typing import Any
 
+import logging
 import json
 import requests
 from time import sleep
 from address_checkers.abs_address_checker import AbsAddressChecker
+from utility.safe_requests import safe_requests_get
 
 
 class LtcAddressChecker(AbsAddressChecker):
@@ -20,20 +22,16 @@ class LtcAddressChecker(AbsAddressChecker):
     @staticmethod
     def address_search(address: str) -> bool:
         """Use chain.so API to check if an address is valid"""
-        r = None
-        while True:
-            exception_raised = False
-            try:
-                r = requests.get(LtcAddressChecker.CHAIN_SO + address)
-                # WARNING: chain.so API give 5request/sec for free
-            except requests.exceptions.ConnectionError:
-                sleep(1)
-                exception_raised = True
-            if not exception_raised:
-                break
-        resp = r.text
+        r = safe_requests_get(LtcAddressChecker.CHAIN_SO + address,
+                              jsoncheck=True, max_retries=10,
+                              jsonerror_pause=4)
+        if r is None:
+            logging.warning(address + " Keep the result because the API is" +
+                            "temporary not available")
+            return True
+
         try:
-            jsonResp = json.loads(resp)
+            jsonResp = json.loads(r.text)
             if (jsonResp[LtcAddressChecker.STATUS] ==
                     LtcAddressChecker.SUCCESS):
                 return (jsonResp[LtcAddressChecker.DATA]
@@ -57,17 +55,11 @@ class LtcAddressChecker(AbsAddressChecker):
         return False
 
     def get_status(self, address: str) -> int:
-        r = None
-        while True:
-            exception_raised = False
-            try:
-                r = requests.get(LtcAddressChecker.CHAIN_SO_TXS_NUM + address)
-                # WARNING: chain.so API give 5request/sec for free
-            except requests.exceptions.ConnectionError:
-                sleep(1)
-                exception_raised = True
-            if not exception_raised:
-                break
+        query = LtcAddressChecker.CHAIN_SO_TXS_NUM + address
+        r = safe_requests_get(query, jsoncheck=True, max_retries=10,
+                              jsonerror_pause=4)
+        if r is None:
+            return 0
         resp = r.text
         try:
             json_response = json.loads(resp)
