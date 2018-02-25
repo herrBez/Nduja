@@ -22,6 +22,8 @@ class BtcAddressChecker(AbsAddressChecker):
     def address_valid(self, bc):
         """Checks if the string passed could be a valid address for a bitcoin
         wallet"""
+        if "I" in bc or "l" in bc or "O" in bc or "0" in bc:
+            return False
         try:
             bcbytes = BtcAddressChecker.decode_base58(bc, 25)
             return bcbytes[-4:] == \
