@@ -74,12 +74,12 @@ class DogeAddressChecker(AbsAddressChecker):
             try:
                 inputs = json_response["data"]["inputs"]
             except KeyError:
-                print()
+                pass
 
             try:
                 outputs = json_response["data"]["outputs"]
             except KeyError:
-                print()
+                pass
 
             return 1 if len(inputs) > 0 or len(outputs) > 0 else 0
         except ValueError:
