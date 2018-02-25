@@ -1,3 +1,6 @@
+from typing import List
+from typing import Any
+
 import json
 import requests
 from time import sleep
@@ -8,6 +11,7 @@ class LtcAddressChecker(AbsAddressChecker):
     """Litecoin Address Checker"""
 
     CHAIN_SO = "https://chain.so/api/v2/is_address_valid/LTC/"
+    CHAIN_SO_TXS_NUM = "https://chain.so/api/v2/get_tx/LTC/"
     STATUS = "status"
     SUCCESS = "success"
     DATA = "data"
@@ -49,3 +53,35 @@ class LtcAddressChecker(AbsAddressChecker):
         if self.address_valid(address):
             return LtcAddressChecker.address_search(address)
         return False
+
+    def get_status(self, address: str) -> int:
+        r = None
+        while True:
+            exception_raised = False
+            try:
+                r = requests.get(LtcAddressChecker.CHAIN_SO_TXS_NUM + address)
+                # WARNING: chain.so API give 5request/sec for free
+            except requests.exceptions.ConnectionError:
+                sleep(1)
+                exception_raised = True
+            if not exception_raised:
+                break
+        resp = r.text
+        try:
+            json_response = json.loads(resp)
+            inputs = []  # type: List[Any]
+            outputs = []  # type: List[Any]
+
+            try:
+                inputs = json_response["data"]["inputs"]
+            except KeyError:
+                print()
+
+            try:
+                outputs = json_response["data"]["outputs"]
+            except KeyError:
+                print()
+
+            return 1 if len(inputs) > 0 or len(outputs) > 0 else 0
+        except ValueError:
+            return 0

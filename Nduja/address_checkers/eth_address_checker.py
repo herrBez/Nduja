@@ -1,4 +1,5 @@
 from typing import List
+from typing import Any
 
 from address_checkers.abs_address_checker import AbsAddressChecker
 import requests
@@ -6,6 +7,8 @@ import json
 from time import sleep
 from requests import Response
 import logging
+from web3 import Web3
+
 
 class EthAddressChecker(AbsAddressChecker):
     """Ethereum address checker"""
@@ -27,9 +30,6 @@ class EthAddressChecker(AbsAddressChecker):
         EthAddressChecker.token_index = ((EthAddressChecker.token_index + 1) %
                                          len(EthAddressChecker.token))
         return url
-
-    def address_check(self, address: str) -> bool:
-        return False
 
     @staticmethod
     def address_search(address: str) -> bool:
@@ -80,7 +80,13 @@ class EthAddressChecker(AbsAddressChecker):
 
         return json_resp["message"] == "OK"
 
-    def address_valid(self, address: str) -> bool:
+    def address_valid(selfself, address: str) -> bool:
+        return Web3.isAddress(address)
+
+    def address_check(self, address: str) -> bool:
         """Check if addr is a valid Ethereum address using web3"""
-        return EthAddressChecker.address_search(address) and \
-            not EthAddressChecker.is_contract(address)
+        if self.address_valid(address):
+            return EthAddressChecker.address_search(address) and \
+                not EthAddressChecker.is_contract(address)
+        else:
+            return False

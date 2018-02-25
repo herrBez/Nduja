@@ -12,3 +12,6 @@ class XmrAddressChecker(AbsAddressChecker):
 
     def address_valid(self, address: str) -> bool:
         return address.startswith("4") and len(address) == 95
+
+    def get_status(self, address: str):
+        return 0

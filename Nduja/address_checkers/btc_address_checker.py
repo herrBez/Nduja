@@ -30,23 +30,33 @@ class BtcAddressChecker(AbsAddressChecker):
             return False
 
     @staticmethod
-    def address_search(address):
+    def address_search(address: str):
         """Checks if the bitcoin address exists"""
         r = requests.get(BtcAddressChecker.BITCOIN_INFO + address)
-        resp = r.text
+        resp_txt = r.text
         try:
-            resp = json.loads(resp)
-            n_tx = resp["n_tx"]
+            resp = json.loads(resp_txt)
+            n_tx = resp["n_tx"]  # type: int
             return n_tx > 0
         except ValueError:
             return False
 
-    def address_check(self, address):
+    def address_check(self, address: str) -> bool:
         """Check if the bitcoin address is valid and exists"""
         if self.address_valid(address):
             return BtcAddressChecker.address_search(address)
         else:
             return False
+
+    def get_status(self, address: str) -> int:
+        r = requests.get(BtcAddressChecker.BITCOIN_INFO + address)
+        resp_txt = r.text
+        try:
+            resp = json.loads(resp_txt)
+            n_tx = resp["n_tx"]  # type: int
+            return 1 if n_tx > 0 else 0
+        except ValueError:
+            return 0
 
 # Usage example
 # c = BtcAddressChecker()
