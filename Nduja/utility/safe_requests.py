@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any, Dict
 
 import requests
 from requests import Response
@@ -10,7 +10,8 @@ import json
 def safe_requests_get(query: str, token: Optional[str] = None,
                       timeout: int = 120, max_retries: int = 10,
                       jsoncheck: bool = False,
-                      jsonerror_pause: int = 5) -> \
+                      jsonerror_pause: int = 5,
+                      params: Dict[str, Any] = None) -> \
         Optional[Response]:
     retries = 0
     response = None  # type: Optional[Response]
@@ -27,6 +28,7 @@ def safe_requests_get(query: str, token: Optional[str] = None,
             response = requests.get(query,
                                     headers=headers,
                                     timeout=timeout,
+                                    params=params
                                     )
             if jsoncheck:
                 json.loads(response.text)
