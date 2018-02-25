@@ -9,7 +9,8 @@ import json
 
 def safe_requests_get(query: str, token: Optional[str] = None,
                       timeout: int = 120, max_retries: int = 10,
-                      jsoncheck: bool = False) -> \
+                      jsoncheck: bool = False,
+                      jsonerror_pause: int = 5) -> \
         Optional[Response]:
     retries = 0
     response = None  # type: Optional[Response]
@@ -34,6 +35,10 @@ def safe_requests_get(query: str, token: Optional[str] = None,
             retries += 1
             response = None
             sleep(2)
+        except ValueError:
+            retries += 1
+            response = None
+            sleep(jsonerror_pause)
         except Exception:
             retries += 1
             response = None

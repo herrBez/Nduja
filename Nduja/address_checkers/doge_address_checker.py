@@ -24,7 +24,8 @@ class DogeAddressChecker(AbsAddressChecker):
 
 
         r = safe_requests_get(DogeAddressChecker.CHAIN_SO + address,
-                              jsoncheck=True, max_retries=10)
+                              jsoncheck=True, max_retries=10,
+                              jsonerror_pause=4)
         if r is None:
             logging.warning(address + " Keep the result because the API is" +
                                       "temporary not available")
