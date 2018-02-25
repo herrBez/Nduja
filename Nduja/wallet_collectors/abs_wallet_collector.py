@@ -1,22 +1,22 @@
 from abc import ABCMeta, abstractmethod
 import json
-# N.B. According to this issue we should import grequests before! requests
-# otherwise grequets does not work
-# https://github.com/kennethreitz/grequests/issues/103
-import grequests
 import requests
 from requests import Response
 from functools import reduce
 import traceback
-import sys
 import logging
 
 from typing import Any
 from typing import Optional
+from typing import List
+from typing import Dict
 
 from typing import TypeVar
 
-from utility.pattern import *
+from utility.pattern import Pattern
+from utility.pattern import match_personal_website
+from utility.pattern import match_email
+from utility.print_utility import escape_utf8
 
 T = TypeVar('T')
 
@@ -36,7 +36,7 @@ class AbsWalletCollector:
 
     def __init__(self, format_file: str) -> None:
         self._format_object = json.loads(open(format_file).read())
-        self._patterns = list(map(lambda f: Pattern(f), self._format_object))
+        self._patterns = [Pattern(f) for f in self._format_object]
 
     @property
     def patterns(self) -> List[Pattern]:
@@ -99,12 +99,13 @@ class AbsWalletCollector:
 
             if contents[i] != "":
                 try:
-                    print("**********************")
-                    print(contents[i])
-                    print("**********************")
+                    logging.debug("%s\n%s\n%s\n",
+                                  "***",
+                                  escape_utf8(contents[i]),
+                                  "***")
                     emails = match_email(contents[i])
                     websites = match_personal_website(contents[i])
-                    
+
                     # Retrieve the list of matches
                     match_list = \
                         flatten(
@@ -130,12 +131,11 @@ class AbsWalletCollector:
                         final_result.append(element)
 
                 except Exception:
-                    logging.error("Error on: " + str(traceback.format_exc()))
+                    logging.error("Error on: %s", str(traceback.format_exc()))
             else:
-                logging.warning("content[" + str(i) + "] empty")
+                logging.warning("content[%d] empty", i)
 
-            logging.debug(str(i) + "/" + str(len(contents))
-                          + " elements processed.")
+            logging.debug("%d/%d elements processed", i+1, len(contents))
 
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
 

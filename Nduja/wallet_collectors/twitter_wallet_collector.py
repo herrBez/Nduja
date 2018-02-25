@@ -122,7 +122,7 @@ class TwitterWalletCollector(AbsWalletCollector):
                          + query_filter
                          )
                 queries.append(query)
-        print(queries)
+        logging.debug("%s", queries)
         return queries
 
     @staticmethod

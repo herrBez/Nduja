@@ -41,7 +41,7 @@ class DogeAddressChecker(AbsAddressChecker):
         return True
 
     def address_valid(self, address: str) -> bool:
-        return len(address) == 33 and address.startswith("D")
+        return len(address) == 34 and address.startswith("D")
 
     def address_check(self, address: str) -> bool:
         """Check if a Doge address is valid"""
