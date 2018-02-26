@@ -80,7 +80,7 @@ class DbManager:
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
                 VALUES (?,?,?,?)''', (str(name), str(website),
-                                      str(email), str(json),))
+                                      str(email), str([json]),))
         except Error:
             traceback.print_exc()
             return -1
@@ -145,7 +145,7 @@ class DbManager:
                         host: str, username: str, url: str):
 
         self.insert_wallet(address, currency, status)
-        info = self.insert_information(name, website, email, json)  # type: int
+        info = self.insert_information(name, website, email, str([json]))  # type: int
         acc = self.insert_account(host, username, info)
         self.insert_account_wallet(acc, address, url)
         return acc
@@ -205,6 +205,18 @@ class DbManager:
         accounts = []
         try:
             c.execute('''SELECT * FROM Wallet WHERE Status<0''')
+            for row in c:
+                accounts.append(Wallet(row[0], row[1], None, row[2]))
+        except Error:
+            traceback.print_exc()
+        return accounts
+
+    def get_all_known_wallets_by_currency(self, currency: str) -> List[Wallet]:
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT * FROM Wallet WHERE Status<0 AND Currency=(?)''',
+                      (currency,))
             for row in c:
                 accounts.append(Wallet(row[0], row[1], None, row[2]))
         except Error:

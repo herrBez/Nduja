@@ -175,7 +175,7 @@ def get_epoch() -> int:
 
 
 def main2() -> None:
-    DbManager.set_db_file_name("nduja.db")
+    DbManager.set_db_file_name("nduja_cleaned_wc.db")
 
     epoch = get_epoch()
 
@@ -186,10 +186,10 @@ def main2() -> None:
 
     db.init_connection()
 
-    black_list = [w for w in db.get_all_known_wallets()]
+    black_list = [w for w in db.get_all_known_wallets_by_currency("LTC")]
 
     clusters = [Cluster([w], [], db.find_accounts_by_wallet(w))
-                for w in db.get_all_wallets_by_currency("BTC")
+                for w in db.get_all_wallets_by_currency("LTC")
                 if w not in black_list]
 
     black_list_cluster = Cluster(black_list, [], [99999])
