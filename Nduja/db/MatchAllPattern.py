@@ -51,8 +51,8 @@ def match_all_pattern(format_file, db_name, config_file_path):
     DbManager.set_config_file(format_file)
     DbManager.set_db_file_name(db_name)
 
-    with open(config_file_path, "r") as config_file_path:
-        EthAddressChecker.set_token(config_file_path["tokens"]["etherscan"])
+    with open(config_file_path, "r") as config_file:
+        EthAddressChecker.set_token(json.loads(config_file.read())["tokens"]["etherscan"])
 
     format_object = json.loads(open(format_file).read())
     patterns = [Pattern(f) for f in format_object]
@@ -103,6 +103,7 @@ def match_all_pattern(format_file, db_name, config_file_path):
 
 
                             try:
+                                # if success = false --> it was already inserted
                                 success = insert_wallet(mydbcursor,
                                                         w,
                                                         s,
