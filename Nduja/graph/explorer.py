@@ -186,10 +186,10 @@ def main2() -> None:
 
     db.init_connection()
 
-    black_list = [w for w in db.get_all_known_wallets_by_currency("LTC")]
+    black_list = [w for w in db.get_all_known_wallets_by_currency("BTC")]
 
     clusters = [Cluster([w], [], db.find_accounts_by_wallet(w))
-                for w in db.get_all_wallets_by_currency("LTC")
+                for w in db.get_all_wallets_by_currency("BTC")
                 if w not in black_list]
 
     black_list_cluster = Cluster(black_list, [], [99999])
