@@ -1,10 +1,15 @@
+"""Module for parsing search results"""
+from typing import List, Callable, Dict, Any
+
 import json
+
 from db.db_manager import DbManager
 from address_checkers.abs_address_checker import AbsAddressChecker
-from typing import List, Callable, Dict, Any
 
 
 class Parser:
+    """Parser class"""
+
     dbManager = None
     SYMBOLS = "symbol"
     WALLETS = "wallet_list"
@@ -19,23 +24,26 @@ class Parser:
         Parser.dbManager = DbManager.get_instance()
 
     def parse_string(self, string: str) -> None:
+        """Method to parsing result if passed as string"""
         return Parser.parse(json.loads(string))
 
     def parse_file(self, path: str) -> None:
+        """Method to parsing result if passed as file"""
         return Parser.parse(json.load(open(path)))
 
     @staticmethod
     def parse(results: Dict[str, Any]) -> None:
+        """Method to parse search results"""
         for res in results[Parser.RESULTS]:
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
             account_id = None
             Parser.dbManager.init_connection()
             for i in range(0, len(symbols)):
-                s = symbols[i]
-                w = wallets[i]
-                checker = Parser.retrieve_checker(s)
-                if checker.address_valid(w):
+                sym = symbols[i]
+                wal = wallets[i]
+                checker = Parser.retrieve_checker(sym)
+                if checker.address_valid(wal):
                     if account_id is None:
                         account_id = (Parser.dbManager.
                                       find_account(res[Parser.HOST],
@@ -44,11 +52,11 @@ class Parser:
                             account_id = Parser.dbManager.insert_account_no_info(
                                 res[Parser.HOST],
                                 res[Parser.USERNAME])
-                    if not Parser.dbManager.find_wallet(w):
-                        if checker.address_check(w):
-                            status = checker.get_status(w)
+                    if not Parser.dbManager.find_wallet(wal):
+                        if checker.address_check(wal):
+                            status = checker.get_status(wal)
                             (Parser.dbManager.
-                             insert_wallet_with_account(w, s, status,
+                             insert_wallet_with_account(wal, sym, status,
                                                         account_id,
                                                         res[Parser.URL]))
             Parser.dbManager.save_changes()
@@ -56,6 +64,7 @@ class Parser:
     @staticmethod
     def valid_wallets(wallets: List[str],
                       checker: AbsAddressChecker) -> List[str]:
+        """Return a list of valid addresses from the list passed as argument"""
         valid_wallets = []
         for wallet in wallets:
             if checker.address_valid(wallet):
@@ -64,18 +73,20 @@ class Parser:
 
     @staticmethod
     def retrieve_checker(currency: str) -> AbsAddressChecker:
+        """Retrieve the right checker given a currency"""
         if currency in Parser.CURRENCIES:
             return Parser.get_class('address_checkers.' +
-                                  currency.lower() + "_address_checker." +
-                                  currency.lower().title() + "AddressChecker")()
-        else:
-            return None
+                                    currency.lower() + "_address_checker." +
+                                    currency.lower().title() +
+                                    "AddressChecker")()
+        return None
 
     @staticmethod
     def get_class(name) -> Callable:
+        """Retrieve the class of the checker of a certain currency"""
         parts = name.split('.')
         module = ".".join(parts[:-1])
-        m = __import__(module)
+        mod = __import__(module)
         for comp in parts[1:]:
-            m = getattr(m, comp)
-        return m
+            mod = getattr(mod, comp)
+        return mod
