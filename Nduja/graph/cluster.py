@@ -4,8 +4,7 @@ from typing import Any
 from typing import List
 
 from dao.wallet import Wallet
-
-from graph.BitcoinTransactionRetriever import BtcTransactionRetriever
+from graph.abs_transaction_retriever import AbsTransactionRetriever
 
 
 class Cluster:
@@ -15,6 +14,7 @@ class Cluster:
 
     def __init__(self,
                  addresses: Iterable[Wallet],
+                 transaction_retriever: AbsTransactionRetriever,
                  inferred_addresses: Iterable[Wallet] = [],
                  ids: Iterable[int] = [-1]) -> None:
         self._original_addresses = set(addresses)
@@ -25,6 +25,7 @@ class Cluster:
         self.accounts = []  # type: List[int]
         self._belongs_to_blacklist = False
         self._ids = set(ids)
+        self._transaction_retriever = transaction_retriever
 
     @property
     def ids(self):
@@ -77,9 +78,6 @@ class Cluster:
         only once. Indeed it requires a time proportional to the number
         of inferred addresses * their transactions"""
         if not self.filled:
-
-            btc_transaction_retriever = BtcTransactionRetriever()
-
             stack = set([])
             tmp_black_list = []
             for saddr in self.inferred_addresses:
@@ -95,7 +93,7 @@ class Cluster:
                     return False
 
                 tmp_black_list.append(elem)
-                a, b, siblings = btc_transaction_retriever. \
+                a, b, siblings = self._transaction_retriever. \
                     get_input_output_addresses(elem.address)
                 for s in siblings:
                     w = Wallet(s, "BTC", "", 1, True)
