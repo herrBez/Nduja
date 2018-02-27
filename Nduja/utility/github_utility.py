@@ -1,30 +1,29 @@
-import sys
-import datetime
+"""Module for utility function to use github API"""
 from typing import Optional
 
-import requests
+import logging
+import datetime
+from time import sleep
+import pause
 
 from requests import Response
-from requests.exceptions import ReadTimeout
-import logging
-import pause
+
 from utility.print_utility import print_json
 from utility.safe_requests import safe_requests_get
-from time import sleep
-
-from utility.safe_requests import safe_requests_get
 
 
-def perform_github_request(query: str, token: str, max_retries: int= 5) \
+def perform_github_request(query: str, token: str, max_retries: int = 5) \
         -> Optional[Response]:
+    """Perform requests using github API"""
     is_valid = False
     while not is_valid:
         is_valid = True
 
-        response = safe_requests_get(query, token, 5, jsoncheck=True)
+        response = safe_requests_get(query, token, 5, jsoncheck=True,
+                                     max_retries=max_retries)
 
         if response is not None:
-            if response.status_code == requests.codes.forbidden:
+            if response.status_code == 403:
                 retry_after = int(dict(response.headers)["Retry-After"])
                 sleep(retry_after + 1)
                 is_valid = False
