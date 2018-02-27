@@ -1,3 +1,4 @@
+"""Module that contains abstract base class for address checkers"""
 from abc import ABCMeta, abstractmethod
 
 

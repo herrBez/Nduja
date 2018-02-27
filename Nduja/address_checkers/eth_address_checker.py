@@ -1,15 +1,16 @@
-from typing import List
-from typing import Any
+"""Module for checking Ethereum addresses"""
+from typing import List, Any
 
-from address_checkers.abs_address_checker import AbsAddressChecker
-import requests
+import logging
 import json
 from time import sleep
-from requests import Response
-import logging
 
-from utility.safe_requests import safe_requests_get
+import requests
+from requests import Response
 from web3 import Web3
+
+from address_checkers.abs_address_checker import AbsAddressChecker
+from utility.safe_requests import safe_requests_get
 
 
 class EthAddressChecker(AbsAddressChecker):
@@ -23,6 +24,7 @@ class EthAddressChecker(AbsAddressChecker):
 
     @staticmethod
     def get_next_token() -> str:
+        """Return the next token that can be used to perform a request"""
         token = EthAddressChecker.token[EthAddressChecker.token_index]
         EthAddressChecker.token_index = ((EthAddressChecker.token_index + 1) %
                                          len(EthAddressChecker.token))
@@ -30,27 +32,30 @@ class EthAddressChecker(AbsAddressChecker):
 
     @staticmethod
     def set_token(token: List[str]):
+        """Set list of tokens that can be used to perform requests"""
         EthAddressChecker.token = token
 
     @staticmethod
     def create_url(address: str) -> str:
+        """Create the request to be performed"""
         url = (EthAddressChecker.P1 + address + EthAddressChecker.P2 +
                EthAddressChecker.get_next_token())
         return url
 
     @staticmethod
     def address_search(address: str) -> bool:
-        r = Response()
+        """Search the address in the blockchain to verify its validity"""
+        response = Response()
         while True:
             exception_raised = False
             try:
-                r = requests.get(EthAddressChecker.create_url(address))
+                response = requests.get(EthAddressChecker.create_url(address))
             except requests.exceptions.ConnectionError:
                 sleep(1)
                 exception_raised = True
             if not exception_raised:
                 break
-        resp = r.text
+        resp = response.text
         try:
             json_resp = json.loads(resp)
             return len(json_resp[EthAddressChecker.RESULT]) > 0
@@ -68,9 +73,7 @@ class EthAddressChecker(AbsAddressChecker):
         payload = {'module': 'contract',
                    'action': 'getabi',
                    'address': address,
-                   'apikey':
-                       EthAddressChecker.get_next_token()
-                   }
+                   'apikey': EthAddressChecker.get_next_token()}
 
         while True:
             exception_raised = False
@@ -87,7 +90,8 @@ class EthAddressChecker(AbsAddressChecker):
 
         return json_resp["message"] == "OK"
 
-    def address_valid(selfself, address: str) -> bool:
+    def address_valid(self, address: str) -> bool:
+        """Check locally if the address has a valid format"""
         return Web3.isAddress(address)
 
     def address_check(self, address: str) -> bool:
@@ -95,32 +99,30 @@ class EthAddressChecker(AbsAddressChecker):
         if self.address_valid(address):
             return EthAddressChecker.address_search(address) and \
                 not EthAddressChecker.is_contract(address)
-        else:
-            return False
+        return False
 
     def get_status(self, address: str) -> int:
+        """Return 1 if the address is used in some transaction, 0 otherwise"""
         base_url = 'https://api.etherscan.io/api?'
 
         payload = {'module': 'account',
                    'action': 'txlist',
                    'address': address,
-                   'apikey':
-                       EthAddressChecker.get_next_token()
-                   }
-        r = safe_requests_get(query=base_url,
-                              token=None,
-                              jsoncheck=True,
-                              params=payload)
+                   'apikey': EthAddressChecker.get_next_token()}
 
-        if r is None:
+        response = safe_requests_get(query=base_url,
+                                     token=None,
+                                     jsoncheck=True,
+                                     params=payload)
+
+        if response is None:
             logging.warning("The ethereum api is currently not available" +
                             " let's remain safe and returns 1")
             return 1
 
-        else:
-            resp = json.loads(r.text)
+        resp = json.loads(response.text)
 
-            txs = resp["result"]  # type: Any
-            for t in txs: # if it has at least one element return True
-                return 1
-            return 0
+        txs = resp["result"]  # type: Any
+        if txs:
+            return 1
+        return 0

@@ -1,3 +1,4 @@
+"""Module for checking Litecoin addresses"""
 from address_checkers.abs_address_checker import AbsAddressChecker
 
 

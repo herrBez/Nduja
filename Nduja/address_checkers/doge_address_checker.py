@@ -1,3 +1,4 @@
+"""Module for checking Dogecoin addresses"""
 from address_checkers.chainso_address_checker import ChainSoAddressChecker
 
 
