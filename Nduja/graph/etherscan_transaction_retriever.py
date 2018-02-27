@@ -6,17 +6,18 @@
 # d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
 import logging
 from time import sleep
-from typing import Dict
+from typing import Dict, Optional
 from typing import List
 from typing import Any
 from typing import Tuple
 
 import json
 import requests
+from graph.abs_transaction_retriever import AbsTransactionRetriever
 from utility.safe_requests import safe_requests_get
 
 
-class EtherscanTransactionRetriever:
+class EtherscanTransactionRetriever(AbsTransactionRetriever):
     """This class is responsible for collecting the transactions of a given
     address
     """
@@ -37,7 +38,8 @@ class EtherscanTransactionRetriever:
                                 len(self.tokens))
         return query
 
-    def get_input_output_addresses(self, address: str) -> \
+    def get_input_output_addresses(self, address: str,
+                                   timestamp: Optional[int] = None) -> \
             Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
         """Given an address it returns ALL transactions performed
         by the address"""
