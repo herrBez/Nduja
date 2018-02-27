@@ -217,12 +217,18 @@ def main2(argv: List[str]) -> None:
     black_list_cluster = Cluster(black_list, transaction_retriever, [], [99999])
 
     db.close_db()
-    print("qui ci siamo")
 
+    logging.info("Starting the fill cluster function")
+    length = len(clusters)
+
+    times = 0
     for cluster in clusters:
+        logging.info("Percentage: %.2f", times*100/length)
         cluster.fill_cluster(black_list_cluster)
-        print(list(cluster.inferred_addresses))
+        times += 1
+        # print(list(cluster.inferred_addresses))
     print("Filled")
+    del times
 
     clusters = [cluster for cluster in clusters
                 if not cluster.belongsToBlackList]
@@ -262,5 +268,5 @@ def main2(argv: List[str]) -> None:
     print("Done")
 
 if __name__ == "__main__":
-
+    logging.basicConfig(level=logging.INFO)
     main2(sys.argv)
