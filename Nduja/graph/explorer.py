@@ -190,7 +190,7 @@ def get_retriever_by_currency(currency: str) -> AbsTransactionRetriever:
     }[currency]
 
 
-def main2(argv: Iterable[str]) -> None:
+def main2(argv: List[str]) -> None:
     """
         Requires 2 arguments:
          - first -> db name
