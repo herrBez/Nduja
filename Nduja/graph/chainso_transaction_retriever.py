@@ -46,6 +46,20 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
                 sleep(1)
         return resp
 
+    @staticmethod
+    def retrieve_transaction(query: str, timestamp: int) -> Optional[Set[str]]:
+        r = safe_requests_get(query=query, token=None, timeout=30,
+                              jsoncheck=True)
+        resp = ChainSoTransactionRetriever.manage_response(query, r)
+        if resp is None:
+            return None
+        txs = resp["data"]["txs"]  # type: Any
+        txid_set = set(
+            [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
+            # type: Set[str]
+        sleep(1)
+        return txid_set
+
     def get_input_output_addresses(self, address: str,
                                    timestamp: Optional[int] = None) \
             -> Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
@@ -60,35 +74,26 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         connected_dict = {}  # type: Dict[str, int]
 
         query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
-        r = safe_requests_get(query=query_input, token=None, timeout=30,
-                              jsoncheck=True)
-        resp = ChainSoTransactionRetriever.manage_response(query_input, r)
-        if resp is None:
-            return inputs_dict, outputs_dict, connected_dict
-        txs = resp["data"]["txs"]  # type: Any
-        in_txid_set = set([str(t["txid"]) for t in txs if t["time"] < timestamp]) \
-        # type: Set[str]
-
-        sleep(1)
+        in_txid_set = ChainSoTransactionRetriever. \
+            retrieve_transaction(query_input, timestamp)
 
         query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
-        r = safe_requests_get(query=query_output, token=None, timeout=30,
-                              jsoncheck=True)
-        resp = ChainSoTransactionRetriever.manage_response(query_input, r)
-        if resp is None:
-            return inputs_dict, outputs_dict, connected_dict
-        txs = resp["data"]["txs"]
-        out_txid_set = set([str(t["txid"]) for t in txs if t["time"] < timestamp]) \
-        # type: Set[str]
+        out_txid_set = ChainSoTransactionRetriever. \
+            retrieve_transaction(query_output, timestamp)
 
-        sleep(1)
+        if in_txid_set is None and out_txid_set is None:
+            return inputs_dict, outputs_dict, connected_dict
+        elif in_txid_set is None:
+            in_txid_set = set([])
+        elif out_txid_set is None:
+            out_txid_set = set([])
 
         txid_set = in_txid_set.union(out_txid_set)
         for txid in txid_set:
             transaction_query = self.CHAIN_SO_TRANSACTION_INFO + str(txid)
             r = safe_requests_get(query=transaction_query, token=None,
                                   timeout=30, jsoncheck=True)
-            resp = ChainSoTransactionRetriever.\
+            resp = ChainSoTransactionRetriever. \
                 manage_response(transaction_query, r)
             if resp is None:
                 return inputs_dict, outputs_dict, connected_dict
