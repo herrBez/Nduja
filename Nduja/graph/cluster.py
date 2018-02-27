@@ -85,8 +85,9 @@ class Cluster:
 
             while len(stack) > 0:
                 elem = stack.pop()
-                self.add_inferred_address(elem)
-                if elem is black_list.inferred_addresses:
+                self.add_inferred_address(elem)                    
+                    
+                if elem is in black_list.inferred_addresses:
                     black_list.merge(self)
                     self.filled = True
                     self._belongs_to_blacklist = True

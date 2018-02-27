@@ -1,10 +1,10 @@
-import json
-from abc import ABCMeta, abstractmethod
+"""Module that gives abstract class for checking addresses using Chain.so API"""
 import logging
 from time import sleep
+import json
+from abc import ABCMeta, abstractmethod
 
 from address_checkers.abs_address_checker import AbsAddressChecker
-from typing import List, Any
 from utility.safe_requests import safe_requests_get
 
 
@@ -23,34 +23,40 @@ class ChainSoAddressChecker(AbsAddressChecker):
 
     @abstractmethod
     def is_valid_address_url(self) -> str:
+        """Abstract method that returns the URL for checking if an address
+        is valid"""
         pass
 
     @abstractmethod
     def get_spent_txs_url(self) -> str:
+        """Abstract method that returns the URL for retrieving spent
+        transactions"""
         pass
 
     @abstractmethod
     def get_received_txs_url(self) -> str:
+        """Abstract method that returns the URL for retrieving received
+        transactions"""
         pass
 
     def address_search(self, address: str) -> bool:
         """Use chain.so API to check if an address is valid"""
-        r = safe_requests_get(self.is_valid_address_url() + address,
-                              jsoncheck=True, max_retries=10,
-                              jsonerror_pause=4)
-        if r is None:
-            logging.warning(address + " Keep the result because the API is" +
-                            "temporary not available")
+        response = safe_requests_get(self.is_valid_address_url() + address,
+                                     jsoncheck=True, max_retries=10,
+                                     jsonerror_pause=4)
+        if response is None:
+            warn = address + " Keep the result because the API is temporary " \
+                             "not available"
+            logging.warning(warn)
             return True
 
         try:
-            json_response = json.loads(r.text)
+            json_response = json.loads(response.text)
             if (json_response[ChainSoAddressChecker.STATUS] ==
                     ChainSoAddressChecker.SUCCESS):
                 return (json_response[ChainSoAddressChecker.DATA][
                     ChainSoAddressChecker.ISVALID])
-            else:
-                return False
+            return False
         except ValueError:
             sleep(0.5)
             return False
@@ -69,8 +75,9 @@ class ChainSoAddressChecker(AbsAddressChecker):
         r_received = safe_requests_get(query_received, jsoncheck=True,
                                        max_retries=5, jsonerror_pause=7)
         if r_spent is None and r_received is None:
-            logging.warning(address + " Result 0 because the API is" +
-                            "temporary not available")
+            warn = address + " Result 0 because the API is temporary " \
+                             "not available"
+            logging.warning(warn)
             return 0
         elif r_spent is None:
             logging.warning(address + " the API is temporary not available " +
@@ -99,6 +106,6 @@ class ChainSoAddressChecker(AbsAddressChecker):
                 except KeyError:
                     pass
 
-            return 1 if len(inputs) > 0 or len(outputs) > 0 else 0
+            return 1 if inputs or outputs else 0
         except ValueError:
             return 0

@@ -1,13 +1,5 @@
-from typing import List
-from typing import Any
-
-import logging
-import json
-import requests
-from time import sleep
-from address_checkers.abs_address_checker import AbsAddressChecker
+"""Module for checking Litecoin addresses"""
 from address_checkers.chainso_address_checker import ChainSoAddressChecker
-from utility.safe_requests import safe_requests_get
 
 
 class LtcAddressChecker(ChainSoAddressChecker):
