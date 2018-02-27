@@ -4,6 +4,7 @@ from typing import Set
 from typing import Tuple
 from typing import Dict
 from typing import Any
+from typing import Iterable
 import time
 
 import sys
@@ -188,17 +189,17 @@ def get_retriever_by_currency(currency: str) -> AbsTransactionRetriever:
     }[currency]
 
 
-def main2() -> None:
+def main2(argv: Iterable[str]) -> None:
     """
         Requires 2 arguments:
          - first -> db name
          - second -> currency (BTC, ETH, LTC, DOGE)
     """
-    DbManager.set_db_file_name(sys.argv[1])
+    DbManager.set_db_file_name(argv[1])
     db = DbManager.get_instance()
     db.init_connection()
 
-    currency = sys.argv[2] if sys.argv[2] in ["BTC", "ETH", "LTC", "DOGE"] \
+    currency = argv[2] if argv[2] in ["BTC", "ETH", "LTC", "DOGE"] \
         else "BTC"
 
     epoch = get_epoch()
@@ -259,5 +260,5 @@ def main2() -> None:
 #    graph.plot()
     print("Done")
 
-
-main2()
+if __name__ == "__main__":
+    main2(sys.argv)
