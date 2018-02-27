@@ -5,6 +5,8 @@ from typing import Dict, Optional, Set, Any, Tuple
 import json
 
 from graph.abs_transaction_retriever import AbsTransactionRetriever
+from requests import Response
+from utility.print_utility import escape_utf8
 from utility.safe_requests import safe_requests_get
 
 
@@ -26,20 +28,21 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
             + '/'
 
     @staticmethod
-    def manage_request(query: str, req: Any) -> Optional[Dict[str, Any]]:
+    def manage_response(query: str, response: Optional[Response]) -> \
+            Optional[Dict[str, Any]]:
         resp = None  # type: Optional[Dict[str, Any]]
-        if req is None:
+        if response is None:
             logging.warning("ChainSoTransactionRetriever " + query
                             + " failed")
         else:
-            raw_response = req.text
+            raw_response = response.text
             try:
                 resp = json.loads(raw_response)
             except json.decoder.JSONDecodeError:
                 print("Response is not a valid JSON")
                 with open('invalid_json.txt', 'a') as the_file:
                     the_file.write(query + "\n")
-                print(u' '.join(req.text).encode('utf-8').strip())
+                print(escape_utf8(response.text))
                 sleep(1)
         return resp
 
@@ -59,7 +62,7 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
         r = safe_requests_get(query=query_input, token=None, timeout=30,
                               jsoncheck=True)
-        resp = ChainSoTransactionRetriever.manage_request(query_input, r)
+        resp = ChainSoTransactionRetriever.manage_response(query_input, r)
         if resp is None:
             return inputs_dict, outputs_dict, connected_dict
         txs = resp["data"]["txs"]  # type: Any
@@ -71,7 +74,7 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
         r = safe_requests_get(query=query_output, token=None, timeout=30,
                               jsoncheck=True)
-        resp = ChainSoTransactionRetriever.manage_request(query_input, r)
+        resp = ChainSoTransactionRetriever.manage_response(query_input, r)
         if resp is None:
             return inputs_dict, outputs_dict, connected_dict
         txs = resp["data"]["txs"]
@@ -86,7 +89,7 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
             r = safe_requests_get(query=transaction_query, token=None,
                                   timeout=30, jsoncheck=True)
             resp = ChainSoTransactionRetriever.\
-                manage_request(transaction_query, r)
+                manage_response(transaction_query, r)
             if resp is None:
                 return inputs_dict, outputs_dict, connected_dict
 
