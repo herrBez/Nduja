@@ -1,5 +1,5 @@
 """Module for checking Ethereum addresses"""
-from typing import List
+from typing import List, Any
 
 import logging
 import json

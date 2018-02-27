@@ -1,4 +1,6 @@
 """Module that gives abstract class for checking addresses using Chain.so API"""
+from typing import Any, List
+
 import logging
 from time import sleep
 import json
