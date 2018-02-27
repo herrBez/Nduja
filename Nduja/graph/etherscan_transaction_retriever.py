@@ -29,6 +29,9 @@ class EtherscanTransactionRetriever(AbsTransactionRetriever):
         self.tokens = tokens
         self.token_index = 0
 
+    def get_currency(self) -> str:
+        return "ETH"
+
     def build_query(self, address: str):
         query = EtherscanTransactionRetriever.ETHERSCAN_INFO + address
         if self.tokens is not None and len(self.tokens) > 0:

@@ -96,7 +96,8 @@ class Cluster:
                 a, b, siblings = self._transaction_retriever. \
                     get_input_output_addresses(elem.address)
                 for s in siblings:
-                    w = Wallet(s, "BTC", "", 1, True)
+                    w = Wallet(s, self._transaction_retriever.get_currency(),
+                               "", 1, True)
                     if w not in black_list.inferred_addresses \
                             and w not in tmp_black_list:
                         stack.add(w)

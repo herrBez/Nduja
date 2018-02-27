@@ -22,6 +22,9 @@ class BtcTransactionRetriever(AbsTransactionRetriever):
 
     BITCOININFO = 'https://blockchain.info/rawaddr/'
 
+    def get_currency(self) -> str:
+        return "BTC"
+
     # def address_search(self, address: str) -> \
     #         Dict[str, Tuple[List[str], List[str]]]:
     #     """Given an address it returns ALL transactions performed

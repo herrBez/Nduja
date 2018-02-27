@@ -19,3 +19,8 @@ class AbsTransactionRetriever:
         """Given an address it returns ALL transactions performed
         by the address"""
         pass
+
+    @abstractmethod
+    def get_currency(self) -> str:
+        """Return the currency of the wallets that it retrieves"""
+        pass

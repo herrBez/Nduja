@@ -17,6 +17,7 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
     CHAIN_SO_TRANSACTION_INFO = 'https://chain.so/api/v2/get_tx/'
 
     def __init__(self, currency: str) -> None:
+        self._currency = currency
         self.CHAIN_SO_INPUT_TRANSACTION = \
             ChainSoTransactionRetriever.CHAIN_SO_INPUT_TRANSACTION + currency \
             + '/'
@@ -26,6 +27,9 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         self.CHAIN_SO_TRANSACTION_INFO = \
             ChainSoTransactionRetriever.CHAIN_SO_TRANSACTION_INFO + currency \
             + '/'
+
+    def get_currency(self) -> str:
+        return self._currency
 
     @staticmethod
     def manage_response(query: str, response: Optional[Response]) -> \
