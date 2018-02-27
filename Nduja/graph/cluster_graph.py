@@ -4,7 +4,7 @@ from typing import Iterable
 from graph_tool.all import *
 
 from graph.cluster import Cluster
-from graph.BitcoinTransactionRetriever import BtcTransactionRetriever
+from graph.bitcoin_transaction_retriever import BtcTransactionRetriever
 
 
 class ClusterGraph:
