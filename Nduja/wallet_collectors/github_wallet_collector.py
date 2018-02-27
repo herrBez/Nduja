@@ -34,13 +34,14 @@ class GithubWalletCollector(AbsWalletCollector):
     def collect_raw_result(self, queries: List[str]) -> List[Dict[str, Any]]:
         raw_results_with_url = []  # type: List[Dict[str, Any]]
 
-
-
         # We proceed sequentially to avoid to be blocked for abuses of
         # api.
         for query in queries:
             response = perform_github_request(query, self.get_next_token())
-
+            if response is None:
+                with open("none_github_response.txt", "a") as out:
+                    out.write(query + "\n")
+                continue
             items = response.json()["items"]
 
             res_urls = []  # type: List[Response]
@@ -75,16 +76,22 @@ class GithubWalletCollector(AbsWalletCollector):
         return raw_results_with_url
 
     def construct_queries(self) -> list:
+        word_list = ["donation", "donate", "donating",
+                     "contribution", "contribute", "contributing"]
+        string_to_search = [p.name for p in self.patterns] + \
+                           [p.symbol for p in self.patterns]
         return [
             "https://api.github.com/search/code?"
             + "q="
-            + pattern.symbol
-            + "+Donation"
+            + s
+            + "+"
+            + word
             + "&page="
             + str(page)
             + "&per_page="
             + str(self.per_page)
-            for pattern in self.patterns
+            for word in word_list
+            for s in string_to_search
             for page in range(1, self.max_page+1)
         ]
 

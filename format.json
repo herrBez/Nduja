@@ -31,7 +31,7 @@
         "name": "dogecoin",
         "symbol": "DOGE",
         "alternative_symbol": " ",
-        "wallet_regexp": "\\b(D[0-9A-Za-z]{33})\\b",
+        "wallet_regexp": "\\b(D[0-9A-Z][0-9A-Za-z]{32})\\b",
         "group": "1"
     }
 ]

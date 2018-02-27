@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 # recursion error due to a bug in grequests (called by twython)
 import grequests
 import requests
-import twython
 from typing import List
 
 from address_checkers.eth_address_checker import EthAddressChecker
@@ -18,15 +17,13 @@ from wallet_collectors.searchcode_wallet_collector \
     import SearchcodeWalletCollector
 from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
 from user_info_retriever.info_retriever import InfoRetriever
-from utility.print_utility import print_json
 
 
 def search_searchcode(formatfile):
     logging.info("Search Code")
     results = (SearchcodeWalletCollector(formatfile)
                .collect_address())
-    Parser().parse_string(results)
-    return "ok searchcode"
+    return results
 
 
 def search_github(formatfile, tokens):
@@ -35,19 +32,16 @@ def search_github(formatfile, tokens):
                                      tokens
                                      )
                .collect_address())
-    print_json(results)
-    logging.info("Finish Search Github")
-    Parser().parse_string(results)
-    return "ok search_github"
+    return results
 
 
 def search_twitter(formatfile, tokens):
     results = (TwitterWalletCollector(formatfile,
                                       tokens)
                .collect_address())
-    Parser().parse_string(results)
 
-    return "ok search_twitter"
+
+    return results
 
 
 def print_help():
@@ -62,12 +56,13 @@ def print_help():
 
 def main(argv: List[str]) -> int:
     """ This is executed when run from the command line """
-    logging.basicConfig(level=logging.DEBUG)
+    logging_level = logging.INFO
     tasks = 0
     configfile = 'conf.json'
     if len(argv) > 0:
         try:
-            opts, args = getopt.getopt(argv, "ht:c:", ["help", "task=", "config="])
+            opts, args = getopt.getopt(argv, "ht:c:d",
+                                       ["help", "task=", "config=", "debug"])
         except getopt.GetoptError:
             print_help()
             sys.exit(2)
@@ -79,29 +74,41 @@ def main(argv: List[str]) -> int:
                 tasks = int(arg)
             elif opt in ("-c", "--config"):
                 configfile = arg
+            elif opt in ("-d", "--debug"):
+                logging_level = logging.DEBUG
     print('Tasks is  ', tasks)
     print('Config is ', configfile)
+    print('Logging is ', logging_level)
+    logging.basicConfig(level=logging_level)
     try:
         config = json.load(open(configfile))
     except FileNotFoundError:
         logging.error("Configuration file not found")
         sys.exit(2)
 
-    DbManager.set_config_file("format.json")
+    DbManager.set_config_file(config["format"])
     DbManager.set_db_file_name(config["dbname"])
     EthAddressChecker.set_token(config["tokens"]["etherscan"])
 
     if tasks in (0, 1):
-        executor = ThreadPoolExecutor(max_workers=4)
-        f1 = executor.submit(search_github, config["format"],
-                             config["tokens"]["github"])
-        f2 = executor.submit(search_twitter, config["format"],
-                             config["tokens"])
-        f3 = executor.submit(search_searchcode, config["format"])
-        print("Let's wait")
-        print(f1.result())
-        print(f2.result())
-        print(f3.result())
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            f1 = executor.submit(search_github, config["format"],
+                                 config["tokens"]["github"])
+
+            f2 = executor.submit(search_searchcode, config["format"])
+
+            f3 = executor.submit(search_twitter, config["format"],
+                                 config["tokens"])
+
+        logging.info("Let's wait")
+
+
+        Parser().parse_string(f1.result())
+        Parser().parse_string(f2.result())
+        Parser().parse_string(f3.result())
+
+
 
     if tasks in (0, 2):
         try:

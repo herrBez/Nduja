@@ -1,22 +1,22 @@
 from abc import ABCMeta, abstractmethod
 import json
-# N.B. According to this issue we should import grequests before! requests
-# otherwise grequets does not work
-# https://github.com/kennethreitz/grequests/issues/103
-import grequests
 import requests
 from requests import Response
 from functools import reduce
 import traceback
-import sys
 import logging
 
 from typing import Any
 from typing import Optional
+from typing import List
+from typing import Dict
 
 from typing import TypeVar
 
-from utility.pattern import *
+from utility.pattern import Pattern
+from utility.pattern import match_personal_website
+from utility.pattern import match_email
+from utility.print_utility import escape_utf8
 
 T = TypeVar('T')
 
@@ -36,7 +36,7 @@ class AbsWalletCollector:
 
     def __init__(self, format_file: str) -> None:
         self._format_object = json.loads(open(format_file).read())
-        self._patterns = list(map(lambda f: Pattern(f), self._format_object))
+        self._patterns = [Pattern(f) for f in self._format_object]
 
     @property
     def patterns(self) -> List[Pattern]:
@@ -55,7 +55,7 @@ class AbsWalletCollector:
             response = requests.get(url, headers=data)
         except requests.exceptions.MissingSchema:
             response = None
-            traceback.print_exc()
+            # traceback.print_exc()
         return response
 
     @abstractmethod
@@ -95,12 +95,17 @@ class AbsWalletCollector:
         logging.debug("Contents extracted")
 
         for i in range(len(contents)):
+            contents[i] = bytes(contents[i], 'utf-8').decode('utf-8', 'ignore')
+
             if contents[i] != "":
                 try:
-                    print(contents[i])
+                    logging.debug("%s\n%s\n%s\n",
+                                  "***",
+                                  escape_utf8(contents[i]),
+                                  "***")
                     emails = match_email(contents[i])
                     websites = match_personal_website(contents[i])
-                    
+
                     # Retrieve the list of matches
                     match_list = \
                         flatten(
@@ -110,7 +115,9 @@ class AbsWalletCollector:
                     # A match was found
                     if len(match_list) > 0:
                         match_list = list(set(match_list))
-                        tmp_list = zip(*match_list)
+                        logging.debug(str(match_list))
+                        tmp_list = list(zip(*match_list))
+                        logging.debug(str(tmp_list))
                         symbol_list = tmp_list[0]
                         wallet_list = tmp_list[1]
 
@@ -124,12 +131,11 @@ class AbsWalletCollector:
                         final_result.append(element)
 
                 except Exception:
-                    logging.error("Error on: " + str(traceback), file=sys.stderr)
+                    logging.error("Error on: %s", str(traceback.format_exc()))
             else:
-                logging.warning("content[" + str(i) + "] empty")
+                logging.warning("content[%d] empty", i)
 
-            logging.debug(str(i) + "/" + str(len(contents))
-                          + " elements processed.")
+            logging.debug("%d/%d elements processed", i+1, len(contents))
 
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
 

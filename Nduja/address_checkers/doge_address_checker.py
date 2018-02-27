@@ -1,50 +1,32 @@
-import json
-import requests
-from time import sleep
-from address_checkers.abs_address_checker import AbsAddressChecker
+"""Module for checking Dogecoin addresses"""
+from address_checkers.chainso_address_checker import ChainSoAddressChecker
 
 
-class DogeAddressChecker(AbsAddressChecker):
+class DogeAddressChecker(ChainSoAddressChecker):
     """Doge address checker"""
 
-    CHAIN_SO = "https://chain.so/api/v2/is_address_valid/DOGE/"
-    STATUS = "status"
-    SUCCESS = "success"
-    DATA = "data"
-    ISVALID = "is_valid"
+    CHAIN_SO = ChainSoAddressChecker.CHAIN_SO + "DOGE/"
+    CHAIN_SO_TXS_RECEIVED_NUM = \
+        ChainSoAddressChecker.CHAIN_SO_TXS_RECEIVED_NUM + "DOGE/"
+    CHAIN_SO_TXS_SPENT_NUM = \
+        ChainSoAddressChecker.CHAIN_SO_TXS_SPENT_NUM + "DOGE/"
 
-    @staticmethod
-    def address_search(address: str) -> bool:
-        """Use chain.so API to check if an address is valid"""
-        r = None
-        while True:
-            exception_raised = False
-            try:
-                r = requests.get(DogeAddressChecker.CHAIN_SO + address)
-                # WARNING: chain.so API give 5request/sec for free
-            except requests.exceptions.ConnectionError:
-                sleep(1)
-                exception_raised = True
-            if not exception_raised:
-                break
-        resp = r.text
-        try:
-            json_response = json.loads(resp)
-            if (json_response[DogeAddressChecker.STATUS] ==
-                    DogeAddressChecker.SUCCESS):
-                return (json_response[DogeAddressChecker.DATA]
-                        [DogeAddressChecker.ISVALID])
-            else:
-                return False
-        except ValueError:
-            return False
-        return True
+    def is_valid_address_url(self) -> str:
+        return DogeAddressChecker.CHAIN_SO
+
+    def get_spent_txs_url(self) -> str:
+        return DogeAddressChecker.CHAIN_SO_TXS_SPENT_NUM
+
+    def get_received_txs_url(self) -> str:
+        return DogeAddressChecker.CHAIN_SO_TXS_RECEIVED_NUM
 
     def address_valid(self, address: str) -> bool:
-        return len(address) == 34 and address.startswith("D")
+        return len(address) == 34 and address.startswith("D") and \
+                "I" not in address and "l" not in address and \
+                "O" not in address and "0" not in address
 
     def address_check(self, address: str) -> bool:
         """Check if a Doge address is valid"""
         if self.address_valid(address):
-            return DogeAddressChecker.address_search(address)
+            return self.address_search(address)
         return False

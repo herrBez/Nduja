@@ -4,7 +4,7 @@ import traceback
 from sqlite3 import Error
 from dao.account import Account
 from dao.wallet import Wallet
-from graph.Cluster import Cluster
+from graph.cluster import Cluster
 from db.db_initializer import DbInitializer
 
 from typing import List, Iterable, Optional
@@ -80,7 +80,7 @@ class DbManager:
         try:
             c.execute('''INSERT INTO Information(Name, Website, Email, Json)
                 VALUES (?,?,?,?)''', (str(name), str(website),
-                                      str(email), str(json),))
+                                      str(email), str([json]),))
         except Error:
             traceback.print_exc()
             return -1
@@ -145,7 +145,7 @@ class DbManager:
                         host: str, username: str, url: str):
 
         self.insert_wallet(address, currency, status)
-        info = self.insert_information(name, website, email, json)  # type: int
+        info = self.insert_information(name, website, email, str([json]))  # type: int
         acc = self.insert_account(host, username, info)
         self.insert_account_wallet(acc, address, url)
         return acc
@@ -211,6 +211,18 @@ class DbManager:
             traceback.print_exc()
         return accounts
 
+    def get_all_known_wallets_by_currency(self, currency: str) -> List[Wallet]:
+        c = self.conn.cursor()
+        accounts = []
+        try:
+            c.execute('''SELECT * FROM Wallet WHERE Status<0 AND Currency=(?)''',
+                      (currency,))
+            for row in c:
+                accounts.append(Wallet(row[0], row[1], None, row[2]))
+        except Error:
+            traceback.print_exc()
+        return accounts
+
     def get_all_inferred_wallets(self) -> List[Wallet]:
         c = self.conn.cursor()
         wallets = []
@@ -242,9 +254,10 @@ class DbManager:
         c = self.conn.cursor()
         for cluster in clusters:
             accounts = set([])
-            for wallet in cluster.original_address:
+            for wallet in cluster.original_addresses:
                 account_related = self.find_accounts_by_wallet(wallet)
                 accounts.update(set(account_related))
+                print(str(wallet))
                 assert len(account_related) > 0
                 assert self.find_wallet(wallet.address)
             first_addr = accounts.pop()

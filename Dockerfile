@@ -20,14 +20,16 @@ RUN apt-get update && \
     apt-get install python3 -y && \
     apt-get install -y python3-graph-tool && \
     apt-get install python3-pip -y && \
-    rm -rf /var/lib/apt/lists/*  && \
+    apt-get install graphviz-dev -y && \
     apt-get remove dirmngr -y && \
+    rm -rf /var/lib/apt/lists/*  && \
     apt-get remove -y && \
     apt-get autoclean -y && \ 
     apt-get autoremove -y
+
     
 RUN mkdir project
-    
+
 VOLUME ["project"]
 COPY requirements.txt ./project
 WORKDIR project/

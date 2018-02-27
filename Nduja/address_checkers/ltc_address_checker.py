@@ -1,51 +1,33 @@
-import json
-import requests
-from time import sleep
-from address_checkers.abs_address_checker import AbsAddressChecker
+"""Module for checking Litecoin addresses"""
+from address_checkers.chainso_address_checker import ChainSoAddressChecker
 
 
-class LtcAddressChecker(AbsAddressChecker):
+class LtcAddressChecker(ChainSoAddressChecker):
     """Litecoin Address Checker"""
 
-    CHAIN_SO = "https://chain.so/api/v2/is_address_valid/LTC/"
-    STATUS = "status"
-    SUCCESS = "success"
-    DATA = "data"
-    ISVALID = "is_valid"
+    CHAIN_SO = ChainSoAddressChecker.CHAIN_SO + "LTC/"
+    CHAIN_SO_TXS_RECEIVED_NUM = \
+        ChainSoAddressChecker.CHAIN_SO_TXS_RECEIVED_NUM + "LTC/"
+    CHAIN_SO_TXS_SPENT_NUM = \
+        ChainSoAddressChecker.CHAIN_SO_TXS_SPENT_NUM + "LTC/"
 
-    @staticmethod
-    def address_search(address: str) -> bool:
-        """Use chain.so API to check if an address is valid"""
-        r = None
-        while True:
-            exception_raised = False
-            try:
-                r = requests.get(LtcAddressChecker.CHAIN_SO + address)
-                # WARNING: chain.so API give 5request/sec for free
-            except requests.exceptions.ConnectionError:
-                sleep(1)
-                exception_raised = True
-            if not exception_raised:
-                break
-        resp = r.text
-        try:
-            jsonResp = json.loads(resp)
-            if (jsonResp[LtcAddressChecker.STATUS] ==
-                    LtcAddressChecker.SUCCESS):
-                return (jsonResp[LtcAddressChecker.DATA]
-                        [LtcAddressChecker.ISVALID])
-            else:
-                return False
-        except ValueError:
-            return False
-        return True
+    def is_valid_address_url(self) -> str:
+        return LtcAddressChecker.CHAIN_SO
+
+    def get_spent_txs_url(self) -> str:
+        return LtcAddressChecker.CHAIN_SO_TXS_SPENT_NUM
+
+    def get_received_txs_url(self) -> str:
+        return LtcAddressChecker.CHAIN_SO_TXS_RECEIVED_NUM
 
     def address_valid(self, address: str) -> bool:
         return ((address.startswith("L") or address.startswith("M")) and
-                26 <= len(address) <= 36)
+                26 <= len(address) <= 36) and \
+                "I" not in address and "l" not in address and \
+                "O" not in address and "0" not in address
 
     def address_check(self, address: str) -> bool:
         """Check if a litecoin address is valid"""
         if self.address_valid(address):
-            return LtcAddressChecker.address_search(address)
+            return self.address_search(address)
         return False

@@ -45,14 +45,12 @@ class Parser:
                                 res[Parser.HOST],
                                 res[Parser.USERNAME])
                     if not Parser.dbManager.find_wallet(w):
-                        status = 0
                         if checker.address_check(w):
-                            status = 1
-                        if s in Parser.NOT_SURE_CHECK:
-                                status = 0
-                        (Parser.dbManager.
-                         insert_wallet_with_account(w, s, status, account_id,
-                                                    res[Parser.URL]))
+                            status = checker.get_status(w)
+                            (Parser.dbManager.
+                             insert_wallet_with_account(w, s, status,
+                                                        account_id,
+                                                        res[Parser.URL]))
             Parser.dbManager.save_changes()
 
     @staticmethod
