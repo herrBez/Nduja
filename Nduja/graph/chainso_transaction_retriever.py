@@ -6,6 +6,7 @@ import json
 
 import logging
 
+import sys
 from graph.abs_transaction_retriever import AbsTransactionRetriever
 from requests import Response
 from utility.print_utility import escape_utf8
@@ -60,10 +61,13 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         if resp is None:
             return None
         
-        logging.debug("%s", query)
-        
-        txs = resp["data"]["txs"]  # type: Any
-    
+        logging.info("%s", query)
+        try:
+            txs = resp["data"]["txs"]  # type: Any
+        except KeyError:
+            logging.error("%s: query %s failed", __file__, query)
+            sys.exit(1)
+
         txid_set = set(
             [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
             # type: Set[str]

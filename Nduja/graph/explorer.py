@@ -16,7 +16,7 @@ from graph.chainso_transaction_retriever import ChainSoTransactionRetriever
 from db.db_manager import DbManager
 # from graph.graph_builder import CurrencyGraph
 from graph.cluster import Cluster
-from graph.cluster_graph import ClusterGraph
+# from graph.cluster_graph import ClusterGraph
 
 
 
@@ -262,5 +262,5 @@ def main2(argv: List[str]) -> None:
     print("Done")
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+
     main2(sys.argv)
