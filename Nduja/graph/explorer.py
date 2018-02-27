@@ -7,6 +7,7 @@ from typing import Any
 from typing import Iterable
 import time
 
+import logging
 import sys
 from dao.wallet import Wallet
 from graph.abs_transaction_retriever import AbsTransactionRetriever
@@ -261,4 +262,5 @@ def main2(argv: Iterable[str]) -> None:
     print("Done")
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main2(sys.argv)

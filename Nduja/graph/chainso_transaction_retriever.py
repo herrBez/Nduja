@@ -4,6 +4,8 @@ from time import sleep
 from typing import Dict, Optional, Set, Any, Tuple
 import json
 
+import logging
+
 from graph.abs_transaction_retriever import AbsTransactionRetriever
 from requests import Response
 from utility.print_utility import escape_utf8
@@ -57,10 +59,16 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         resp = ChainSoTransactionRetriever.manage_response(query, r)
         if resp is None:
             return None
+        
+        logging.debug("%s", query)
+        
         txs = resp["data"]["txs"]  # type: Any
+    
         txid_set = set(
             [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
             # type: Set[str]
+        
+            
         sleep(1)
         return txid_set
 
