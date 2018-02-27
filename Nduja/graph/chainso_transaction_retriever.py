@@ -1,21 +1,18 @@
 import logging
-from asyncio import sleep
+import time
+from time import sleep
 from typing import Dict, Optional, Set, Any, Tuple
 import json
+
+from graph.abs_transaction_retriever import AbsTransactionRetriever
 from utility.safe_requests import safe_requests_get
-import time
 
 
-def get_epoch() -> int:
-    return int(time.time())
-
-
-class ChainSoTransactionRetriever:
+class ChainSoTransactionRetriever(AbsTransactionRetriever):
 
     CHAIN_SO_INPUT_TRANSACTION = 'https://chain.so/api/v2/get_tx_received/'
     CHAIN_SO_OUTPUT_TRANSACTION = 'https://chain.so/api/v2/get_tx_spent/'
     CHAIN_SO_TRANSACTION_INFO = 'https://chain.so/api/v2/get_tx/'
-    timestamp_class = None  # type: Optional[int]
 
     def __init__(self, currency: str) -> None:
         self.CHAIN_SO_INPUT_TRANSACTION = \
@@ -52,7 +49,7 @@ class ChainSoTransactionRetriever:
         """Given an address it returns ALL transactions performed
         by the address"""
 
-        timestamp = ChainSoTransactionRetriever.timestamp_class \
+        timestamp = AbsTransactionRetriever.timestamp_class \
             if timestamp is None else timestamp
 
         inputs_dict = {}  # type: Dict[str, int]
