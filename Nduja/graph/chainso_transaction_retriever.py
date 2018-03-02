@@ -116,26 +116,38 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
             tmp_inputs_list = []
             tmp_outputs_list = []
 
-            for o in resp["data"]["outputs"]:
-                try:
-                    e = o["address"]
-                    tmp_outputs_list.append(e)
-                    out_addr[e] = 1
-                except KeyError:
-                    logging.error("Corrupted content in chain.so api:"
-                                  + "One output address in transaction: "
-                                  + str(txid)
-                                  + " is not valid. Skip this output")
-            for i in resp["data"]["inputs"]:
-                try:
-                    e = i["address"]
-                    tmp_inputs_list.append(e)
-                    in_addr[e] = 1
-                except KeyError:
-                    logging.error("Corrupted content in bitcoin api:"
-                                  + "One input address in transaction: "
-                                  + str(txid)
-                                  + " is not valid. Skip this input")
+            try:
+                for o in resp["data"]["outputs"]:
+                    try:
+                        e = o["address"]
+                        tmp_outputs_list.append(e)
+                        out_addr[e] = 1
+                    except KeyError:
+                        logging.error("Corrupted content in chain.so api:"
+                                        + "One output address in transaction: "
+                                        + str(txid)
+                                        + " is not valid. Skip this output")
+            except KeyError:
+                logging.error("Corrupted content in chain.so api:"
+                              + "One output address in transaction: "
+                              + str(txid)
+                              + " is not valid. Skip this output")
+            try:
+                for i in resp["data"]["inputs"]:
+                    try:
+                        e = i["address"]
+                        tmp_inputs_list.append(e)
+                        in_addr[e] = 1
+                    except KeyError:
+                        logging.error("Corrupted content in bitcoin api:"
+                                      + "One input address in transaction: "
+                                      + str(txid)
+                                      + " is not valid. Skip this input")
+            except KeyError:
+                logging.error("Corrupted content in bitcoin api:"
+                              + "One input address in transaction: "
+                              + str(txid)
+                              + " is not valid. Skip this input")
             if set(tmp_outputs_list).intersection(set(tmp_inputs_list)):
                 with open("suspect_transactions.txt", "a") as myfile:
                     myfile.write("===\n")
