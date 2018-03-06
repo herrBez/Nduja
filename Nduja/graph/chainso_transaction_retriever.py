@@ -64,14 +64,12 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         logging.info("%s", query)
         try:
             txs = resp["data"]["txs"]  # type: Any
+            txid_set = set(
+                [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
+                # type: Set[str]
         except KeyError:
             logging.error("%s: query %s failed", __file__, query)
-            sys.exit(1)
-
-        txid_set = set(
-            [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
-            # type: Set[str]
-        
+            txid_set = set([])
             
         sleep(1)
         return txid_set
