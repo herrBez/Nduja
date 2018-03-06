@@ -87,15 +87,15 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
 
-        query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
-        in_txid_set = ChainSoTransactionRetriever. \
-            retrieve_transaction(query_input, timestamp)
+        # TODO Decomment if input transaction are necessary
+        # query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
+        in_txid_set = None #  type: Optional[Set[Any]]
+        #  ChainSoTransactionRetriever. \
+        #    retrieve_transaction(query_input, timestamp)
 
-        # TODO Decomment if output transaction are necessary
-        # query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
-        out_txid_set = None #  type: Optional[Set[Any]]
-        # ChainSoTransactionRetriever. \
-            # retrieve_transaction(query_output, timestamp)
+        query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
+        out_txid_set =  ChainSoTransactionRetriever. \
+            retrieve_transaction(query_output, timestamp)
 
         if in_txid_set is None and out_txid_set is None:
             return inputs_dict, outputs_dict, connected_dict
