@@ -91,9 +91,10 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         in_txid_set = ChainSoTransactionRetriever. \
             retrieve_transaction(query_input, timestamp)
 
-        query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
-        out_txid_set = ChainSoTransactionRetriever. \
-            retrieve_transaction(query_output, timestamp)
+        # TODO Decomment if output transaction are necessary
+        # query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
+        out_txid_set = None # ChainSoTransactionRetriever. \
+            # retrieve_transaction(query_output, timestamp)
 
         if in_txid_set is None and out_txid_set is None:
             return inputs_dict, outputs_dict, connected_dict
