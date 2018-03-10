@@ -61,7 +61,8 @@ class DbManager:
                                    status: int, account: int, url: str,
                                    inferred: bool = False) -> bool:
         c = self.conn.cursor()
-        int_inferred = 1 if inferred else 0 # type: int
+        int_inferred = 1 if inferred else 0  # type: int
+
         try:
             c.execute('''INSERT INTO Wallet(Address, Currency, Status, Inferred)
                 VALUES (?,?,?,?)''', (str(address), str(currency), status,

@@ -44,6 +44,7 @@ class DbInitializer:
         c.execute('''CREATE TABLE IF NOT EXISTS AccountRelated(
                      Account1 INT,
                      Account2 INT,
+                     UNIQUE(Account1, Account2),
                      FOREIGN KEY (Account1) REFERENCES Account(_id),
                      FOREIGN KEY (Account2) REFERENCES Account(_id)
                      )''')
