@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional
 from typing import Set
 from typing import Any
 from typing import List
@@ -14,7 +14,7 @@ class Cluster:
 
     def __init__(self,
                  addresses: Iterable[Wallet],
-                 transaction_retriever: AbsTransactionRetriever,
+                 transaction_retriever: Optional[AbsTransactionRetriever],
                  inferred_addresses: Iterable[Wallet] = [],
                  ids: Iterable[int] = [-1]) -> None:
         self._original_addresses = set(addresses)
