@@ -230,11 +230,12 @@ def main():
     DbManager.set_config_file("../format.json")
     db = DbManager.get_instance()
     db.init_connection()
-
+    # TODO take currency as input!
     currency = "LTC"
     black_list = [w for w in db.get_all_known_wallets_by_currency(currency)]
     black_list_cluster = Cluster(black_list, None, [], [99999])
 
+    # TODO use all addresses
     wallets = db.get_all_wallets_by_currency(currency)[0:5]
 
     clusters = []
