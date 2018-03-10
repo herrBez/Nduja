@@ -19,6 +19,8 @@ import os
 from graph.cluster import Cluster
 import subprocess
 
+from tqdm import tqdm
+
 
 rpc_port = 2300
 rpc_user = "mirko"
@@ -155,30 +157,33 @@ def stop_server():
     myLogger.debug("Server stopped")
 
 
-# Get the sibling of a single address ^^
-# to achieve better performances -->
-# all_transactions SHOULD NOT CONTAIN DUPLICATES
-def get_sibling(wallet: str,
-                all_transactions: List[Dict]) -> Set[str]:
-    sibling = set([])
-    for j in all_transactions:
-        potential_sibling = set([])
+def pre_elaborate(all_transaction):
+    # Mapping transaction("txid") -> [Input Addresses]
+    transactions = {}
+
+    for j in tqdm(all_transaction):
         x = get_transaction(get_new_rpc_connection(), j["txid"])
-        wallet_is_input = False
+        transactions[j["txid"]] = set([])
         for t in x["vin"]:
             # It is a coinbase transaction
             if "txid" not in t:
                 myLogger.debug("txid not in t")
                 continue
             t1 = get_transaction(get_new_rpc_connection(), t["txid"])
-            addresses = t1["vout"][t["vout"]]["scriptPubKey"]["addresses"]
-            potential_sibling = potential_sibling.union(addresses)
-            if wallet in addresses:
-                wallet_is_input = True
-        if wallet_is_input:
-            sibling = sibling.union(potential_sibling)
-    if wallet in sibling:
-        sibling.remove(wallet)
+
+            transactions[j["txid"]].union(set(t1["vout"][t["vout"]]["scriptPubKey"]["addresses"]))
+    return transactions
+
+# Get the sibling of a single address ^^
+# to achieve better performances -->
+# all_transactions SHOULD NOT CONTAIN DUPLICATES
+def get_sibling(wallet: str,
+                transactions: dict) -> Set[str]:
+    sibling = set([])
+
+    for k in transactions:
+        if wallet in transactions[k]:
+            sibling = sibling.union(transactions[k])
     return sibling
 
 
@@ -245,10 +250,6 @@ def main():
     db_help = DbManager2("prova.sql")
     db_help.init_connection()
 
-    stop_server()
-    start_server(rescan=False)
-
-    myLogger.debug("Server started")
 
     old_sibling = set([])
     new_sibling = set(wallets)
@@ -289,7 +290,7 @@ def main():
         all_transaction = [tx
                            for tx in
                            get_new_rpc_connection().listtransactions("*",
-                                                                     1000000,
+                                                                     10000000,
                                                                      0,
                                                                      True)
                            if tx["time"] < timestamp and
@@ -301,6 +302,10 @@ def main():
         all_transaction = list({tx["txid"]: tx for tx in all_transaction}.values())
 
         logging.debug("all_transaction length After " + str(len(all_transaction)))
+
+        all_transaction = pre_elaborate(all_transaction)
+        # print(all_transaction)
+
 
         for w in old_sibling:
 
