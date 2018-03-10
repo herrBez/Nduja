@@ -359,6 +359,10 @@ def main():
         it += 1
     new_sibling.difference(old_sibling)
     myLogger.info("Exiting normally...")
+    clusters = list(set([wallet2cluster[w] for w in wallet2cluster]))
+    db.insert_cluster(clusters)
+    db.save_changes()
+    db.init_connection()
 
 
 if __name__ == "__main__":
