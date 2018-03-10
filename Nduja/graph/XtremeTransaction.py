@@ -156,31 +156,27 @@ def stop_server():
 
 
 # Get the sibling of a single address ^^
+# to achieve better performances -->
+# all_transactions SHOULD NOT CONTAIN DUPLICATES
 def get_sibling(wallet: str,
-                all_transactions: List[Any]) -> Set[str]:
-    processed_transaction = []
+                all_transactions: List[Dict]) -> Set[str]:
     sibling = set([])
-
-    myLogger.debug("")
     for j in all_transactions:
         potential_sibling = set([])
-
-        if j["txid"] not in processed_transaction:
-            processed_transaction.append(j["txid"])
-            x = get_transaction(get_new_rpc_connection(), j["txid"])
-            wallet_is_input = False
-            for t in x["vin"]:
-                # It is a coinbase transaction
-                if "txid" not in t:
-                    myLogger.debug("txid not in t")
-                    continue
-                t1 = get_transaction(get_new_rpc_connection(), t["txid"])
-                addresses = t1["vout"][t["vout"]]["scriptPubKey"]["addresses"]
-                potential_sibling = potential_sibling.union(addresses)
-                if wallet in addresses:
-                    wallet_is_input = True
-            if wallet_is_input:
-                sibling = sibling.union(potential_sibling)
+        x = get_transaction(get_new_rpc_connection(), j["txid"])
+        wallet_is_input = False
+        for t in x["vin"]:
+            # It is a coinbase transaction
+            if "txid" not in t:
+                myLogger.debug("txid not in t")
+                continue
+            t1 = get_transaction(get_new_rpc_connection(), t["txid"])
+            addresses = t1["vout"][t["vout"]]["scriptPubKey"]["addresses"]
+            potential_sibling = potential_sibling.union(addresses)
+            if wallet in addresses:
+                wallet_is_input = True
+        if wallet_is_input:
+            sibling = sibling.union(potential_sibling)
     if wallet in sibling:
         sibling.remove(wallet)
     return sibling
@@ -287,7 +283,7 @@ def main():
         old_sibling = new_sibling
         new_sibling = set([])
 
-        percentage_step = 1.0/len(old_sibling)
+        percentage_step = 100.0/len(old_sibling)
         percentage = 0
 
         all_transaction = [tx
@@ -300,9 +296,15 @@ def main():
                            "txid" in tx
                            ]
 
+        logging.debug("all_transaction length Before " + str(len(all_transaction)))
+
+        all_transaction = list({tx["txid"]: tx for tx in all_transaction}.values())
+
+        logging.debug("all_transaction length After " + str(len(all_transaction)))
+
         for w in old_sibling:
 
-            myLogger.debug("%d of total %d", percentage, len(old_sibling))
+            myLogger.debug("%0.3f of total %d", percentage, len(old_sibling))
 
             percentage += percentage_step
 
