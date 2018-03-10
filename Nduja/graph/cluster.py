@@ -83,7 +83,7 @@ class Cluster:
             for saddr in self.inferred_addresses:
                 stack.add(saddr)
 
-            while len(stack) > 0:
+            while len(stack) > 0 and len(self.inferred_addresses) < 30:
                 elem = stack.pop()
                 self.add_inferred_address(elem)
                 

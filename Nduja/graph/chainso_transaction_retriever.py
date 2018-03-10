@@ -64,14 +64,12 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         logging.info("%s", query)
         try:
             txs = resp["data"]["txs"]  # type: Any
+            txid_set = set(
+                [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
+                # type: Set[str]
         except KeyError:
             logging.error("%s: query %s failed", __file__, query)
-            sys.exit(1)
-
-        txid_set = set(
-            [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
-            # type: Set[str]
-        
+            txid_set = set([])
             
         sleep(1)
         return txid_set
@@ -89,12 +87,14 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
 
-        query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
-        in_txid_set = ChainSoTransactionRetriever. \
-            retrieve_transaction(query_input, timestamp)
+        # TODO Decomment if input transaction are necessary
+        # query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
+        in_txid_set = None #  type: Optional[Set[Any]]
+        #  ChainSoTransactionRetriever. \
+        #    retrieve_transaction(query_input, timestamp)
 
         query_output = self.CHAIN_SO_OUTPUT_TRANSACTION + address
-        out_txid_set = ChainSoTransactionRetriever. \
+        out_txid_set =  ChainSoTransactionRetriever. \
             retrieve_transaction(query_output, timestamp)
 
         if in_txid_set is None and out_txid_set is None:

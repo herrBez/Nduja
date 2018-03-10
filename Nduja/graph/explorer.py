@@ -223,7 +223,7 @@ def main2(argv: List[str]) -> None:
 
     times = 0
     for cluster in clusters:
-        logging.info("Percentage: %.2f", times*100/length)
+        logging.error("Percentage: %.2f", times*100/length)
         cluster.fill_cluster(black_list_cluster)
         times += 1
         # print(list(cluster.inferred_addresses))
