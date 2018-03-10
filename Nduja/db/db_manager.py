@@ -7,7 +7,7 @@ from dao.wallet import Wallet
 from graph.cluster import Cluster
 from db.db_initializer import DbInitializer
 
-from typing import List, Iterable, Optional
+from typing import List, Iterable, Optional, Set
 
 
 class DbManager:
@@ -278,6 +278,26 @@ class DbManager:
                 for account in accounts:
                     c.execute('''INSERT INTO AccountRelated(Account1, Account2) 
                                  VALUES (?,?)''', (first_addr, account,))
+
+    def retrieve_clusters_by_currency(self, currency: str) -> Iterable[Cluster]:
+        c = self.conn.cursor()
+        c.execute('''SELECT _id FROM Account''')
+        accounts = set([])  # type: Set[int]
+        for row in c:
+            accounts.add(row[0])
+        clusters = set([])  # type: Set[Cluster]
+        for account in accounts:
+            c.execute('''SELECT Wallet.Address, Wallet.Currency, Wallet.Status,
+                         Wallet.Inferred 
+                         FROM AccountWallet INNER JOIN Wallet
+                         WHERE AccountWallet.Wallet = Wallet.Address AND
+                         AccountWallet.Account=(?) AND Wallet.Currency = (?)''',
+                      (account, currency,))
+            wallets = set([])  # type: Set[Wallet]
+            for row in c:
+                wallets.add(Wallet(row[0], row[1], row[2], row[3]))
+            clusters.add(Cluster(wallets, None, wallets, [account]))
+        return clusters
 
 # try:
 #     os.remove('./db.db')
