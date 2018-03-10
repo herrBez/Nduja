@@ -99,7 +99,6 @@ def run(cmd):
 
 def start_server(rescan=True):
     cmdstart = ["litecoind", "-daemon"]
-    cmdcheck = ["/home/mirko/litecoin-0.14.2/bin/litecoin-cli", "getblockcount"]
 
     if is_running():
         stop_server()
@@ -161,17 +160,10 @@ def get_sibling(wallet: str,
                 all_transactions: List[Any]) -> Set[str]:
     processed_transaction = []
     sibling = set([])
-    percentage = 0.0
-    percentage_step = 100/len(all_transactions)
+
+    myLogger.debug("")
     for j in all_transactions:
-
-        myLogger.debug("get_sibling: %s", percentage)
-        percentage += percentage_step
-
         potential_sibling = set([])
-        if "txid" not in j:
-            myLogger.debug(j)
-            continue
 
         if j["txid"] not in processed_transaction:
             processed_transaction.append(j["txid"])
@@ -184,7 +176,7 @@ def get_sibling(wallet: str,
                     continue
                 t1 = get_transaction(get_new_rpc_connection(), t["txid"])
                 addresses = t1["vout"][t["vout"]]["scriptPubKey"]["addresses"]
-                potential_sibling.union(addresses)
+                potential_sibling = potential_sibling.union(addresses)
                 if wallet in addresses:
                     wallet_is_input = True
             if wallet_is_input:
@@ -303,7 +295,8 @@ def main():
                                                                      1000000,
                                                                      0,
                                                                      True)
-                           if tx["time"] < timestamp
+                           if tx["time"] < timestamp and
+                           "txid" in tx
                            ]
 
         for w in old_sibling:
@@ -317,8 +310,6 @@ def main():
                 Wallet(s, currency, 1, 1) for s in
                 get_sibling(w.address, all_transaction).difference([w.address for w in processed])]
 
-
-
             # Add to cluster containing w
             for sw in sibling:
                 if sw not in black_list_cluster.inferred_addresses:
@@ -329,8 +320,7 @@ def main():
                         for winf in wallet2cluster[w].inferred_addresses:
                             wallet2cluster[winf] = wallet2cluster[sw]
 
-
-                    # Simply add the siebling to the cluster
+                    # Simply add the sibling to the cluster
                     else:
                         wallet2cluster[w].add_inferred_address(sw)
                         wallet2cluster[sw] = wallet2cluster[w]
@@ -339,7 +329,8 @@ def main():
 
                     tmp_new_siebling.add(sw)
 
-                else:  # It is in the black list ->  executed at most once in a loop
+                # It is in the black list ->  executed at most once in a loop
+                else:
                     for sw1 in sibling:
                         wallet2cluster[w].add_inferred_address(sw1)
                         wallet2cluster[sw1] = wallet2cluster[w]
@@ -355,9 +346,11 @@ def main():
                     # wallets
                     tmp_new_siebling = set([])
                     break
+            print(len(tmp_new_siebling))
             new_sibling = new_sibling.union(tmp_new_siebling)
         it += 1
-    new_sibling.difference(old_sibling)
+        new_sibling.difference(old_sibling)
+
     myLogger.info("Exiting normally...")
 
 
