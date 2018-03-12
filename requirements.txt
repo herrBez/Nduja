@@ -9,3 +9,5 @@ typing==3.6.4
 mypy==0.560
 future==0.16.0
 beautifulsoup4==4.6.0
+tqdm==4.19.6
+
