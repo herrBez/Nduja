@@ -30,6 +30,7 @@ logging.basicConfig()
 myLogger = logging.getLogger(__file__)
 myLogger.setLevel(logging.DEBUG)
 
+ERROR_FILE_PATH="transaction_wo_adresses.json"
 
 
 def get_transaction(rpc_connection, txhash: str) -> Dict:
@@ -53,12 +54,13 @@ def get_last_block_id(rpc_connection):
     return rpc_connection.getblockcount()
 
 
-def get_new_rpc_connection():
+def get_new_rpc_connection(timeout: int =30):
     return AuthServiceProxy(
         "http://%s:%s@127.0.0.1:%d" % (
             rpc_user,
             rpc_password,
-            rpc_port)
+            rpc_port),
+        timeout=timeout
     )
 
 
@@ -170,8 +172,16 @@ def pre_elaborate(all_transaction):
                 myLogger.debug("txid not in t")
                 continue
             t1 = get_transaction(get_new_rpc_connection(), t["txid"])
+            try:
+                transactions[j["txid"]] = \
+                    transactions[j["txid"]].union(
+                        set(t1["vout"][t["vout"]]["scriptPubKey"]["addresses"])
+                    )
+            except KeyError:
+                with open(ERROR_FILE_PATH, "a") as f:
+                    f.write(t1["txid"])
+                    f.write("\n")
 
-            transactions[j["txid"]].union(set(t1["vout"][t["vout"]]["scriptPubKey"]["addresses"]))
     return transactions
 
 # Get the sibling of a single address ^^
@@ -181,9 +191,11 @@ def get_sibling(wallet: str,
                 transactions: dict) -> Set[str]:
     sibling = set([])
 
-    for k in transactions:
+    for k in tqdm(transactions):
         if wallet in transactions[k]:
             sibling = sibling.union(transactions[k])
+    if wallet in sibling:
+        sibling.remove(wallet)
     return sibling
 
 
@@ -224,7 +236,35 @@ def get_all_spent_transaction(wallet: str) -> None:
             if value_spent > 0:
                 print(j["txid"] + " " + str(value_spent))
 
+
+def retrieve_all_raw_transactions(timestamp):
+    timeout = 60
+    while True:
+        try:
+            all_transaction = [tx
+                               for tx in
+                               get_new_rpc_connection(timeout=timeout).
+                                   listtransactions("*",
+                                                    100000000,
+                                                    0,
+                                                    True)
+                               if tx["time"] < timestamp and
+                               "txid" in tx
+                               ]
+            break
+        except socket.timeout:
+            sleep(2)  # Sleep and retry
+            logging.warning("All Transaction failed for timeout!: "
+                            + "Let's retry")
+            timeout *= 2
+            if not is_running():
+                start_server(rescan=False)
+    return all_transaction
+
+
 def main():
+    with open(ERROR_FILE_PATH, "a") as f:
+        f.write("Run of " + str(time.time()) + "\n")
     LITECOIN_WALLET_DAT_PATH = "/home/mirko/.litecoin/wallet.dat"
     timestamp = time.time()  # TODO set the right time (1fst march??)
     DbManager.set_db_file_name("./db/nduja_cleaned_wc_no_invalid.db")
@@ -236,16 +276,18 @@ def main():
     black_list = [w for w in db.get_all_known_wallets_by_currency(currency)]
     black_list_cluster = Cluster(black_list, None, [], [99999])
 
-    # TODO use all addresses
-    wallets = db.get_all_wallets_by_currency(currency)[0:5]
+    wallets = db.get_all_wallets_by_currency(currency)
 
     clusters = []
     wallet2cluster = {}
+
     for w in wallets:
         if w not in black_list:
             c = Cluster([w], None, [], db.find_accounts_by_wallet(w))
             clusters.append(c)
             wallet2cluster[w] = c
+        else:
+            wallet2cluster[w] = black_list_cluster
 
     db_help = DbManager2("prova.sql")
     db_help.init_connection()
@@ -274,7 +316,7 @@ def main():
         db_help.remove_to_process_wallets(list(old_sibling))
         db_help.save_changes()
 
-        for w in new_sibling:
+        for w in tqdm(new_sibling):
             get_new_rpc_connection().importaddress(w.address, w.address, False)
 
         myLogger.debug("Loaded all siebling in litecoind")
@@ -287,16 +329,8 @@ def main():
         percentage_step = 100.0/len(old_sibling)
         percentage = 0
 
-        all_transaction = [tx
-                           for tx in
-                           get_new_rpc_connection().listtransactions("*",
-                                                                     10000000,
-                                                                     0,
-                                                                     True)
-                           if tx["time"] < timestamp and
-                           "txid" in tx
-                           ]
-
+        all_transaction = retrieve_all_raw_transactions(timestamp)
+        
         logging.debug("all_transaction length Before " + str(len(all_transaction)))
 
         all_transaction = list({tx["txid"]: tx for tx in all_transaction}.values())
@@ -306,10 +340,12 @@ def main():
         all_transaction = pre_elaborate(all_transaction)
         # print(all_transaction)
 
+        for w in old_sibling:
+            assert(w in wallet2cluster)
 
         for w in old_sibling:
 
-            myLogger.debug("%0.3f of total %d", percentage, len(old_sibling))
+            myLogger.debug("%0.3f %c of total %d", percentage, '%', len(old_sibling))
 
             percentage += percentage_step
 
@@ -324,9 +360,9 @@ def main():
                     # we found two clusters that should be merged!
                     if sw in wallet2cluster:
                         # Update the mapping
-                        wallet2cluster[sw].merge(wallet2cluster[w])
-                        for winf in wallet2cluster[w].inferred_addresses:
-                            wallet2cluster[winf] = wallet2cluster[sw]
+                        wallet2cluster[w].merge(wallet2cluster[sw])
+                        for winf in wallet2cluster[sw].inferred_addresses:
+                            wallet2cluster[winf] = wallet2cluster[w]
 
                     # Simply add the sibling to the cluster
                     else:
@@ -339,29 +375,33 @@ def main():
 
                 # It is in the black list ->  executed at most once in a loop
                 else:
+
                     for sw1 in sibling:
-                        wallet2cluster[w].add_inferred_address(sw1)
+                        if sw1 in wallet2cluster:
+                            wallet2cluster[w].merge(wallet2cluster[sw1])
+                        else:
+                            wallet2cluster[w].add_inferred_address(sw1)
                         wallet2cluster[sw1] = wallet2cluster[w]
 
-                    # Cancel from mapping the black list one
-                    for winf in wallet2cluster[w].inferred_addresses:
-                        wallet2cluster.pop(winf, None)
-                    wallet2cluster.pop(w, None)
+                    add_wallets = wallet2cluster[w].inferred_addresses
 
                     black_list_cluster.merge(wallet2cluster[w])
-                    myLogger.debug("Merge cluster of " + w + " in black_list")
-                    # Clear the tmp_new_siebling. We won't explore black list
+
+                    for sw1 in add_wallets:
+                        wallet2cluster[sw1] = black_list_cluster
+
+                    # Clear the tmp_new_sibling. We won't explore black list
                     # wallets
                     tmp_new_siebling = set([])
                     break
             print(len(tmp_new_siebling))
             new_sibling = new_sibling.union(tmp_new_siebling)
         it += 1
-        new_sibling.difference(old_sibling)
+        new_sibling = new_sibling.difference(old_sibling)
 
     myLogger.info("Exiting normally...")
     clusters = list(set([wallet2cluster[w] for w in wallet2cluster]))
-    db.insert_cluster(clusters)
+    db.insert_clusters(clusters)
     db.save_changes()
     db.init_connection()
 
