@@ -298,6 +298,40 @@ class DbManager:
                 wallets.add(Wallet(row[0], row[1], row[2], row[3]))
             original_addresses = [w for w in wallets if not w.inferred]
             clusters.add(Cluster(original_addresses, None, wallets, [account]))
+
+        # take all account related by the first of the 2 accounts
+        accounts_related = set([])
+        c.execute('''SELECT Account1 FROM AccountRelated''')
+        for row in c:
+            accounts_related.add(row[0])
+        for acc_1 in accounts_related:
+            clusters_acc_1 = set([])
+            # find all cluster related to a certain account
+            # generic, in must be only one
+            for cluster in clusters:
+                if acc_1 in cluster.ids:
+                    clusters_acc_1.add(cluster)
+            # remove those clusters from the set to be returned
+            clusters = clusters.difference(clusters_acc_1)
+            clusters_acc_1_list = list(clusters_acc_1)
+            cluster_merged = clusters_acc_1_list[0]  # type: Cluster
+            cluster_to_merge = set(clusters_acc_1_list[1:])
+            # take all account related to acc_1
+            c.execute('''SELECT Account2 FROM AccountRelated
+                         WHERE Account1 = (?)''', (acc_1,))
+            accs_2 = set([])
+            for row in c:
+                accs_2.add(row[0])
+            # find cluster related to accounts related to acc_1
+            for cluster in clusters:
+                if accs_2.intersection(set(cluster.ids)):
+                    cluster_to_merge.add(cluster)
+            # merge those clusters removing them from the cluster to be returned
+            for cluster in cluster_to_merge:
+                if cluster in clusters:
+                    clusters.remove(cluster)
+                cluster_merged.merge(cluster)
+            clusters.add(cluster_merged)
         return clusters
 
 # try:
