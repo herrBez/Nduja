@@ -296,7 +296,8 @@ class DbManager:
             wallets = set([])  # type: Set[Wallet]
             for row in c:
                 wallets.add(Wallet(row[0], row[1], row[2], row[3]))
-            clusters.add(Cluster(wallets, None, wallets, [account]))
+            original_addresses = [w for w in wallets if not w.inferred]
+            clusters.add(Cluster(original_addresses, None, wallets, [account]))
         return clusters
 
 # try:
