@@ -1,6 +1,7 @@
 import http
 import socket
 import sys
+import math
 from time import sleep
 
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
@@ -23,8 +24,8 @@ from tqdm import tqdm
 
 
 rpc_port = 2300
-rpc_user = "mirko"
-rpc_password = "ciaociao"
+rpc_user = "zanna"
+rpc_password = "nduja"
 
 logging.basicConfig()
 myLogger = logging.getLogger(__file__)
@@ -240,7 +241,7 @@ def get_all_spent_transaction(wallet: str) -> None:
 def retrieve_all_raw_transactions_alt(timestamp):
     txs_processed = 0
     all_transaction = []
-    fixed_step = 100000000 / 1000
+    fixed_step = math.floor(100000000 / 1000)
     while txs_processed < 100000000:
         timeout = 60
         while True:
