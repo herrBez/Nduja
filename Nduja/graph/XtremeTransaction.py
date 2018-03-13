@@ -102,7 +102,7 @@ def run(cmd):
 
 
 def start_server(rescan=True):
-    cmdstart = ["litecoind", "-daemon"]
+    cmdstart = ["/home/zanna/Desktop/dogecoin-1.10.0/bin/dogecoind", "-daemon"]
 
     if is_running():
         stop_server()
@@ -237,6 +237,36 @@ def get_all_spent_transaction(wallet: str) -> None:
                 print(j["txid"] + " " + str(value_spent))
 
 
+def retrieve_all_raw_transactions_alt(timestamp):
+    txs_processed = 0
+    all_transaction = []
+    fixed_step = 100000000 / 1000
+    while txs_processed < 100000000:
+        timeout = 60
+        while True:
+            try:
+                all_transaction += [tx
+                                    for tx in
+                                    (get_new_rpc_connection(timeout=timeout).
+                                        listtransactions("*",
+                                                         txs_processed
+                                                         + fixed_step,
+                                                         txs_processed + 1,
+                                                         True))
+                                    if tx["time"] < timestamp and
+                                    "txid" in tx]
+                break
+            except socket.timeout:
+                sleep(2)  # Sleep and retry
+                logging.warning("All Transaction failed for timeout!: "
+                                + "Let's retry")
+                timeout *= 2
+                if not is_running():
+                    start_server(rescan=False)
+        txs_processed += fixed_step
+    return all_transaction
+
+
 def retrieve_all_raw_transactions(timestamp):
     timeout = 60
     while True:
@@ -265,18 +295,21 @@ def retrieve_all_raw_transactions(timestamp):
 def main():
     with open(ERROR_FILE_PATH, "a") as f:
         f.write("Run of " + str(time.time()) + "\n")
-    LITECOIN_WALLET_DAT_PATH = "/home/mirko/.litecoin/wallet.dat"
+    LITECOIN_WALLET_DAT_PATH = "/home/zanna/.dogecoin/wallet.dat"
     timestamp = time.time()  # TODO set the right time (1fst march??)
     DbManager.set_db_file_name("./db/nduja_cleaned_wc_no_invalid.db")
     DbManager.set_config_file("../format.json")
     db = DbManager.get_instance()
     db.init_connection()
     # TODO take currency as input!
-    currency = "LTC"
+    currency = "DOGE"
     black_list = [w for w in db.get_all_known_wallets_by_currency(currency)]
     black_list_cluster = Cluster(black_list, None, [], [99999])
 
-    wallets = db.get_all_wallets_by_currency(currency)
+    # TODO comment if not testing
+    wallets = db.get_all_wallets_by_currency(currency)[0:10]
+    # TODO decomment if not testing production
+    # wallets = db.get_all_wallets_by_currency(currency)
 
     clusters = []
     wallet2cluster = {}
@@ -329,7 +362,7 @@ def main():
         percentage_step = 100.0/len(old_sibling)
         percentage = 0
 
-        all_transaction = retrieve_all_raw_transactions(timestamp)
+        all_transaction = retrieve_all_raw_transactions_alt(timestamp)
         
         logging.debug("all_transaction length Before " + str(len(all_transaction)))
 
