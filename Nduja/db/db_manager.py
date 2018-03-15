@@ -1,5 +1,5 @@
 """Module for managing database"""
-from typing import List, Iterable, Optional
+from typing import List, Iterable, Optional, Set
 
 import sqlite3
 from sqlite3 import Error
@@ -71,7 +71,8 @@ class DbManager:
         """Method to insert a new wallet into the database connected to a
         certain accoint"""
         db_conn = self.conn.cursor()
-        int_inferred = 1 if inferred else 0 # type: int
+        int_inferred = 1 if inferred else 0  # type: int
+
         try:
             db_conn.execute('''INSERT INTO Wallet(Address, Currency, Status,
                                Inferred) VALUES (?,?,?,?)''',
@@ -312,3 +313,59 @@ class DbManager:
                     db_conn.execute('''INSERT INTO AccountRelated(Account1,
                                        Account2) VALUES (?,?)''',
                                     (first_addr, account,))
+
+    def retrieve_clusters_by_currency(self, currency: str) -> Iterable[Cluster]:
+        db_conn = self.conn.cursor()
+        db_conn.execute('''SELECT _id FROM Account''')
+        accounts = set([])  # type: Set[int]
+        for row in db_conn:
+            accounts.add(row[0])
+        clusters = set([])  # type: Set[Cluster]
+        for account in accounts:
+            db_conn.execute('''SELECT Wallet.Address, Wallet.Currency,
+                               Wallet.Status, Wallet.Inferred 
+                               FROM AccountWallet INNER JOIN Wallet
+                               WHERE AccountWallet.Wallet = Wallet.Address AND
+                               AccountWallet.Account=(?) AND
+                               Wallet.Currency = (?)''',
+                            (account, currency,))
+            wallets = set([])  # type: Set[Wallet]
+            for row in db_conn:
+                wallets.add(Wallet(row[0], row[1], row[2], row[3]))
+            original_addresses = [w for w in wallets if not w.inferred]
+            clusters.add(Cluster(original_addresses, None, wallets, [account]))
+
+        # take all account related by the first of the 2 accounts
+        accounts_related = set([])
+        db_conn.execute('''SELECT Account1 FROM AccountRelated''')
+        for row in db_conn:
+            accounts_related.add(row[0])
+        for acc_1 in accounts_related:
+            clusters_acc_1 = set([])
+            # find all cluster related to a certain account
+            # generic, in must be only one
+            for cluster in clusters:
+                if acc_1 in cluster.ids:
+                    clusters_acc_1.add(cluster)
+            # remove those clusters from the set to be returned
+            clusters = clusters.difference(clusters_acc_1)
+            clusters_acc_1_list = list(clusters_acc_1)
+            cluster_merged = clusters_acc_1_list[0]  # type: Cluster
+            cluster_to_merge = set(clusters_acc_1_list[1:])
+            # take all account related to acc_1
+            db_conn.execute('''SELECT Account2 FROM AccountRelated
+                         WHERE Account1 = (?)''', (acc_1,))
+            accs_2 = set([])
+            for row in db_conn:
+                accs_2.add(row[0])
+            # find cluster related to accounts related to acc_1
+            for cluster in clusters:
+                if accs_2.intersection(set(cluster.ids)):
+                    cluster_to_merge.add(cluster)
+            # merge those clusters removing them from the cluster to be returned
+            for cluster in cluster_to_merge:
+                if cluster in clusters:
+                    clusters.remove(cluster)
+                cluster_merged.merge(cluster)
+            clusters.add(cluster_merged)
+        return clusters

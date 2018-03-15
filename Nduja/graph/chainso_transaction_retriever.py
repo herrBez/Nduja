@@ -5,6 +5,8 @@ from time import sleep
 import logging
 
 import json
+import sys
+from graph.abs_transaction_retriever import AbsTransactionRetriever
 from requests import Response
 
 from graph.abs_transaction_retriever import AbsTransactionRetriever
@@ -60,13 +62,15 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         resp = ChainSoTransactionRetriever.manage_response(query, response)
         if resp is None:
             return None
-        logging.debug("%s", query)
-
-        txs = resp["data"]["txs"]  # type: Any
-
-        txid_set = set(
-            [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
-            # type: Set[str]
+        logging.info("%s", query)
+        try:
+            txs = resp["data"]["txs"]  # type: Any
+            txid_set = set(
+                [str(t["txid"]) for t in txs if t["time"] < timestamp]) \
+                # type: Set[str]
+        except KeyError:
+            logging.error("%s: query %s failed", __file__, query)
+            txid_set = set([])
 
         sleep(1)
         return txid_set
@@ -84,12 +88,14 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
 
-        query_input = self.chain_so_input_transaction + address
-        in_txid_set = ChainSoTransactionRetriever. \
-            retrieve_transaction(query_input, timestamp)
+        # TODO Decomment if input transaction are necessary
+        # query_input = self.CHAIN_SO_INPUT_TRANSACTION + address
+        in_txid_set = None #  type: Optional[Set[Any]]
+        #  ChainSoTransactionRetriever. \
+        #    retrieve_transaction(query_input, timestamp)
 
         query_output = self.chain_so_output_transaction + address
-        out_txid_set = ChainSoTransactionRetriever. \
+        out_txid_set =  ChainSoTransactionRetriever. \
             retrieve_transaction(query_output, timestamp)
 
         if in_txid_set is None and out_txid_set is None:
@@ -115,26 +121,38 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
             tmp_inputs_list = []
             tmp_outputs_list = []
 
-            for out in resp["data"]["outputs"]:
-                try:
-                    addr = out["address"]
-                    tmp_outputs_list.append(addr)
-                    out_addr[addr] = 1
-                except KeyError:
-                    logging.error("Corrupted content in chain.so api:"
-                                  + "One output address in transaction: "
-                                  + "%s  is not valid. Skip this output",
-                                  str(txid))
-            for i in resp["data"]["inputs"]:
-                try:
-                    addr = i["address"]
-                    tmp_inputs_list.append(addr)
-                    in_addr[addr] = 1
-                except KeyError:
-                    logging.error("Corrupted content in bitcoin api:"
-                                  + "One input address in transaction: "
-                                  + "%s is not valid. Skip this input",
-                                  str(txid))
+            try:
+                for o in resp["data"]["outputs"]:
+                    try:
+                        e = o["address"]
+                        tmp_outputs_list.append(e)
+                        out_addr[e] = 1
+                    except KeyError:
+                        logging.error("Corrupted content in chain.so api:"
+                                        + "One output address in transaction: "
+                                        + str(txid)
+                                        + " is not valid. Skip this output")
+            except KeyError:
+                logging.error("Corrupted content in chain.so api:"
+                              + "One output address in transaction: "
+                              + str(txid)
+                              + " is not valid. Skip this output")
+            try:
+                for i in resp["data"]["inputs"]:
+                    try:
+                        e = i["address"]
+                        tmp_inputs_list.append(e)
+                        in_addr[e] = 1
+                    except KeyError:
+                        logging.error("Corrupted content in bitcoin api:"
+                                      + "One input address in transaction: "
+                                      + str(txid)
+                                      + " is not valid. Skip this input")
+            except KeyError:
+                logging.error("Corrupted content in bitcoin api:"
+                              + "One input address in transaction: "
+                              + str(txid)
+                              + " is not valid. Skip this input")
             if set(tmp_outputs_list).intersection(set(tmp_inputs_list)):
                 with open("suspect_transactions.txt", "a") as myfile:
                     myfile.write("===\n")

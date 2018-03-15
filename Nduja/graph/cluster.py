@@ -1,5 +1,5 @@
 """Module for cluster class"""
-from typing import Iterable
+from typing import Iterable, Optional
 from typing import Set
 from typing import Any
 from typing import List
@@ -15,7 +15,7 @@ class Cluster:
 
     def __init__(self,
                  addresses: Iterable[Wallet],
-                 transaction_retriever: AbsTransactionRetriever,
+                 transaction_retriever: Optional[AbsTransactionRetriever],
                  inferred_addresses: Iterable[Wallet] = [],
                  ids: Iterable[int] = [-1]) -> None:
         self._original_addresses = set(addresses)
@@ -91,8 +91,7 @@ class Cluster:
             tmp_black_list = []
             for saddr in self.inferred_addresses:
                 stack.add(saddr)
-
-            while stack:
+            while len(stack) > 0 and len(self.inferred_addresses) < 30:
                 elem = stack.pop()
                 self.add_inferred_address(elem)
 
