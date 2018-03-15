@@ -1,3 +1,4 @@
+"""Module for cluster class"""
 from typing import Iterable, Optional
 from typing import Set
 from typing import Any
@@ -19,8 +20,8 @@ class Cluster:
                  ids: Iterable[int] = [-1]) -> None:
         self._original_addresses = set(addresses)
         self._inferred_addresses = set(inferred_addresses)
-        for w in self._original_addresses:
-            self._inferred_addresses.add(w)
+        for wall in self._original_addresses:
+            self._inferred_addresses.add(wall)
         self.filled = False
         self.accounts = []  # type: List[int]
         self._belongs_to_blacklist = False
@@ -29,27 +30,34 @@ class Cluster:
 
     @property
     def ids(self):
+        """get ids"""
         return self._ids
 
     @property
-    def belongsToBlackList(self) -> bool:
+    def belongs_to_black_list(self) -> bool:
+        """Return true if belongs to blacklist, false otherwise"""
         return self._belongs_to_blacklist
 
     @property
     def original_addresses(self) -> Set[Wallet]:
+        """Return original addresses"""
         return self._original_addresses
 
     @property
     def inferred_addresses(self) -> Set[Wallet]:
+        """Return inferred addresses + original addresses"""
         return self._inferred_addresses
 
     def add_inferred_address(self, address: Wallet):
+        """Add an inferred address"""
         self._inferred_addresses.add(address)
 
     def merge_original_list(self, other: 'Cluster'):
+        """Merge 2 original lists"""
         self.original_addresses.update(other.original_addresses)
 
     def merge(self, other: 'Cluster') -> None:
+        """Merge 2 clusters"""
         self._original_addresses = self.original_addresses.union(other.original_addresses)
         self._inferred_addresses = self.inferred_addresses.union(other.inferred_addresses)
         self._ids = self._ids.union(other.ids)
@@ -58,7 +66,7 @@ class Cluster:
         return hash(frozenset(self._inferred_addresses))
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other) and \
+        return isinstance(self, type(other)) and \
                self._inferred_addresses == other.inferred_addresses
 
     def __str__(self) -> str:
@@ -66,6 +74,7 @@ class Cluster:
                str(list(self._inferred_addresses))
 
     def intersect(self, other: 'Cluster') -> bool:
+        """Return true if the intersection between 2 cluster is not null"""
         return len(self.inferred_addresses.
                    intersection(other.inferred_addresses)) > 0
 
@@ -82,11 +91,10 @@ class Cluster:
             tmp_black_list = []
             for saddr in self.inferred_addresses:
                 stack.add(saddr)
-
             while len(stack) > 0 and len(self.inferred_addresses) < 30:
                 elem = stack.pop()
                 self.add_inferred_address(elem)
-                
+
                 if elem in black_list.inferred_addresses:
                     black_list.merge(self)
                     self.filled = True
@@ -94,15 +102,14 @@ class Cluster:
                     return False
 
                 tmp_black_list.append(elem)
-                a, b, siblings = self._transaction_retriever. \
+                inp, out, siblings = self._transaction_retriever. \
                     get_input_output_addresses(elem.address)
-                for s in siblings:
-                    w = Wallet(s, self._transaction_retriever.get_currency(),
-                               "", 1, True)
-                    if w not in black_list.inferred_addresses \
-                            and w not in tmp_black_list:
-                        stack.add(w)
+                for sib in siblings:
+                    wall = Wallet(sib, self._transaction_retriever.
+                                  get_currency(), "", 1, True)
+                    if wall not in black_list.inferred_addresses \
+                            and wall not in tmp_black_list:
+                        stack.add(wall)
 
             self.filled = True
         return True
-

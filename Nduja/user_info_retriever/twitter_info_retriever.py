@@ -1,7 +1,10 @@
+"""Module for retrieve information from Twitter accounts"""
+from typing import Dict, List
+
 import json
-from typing import Dict
-from typing import List
+
 from twython import Twython
+
 from dao.personal_info import PersonalInfo
 from dao.account import Account
 from user_info_retriever.abs_personal_info_retriever \
@@ -10,11 +13,13 @@ from utility.twython_utility import twitter_safe_call
 
 
 class TwitterInfoRetriever(PersonalInfoRetriever):
+    """Class for retrieve information from Twitter account"""
     twitter_index = 0
     twitters = []  # type: List[Twython]
 
     @staticmethod
     def get_twython() -> Twython:
+        """Get different instance of twython for different keys"""
         res_twhython = (TwitterInfoRetriever.
                         twitters[TwitterInfoRetriever.twitter_index])
         TwitterInfoRetriever.twitter_index = \
@@ -24,6 +29,7 @@ class TwitterInfoRetriever(PersonalInfoRetriever):
 
     @staticmethod
     def set_token(tokens: Dict) -> None:
+        """Set API keys"""
         print("Set token")
         for i in range(len(tokens["twitter_app_key"])):
             TwitterInfoRetriever.twitters.append(Twython(

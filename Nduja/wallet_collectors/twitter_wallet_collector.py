@@ -1,16 +1,16 @@
-from wallet_collectors.abs_wallet_collector import AbsWalletCollector
+"""Module with the class for collecting wallets from searchcode"""
+from typing import List, Optional, Iterable, Dict, Any
+
+import logging
 from furl import furl
 from twython import Twython
-import logging
-from utility.print_utility import print_json
-from typing import List, Optional, Iterable
-from typing import Dict
-from typing import Any
+
 from utility.twython_utility import twitter_safe_call
+from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 
 
 class TwitterWalletCollector(AbsWalletCollector):
-
+    """Class for retrieving addresses from Twitter"""
     def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
         super().__init__(format_file)
         self.twitter_index = 0
@@ -29,10 +29,12 @@ class TwitterWalletCollector(AbsWalletCollector):
         self.max_count = 100
 
     def get_twython(self):
+        """Return twython object with different API key"""
         self.twitter_index = (self.twitter_index + 1) % len(self.twitters)
         return self.twitter_index
 
     def inc_api_call_count(self):
+        """Increment index of twython used"""
         self.api_call_count[self.twitter_index] += 1
 
     def twitter_fetch_all_requests(self, query, **kargs):
@@ -44,8 +46,7 @@ class TwitterWalletCollector(AbsWalletCollector):
                                    q=query,
                                    count=self.max_count,
                                    result_type=kargs["rt"],
-                                   tweet_mode="extended"
-                                   )
+                                   tweet_mode="extended")
 
         logging.info("===")
         if not result:  # The result is empty
@@ -58,7 +59,7 @@ class TwitterWalletCollector(AbsWalletCollector):
 
         # When you no longer receive new results --> stop
         while "next_results" in result["search_metadata"]:
-            f = furl(result["search_metadata"]["next_results"])
+            furl_ = furl(result["search_metadata"]["next_results"])
             my_twitter = self.twitters[self.get_twython()]
             result = twitter_safe_call(my_twitter.search,
                                        q=query,
@@ -66,8 +67,7 @@ class TwitterWalletCollector(AbsWalletCollector):
                                        # Results per page
                                        tweet_mode='extended',
                                        result_type=kargs["rt"],
-                                       max_id=f.args["max_id"]
-                                       )
+                                       max_id=furl_.args["max_id"])
             if not result:
                 break
             logging.info(str(len(result["statuses"])))
@@ -78,70 +78,62 @@ class TwitterWalletCollector(AbsWalletCollector):
 
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
         statuses = []  # type: List[Dict[Any, Any]]
-        rt = "mixed"
-        logging.info("How many queries?" + str(len(queries)))
+        rt_ = "mixed"
+        logging.info("How many queries? %s", str(len(queries)))
 
         for query in queries:
             statuses = statuses + self.twitter_fetch_all_requests(query,
-                                                                  rt=rt
-                                                                  )
+                                                                  rt=rt_)
 
         screen_names = list(set([s["user"]["screen_name"] for s in statuses]))
 
         print("Fetch " + str(len(screen_names)))
         logging.debug("Fetched " + str(len(screen_names))
                       + "screen_names = " + str(screen_names))
-        
-        for sn in screen_names:
-            query = "to:" + sn
-            
+
+        for sn_ in screen_names:
+            query = "to:" + sn_
+
             statuses = statuses + self.twitter_fetch_all_requests(query,
-                                                                  rt=rt
-                                                                  )
+                                                                  rt=rt_)
 
         return statuses
 
     def construct_queries(self) -> List[str]:
         queries = []
-        for p in self.patterns:
+        for pat in self.patterns:
             for query_filter in ["-filter:retweets AND -filter:replies"]:
-                
-                query = ("(" + p.symbol.lower() +
-                         " OR "
-                         + p.name + ")"
-                         + " AND ("
-                         + "donation OR donate OR donating OR"
+                query = ("(" + pat.symbol.lower() + " OR " + pat.name + ")"
+                         + " AND (" + "donation OR donate OR donating OR"
                          + " give OR giving OR"
                          + " contribution OR contribute OR contributing "
-                         + ") AND "
-                         + query_filter)
+                         + ") AND " + query_filter)
                 queries.append(query)
-                query = ("(#" + p.symbol.lower() + " #GiveAway) OR"
-                         + "(#" + p.symbol.lower() + "GiveAway)"
-                         + " AND "
-                         + query_filter
-                         )
+                query = ("(#" + pat.symbol.lower() + " #GiveAway) OR" + "(#"
+                         + pat.symbol.lower() + "GiveAway)" + " AND "
+                         + query_filter)
                 queries.append(query)
         logging.debug("%s", queries)
         return queries
 
     @staticmethod
     def extract_content_single(response) -> str:
+        """extract a single content"""
         # print(response["full_text"])
         return response["full_text"]
 
-    def extract_content(self, responses) -> List[str]:
+    def extract_content(self, response) -> List[str]:
         return list(map(
             lambda r:
             TwitterWalletCollector.extract_content_single(r),
-            responses
+            response
         ))
 
     def build_answer_json(self, raw_response: Any, content: str,
                           symbol_list: List[str],
                           wallet_list: List[str],
-                          emails: Optional[List[str]] =None,
-                          websites: Optional[List[str]] =None) \
+                          emails: Optional[List[str]] = None,
+                          websites: Optional[List[str]] = None) \
             -> Dict[str, Any]:
         known_raw_url = "https://twitter.com/statuses/"\
                         + str(raw_response["id"])
@@ -158,12 +150,3 @@ class TwitterWalletCollector(AbsWalletCollector):
             "wallet_list": wallet_list
         }
         return final_json_element
-
-
-pass
-
-# twc = TwitterWalletCollector("../format.json", "../API_KEYS/twitter.json")
-# result1 = json.dumps(twc.collect_address())
-# results = '{"results" : ' + result1 + '}'
-# with open("scr.txt", mode='a') as file:
-#     file.write(results)

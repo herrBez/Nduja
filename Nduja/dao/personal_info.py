@@ -1,3 +1,4 @@
+"""Module for Information DAO"""
 import json
 
 
@@ -26,4 +27,3 @@ class PersonalInfo:
             },
             indent=2
         )
-

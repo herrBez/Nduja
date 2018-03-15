@@ -1,9 +1,11 @@
+"""Module of base class of transaction retrievers"""
 from abc import ABCMeta, abstractmethod
 from typing import Optional, Dict, Tuple
 import time
 
 
 def get_epoch() -> int:
+    """Return current epoch"""
     return int(time.time())
 
 
@@ -15,7 +17,7 @@ class AbsTransactionRetriever:
     @abstractmethod
     def get_input_output_addresses(self, address: str,
                                    timestamp: Optional[int] = None) -> \
-            Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
+            Tuple[Dict[str, int], Dict[str, int], Dict[str, int]]:
         """Given an address it returns ALL transactions performed
         by the address"""
         pass

@@ -1,3 +1,4 @@
+"""Module for Wallet DAO"""
 import json
 from typing import Tuple
 from typing import Any
@@ -28,8 +29,7 @@ class Wallet:
 
     def __eq__(self, other: Any) -> bool:
         return \
-            type(self) == type(other) and \
-            self.__key() == other.__key()
+            isinstance(self, type(other)) and self.__key() == other.__key()
 
     def __str__(self) -> str:
         return json.dumps(

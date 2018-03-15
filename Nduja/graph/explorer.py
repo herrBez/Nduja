@@ -231,7 +231,7 @@ def main2(argv: List[str]) -> None:
     del times
 
     clusters = [cluster for cluster in clusters
-                if not cluster.belongsToBlackList]
+                if not cluster.belongs_to_black_list]
     clusters_set = set(clusters)
     clusters = list(clusters_set)
 

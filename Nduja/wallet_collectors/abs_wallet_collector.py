@@ -1,17 +1,15 @@
+"""Module with base class for wallet collectors"""
+from typing import Any, Optional, List, Dict, TypeVar
+
 from abc import ABCMeta, abstractmethod
 import json
-import requests
-from requests import Response
 from functools import reduce
 import traceback
 import logging
 
-from typing import Any
-from typing import Optional
-from typing import List
-from typing import Dict
+import requests
+from requests import Response
 
-from typing import TypeVar
 
 from utility.pattern import Pattern
 from utility.pattern import match_personal_website
@@ -21,11 +19,11 @@ from utility.print_utility import escape_utf8
 T = TypeVar('T')
 
 
-def flatten(li: List[List[T]]) -> List[T]:
+def flatten(li_: List[List[T]]) -> List[T]:
     """It takes as input a list of lists and returns a list"""
     return reduce(
         lambda x, y: x + y,
-        li,
+        li_,
         []
     )
 
@@ -40,13 +38,15 @@ class AbsWalletCollector:
 
     @property
     def patterns(self) -> List[Pattern]:
+        """Return a list of patterns"""
         return self._patterns
 
     @patterns.setter
     def patterns(self, value: List[Pattern]) -> None:
+        """Set a list of patterns"""
         self._patterns = value
 
-    def request_url(self, url: str, token: str=None) -> Optional[Response]:
+    def request_url(self, url: str, token: str = None) -> Optional[Response]:
         """ Request an url synchronously and returns the json response"""
         data = None
         if token is not None:
@@ -76,13 +76,14 @@ class AbsWalletCollector:
     def build_answer_json(self, raw_response: Any, content: str,
                           symbol_list: List[str],
                           wallet_list: List[str],
-                          emails: Optional[List[str]] =None,
-                          websites: Optional[List[str]] =None)\
+                          emails: Optional[List[str]] = None,
+                          websites: Optional[List[str]] = None)\
             -> Dict[str, Any]:
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
 
     def collect_address(self) -> str:
+        """Method to collect addresses"""
         final_result = []
 
         queries = self.construct_queries()
@@ -113,7 +114,7 @@ class AbsWalletCollector:
                         )
 
                     # A match was found
-                    if len(match_list) > 0:
+                    if match_list:
                         match_list = list(set(match_list))
                         logging.debug(str(match_list))
                         tmp_list = list(zip(*match_list))
@@ -138,6 +139,3 @@ class AbsWalletCollector:
             logging.debug("%d/%d elements processed", i+1, len(contents))
 
         return '{"results" : ' + str(json.dumps(final_result)) + '}'
-
-
-

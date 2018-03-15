@@ -1,10 +1,12 @@
+"""Module for make synchronized requests"""
 from typing import Optional, Any, Dict
+
+import json
+from time import sleep
 
 import requests
 from requests import Response
 from requests.exceptions import ReadTimeout
-from time import sleep
-import json
 
 
 def safe_requests_get(query: str, token: Optional[str] = None,
@@ -13,13 +15,12 @@ def safe_requests_get(query: str, token: Optional[str] = None,
                       jsonerror_pause: int = 5,
                       params: Dict[str, Any] = None) -> \
         Optional[Response]:
+    """Function to perform a request retrying if failing"""
     retries = 0
     response = None  # type: Optional[Response]
 
     if token is not None:
-        headers = {
-                                        'Authorization': 'token ' + token
-                                    }
+        headers = {'Authorization': 'token ' + token}
     else:
         headers = None
 
@@ -28,8 +29,7 @@ def safe_requests_get(query: str, token: Optional[str] = None,
             response = requests.get(query,
                                     headers=headers,
                                     timeout=timeout,
-                                    params=params
-                                    )
+                                    params=params)
             if jsoncheck:
                 json.loads(response.text)
             break
