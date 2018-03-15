@@ -97,7 +97,9 @@ def run(cmd):
         myLogger.debug("Run " + str(cmd))
         output = subprocess.Popen(cmd, stderr=subprocess.STDOUT)
         myLogger.debug("Ran")
+        # pylint: disable=no-member
         if "Error" in output.decode():
+            # pylint: enable=no-member
             return False
         return True
     except subprocess.CalledProcessError:
