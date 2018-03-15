@@ -21,11 +21,13 @@ from graph.cluster import Cluster
 import subprocess
 
 from tqdm import tqdm
+from pathlib import Path
 
 
+rpc_user = ""
+rpc_password = ""
 rpc_port = 2300
-rpc_user = "zanna"
-rpc_password = "nduja"
+command = ""
 
 logging.basicConfig()
 myLogger = logging.getLogger(__file__)
@@ -83,7 +85,7 @@ def waitUntilReady(rescan: bool = True) -> None:
 
 def is_running():
     for p in psutil.process_iter():
-        if "litecoind" in ' '.join(p.cmdline()):
+        if "litecoind" in p.name():
             return True
     return False
 
@@ -103,7 +105,7 @@ def run(cmd):
 
 
 def start_server(rescan=True):
-    cmdstart = ["/home/zanna/Desktop/dogecoin-1.10.0/bin/dogecoind", "-daemon"]
+    cmdstart = [command]
 
     if is_running():
         stop_server()
@@ -148,6 +150,7 @@ def start_server(rescan=True):
 
 def stop_server():
     myLogger.debug("Stopping the server")
+    myLogger.debug(is_running())
     while is_running():
         try:
             get_new_rpc_connection().stop()
@@ -293,17 +296,15 @@ def retrieve_all_raw_transactions(timestamp):
     return all_transaction
 
 
-def main():
+def main(currency):
     with open(ERROR_FILE_PATH, "a") as f:
         f.write("Run of " + str(time.time()) + "\n")
-    LITECOIN_WALLET_DAT_PATH = "/home/zanna/.dogecoin/wallet.dat"
     timestamp = time.time()  # TODO set the right time (1fst march??)
     DbManager.set_db_file_name("./db/nduja_cleaned_wc_no_invalid.db")
     DbManager.set_config_file("../format.json")
     db = DbManager.get_instance()
     db.init_connection()
     # TODO take currency as input!
-    currency = "DOGE"
     black_list = [w for w in db.get_all_known_wallets_by_currency(currency)]
     black_list_cluster = Cluster(black_list, None, [], [99999])
 
@@ -339,11 +340,12 @@ def main():
         myLogger.info("Iteration %d. I'll process %d", it, len(new_sibling))
 
         print("Stopping server")
+        print(is_running())
         stop_server()
         print("Server stopped")
 
-        os.remove(LITECOIN_WALLET_DAT_PATH)
-        logging.debug("Removed %s", LITECOIN_WALLET_DAT_PATH)
+        os.remove(WALLET_DAT_PATH)
+        logging.debug("Removed %s", WALLET_DAT_PATH)
         start_server(rescan=False)
         processed = processed.union(old_sibling)
         db_help.insert_processed(list(old_sibling))
@@ -441,4 +443,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 5:
+        logging.error("Usage python3 %s "
+                      + "<currency>"
+                      + "<rpc_user> "
+                      + "<rpc_password>"
+                      + "<servercmd>"
+                      + "<data-dir>"
+                      , sys.argv[0])
+        sys.exit(1)
+
+    currency = sys.argv[1]
+    rpc_user = sys.argv[2]
+    rpc_password = sys.argv[3]
+    command = sys.argv[4]
+    WALLET_DAT_PATH = sys.argv[5] + "/wallet.dat"
+
+    main(currency)
