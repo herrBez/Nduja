@@ -387,7 +387,7 @@ def main(currency):
 
             tmp_new_siebling = set([])
             sibling = [
-                Wallet(s, currency, 1, 1) for s in
+                Wallet(s, currency, "", 1, 1) for s in
                 get_sibling(w.address, all_transaction).difference([w.address for w in processed])]
 
             # Add to cluster containing w
