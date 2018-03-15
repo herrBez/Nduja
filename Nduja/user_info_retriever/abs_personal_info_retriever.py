@@ -1,3 +1,4 @@
+"""Module of base class of personal info retrievers"""
 from abc import ABCMeta, abstractmethod
 from typing import List
 from dao.personal_info import PersonalInfo

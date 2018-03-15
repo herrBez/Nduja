@@ -1,36 +1,36 @@
+"""Module for retrieving addresses input of the same transaction locally"""
+from typing import Dict, Optional, Set, List, Any
+
 import http
 import socket
 import sys
+import os
+import subprocess
+import time
 from time import sleep
-
-from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
-from typing import Dict, Optional, Set, List, Any
 import json
 from decimal import Decimal
 import logging
 
+import psutil
+from tqdm import tqdm
+from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+
 from dao.wallet import Wallet
 from db.db_manager import DbManager
 from db.db_manager_helper import DbManager2
-import psutil
-
-import time
-import os
 from graph.cluster import Cluster
-import subprocess
-
-from tqdm import tqdm
 
 
-rpc_port = 2300
-rpc_user = "mirko"
-rpc_password = "ciaociao"
+RPC_PORT = 2300
+RPC_USER = "mirko"
+RPC_PASSWORD = "ciaociao"
 
 logging.basicConfig()
-myLogger = logging.getLogger(__file__)
-myLogger.setLevel(logging.DEBUG)
+MY_LOGGER = logging.getLogger(__file__)
+MY_LOGGER.setLevel(logging.DEBUG)
 
-ERROR_FILE_PATH="transaction_wo_adresses.json"
+ERROR_FILE_PATH = "transaction_wo_adresses.json"
 
 
 def get_transaction(rpc_connection, txhash: str) -> Dict:
@@ -54,17 +54,17 @@ def get_last_block_id(rpc_connection):
     return rpc_connection.getblockcount()
 
 
-def get_new_rpc_connection(timeout: int =30):
+def get_new_rpc_connection(timeout: int = 30):
     return AuthServiceProxy(
         "http://%s:%s@127.0.0.1:%d" % (
-            rpc_user,
-            rpc_password,
-            rpc_port),
+            RPC_USER,
+            RPC_PASSWORD,
+            RPC_PORT),
         timeout=timeout
     )
 
 
-def waitUntilReady(rescan: bool = True) -> None:
+def wait_until_ready(rescan: bool = True) -> None:
     sleep_time = 10
     if rescan:
         sleep_time = 60
@@ -72,11 +72,11 @@ def waitUntilReady(rescan: bool = True) -> None:
         try:
             get_new_rpc_connection().getinfo()
             break
-        except JSONRPCException as e:
-            myLogger.debug("waitUntilReady I'm waiting for litecoind")
+        except JSONRPCException:
+            MY_LOGGER.debug("waitUntilReady I'm waiting for litecoind")
             sleep(sleep_time)
         except ConnectionError:
-            myLogger.debug("waitUntilReady Connection Refused (?)")
+            MY_LOGGER.debug("waitUntilReady Connection Refused (?)")
             sleep(sleep_time)
 
 
@@ -91,9 +91,9 @@ def run(cmd):
     """Tries to start a litecoind instance. Return true if the start
     is successful false otherwise"""
     try:
-        myLogger.debug("Run " + str(cmd))
+        MY_LOGGER.debug("Run " + str(cmd))
         output = subprocess.Popen(cmd, stderr=subprocess.STDOUT)
-        myLogger.debug("Ran")
+        MY_LOGGER.debug("Ran")
         # pylint: disable=no-member
         if "Error" in output.decode():
             # pylint: enable=no-member
@@ -111,12 +111,12 @@ def start_server(rescan=True):
 
     if rescan:
         cmdstart.append("-rescan")
-        myLogger.warning("START THE RESCANNING. THIS MAY TAKE A WHILE")
-    myLogger.debug("Start Server")
+        MY_LOGGER.warning("START THE RESCANNING. THIS MAY TAKE A WHILE")
+    MY_LOGGER.debug("Start Server")
 
     subprocess.call(cmdstart, stdout=subprocess.PIPE)
 
-    myLogger.debug("Qui")
+    MY_LOGGER.debug("Qui")
     sleep(2)
     while True:
         try:
@@ -124,11 +124,11 @@ def start_server(rescan=True):
                 logging.debug("Occhio che non sta girando")
             get_new_rpc_connection().getinfo()
             break
-        except JSONRPCException as e:
+        except JSONRPCException:
             # myLogger.debug("JsonRPCException" + str(e.message))
             sleep(2)
         except ConnectionError:
-            myLogger.debug("ConnectionError")
+            MY_LOGGER.debug("ConnectionError")
             sleep(2)
     #
     # myLogger.debug("After start")
@@ -142,23 +142,23 @@ def start_server(rescan=True):
     #     myLogger.error("n")
     #
     # sleep(2)
-    myLogger.error("y")
+    MY_LOGGER.error("y")
 
     return get_new_rpc_connection()
 
 
 def stop_server():
-    myLogger.debug("Stopping the server")
+    MY_LOGGER.debug("Stopping the server")
     while is_running():
         try:
             get_new_rpc_connection().stop()
         except JSONRPCException:
-            myLogger.debug("Json RPC. Is the server ready (?)")
+            MY_LOGGER.debug("Json RPC. Is the server ready (?)")
             sleep(2)
         except ConnectionError:
             sleep(2)
 
-    myLogger.debug("Server stopped")
+    MY_LOGGER.debug("Server stopped")
 
 
 def pre_elaborate(all_transaction):
@@ -171,7 +171,7 @@ def pre_elaborate(all_transaction):
         for t in x["vin"]:
             # It is a coinbase transaction
             if "txid" not in t:
-                myLogger.debug("txid not in t")
+                MY_LOGGER.debug("txid not in t")
                 continue
             t1 = get_transaction(get_new_rpc_connection(), t["txid"])
             try:
@@ -217,9 +217,9 @@ def get_all_spent_transaction(wallet: str) -> None:
 
                 # it is a mining reward transaction (== creation of money)
                 if "coinbase" in t:
-                    myLogger.debug("coinbase not in t:")
-                    myLogger.debug(t)
-                    myLogger.debug(x["txid"])
+                    MY_LOGGER.debug("coinbase not in t:")
+                    MY_LOGGER.debug(t)
+                    MY_LOGGER.debug(x["txid"])
                     # t1 = x["vout"][0]["scriptPubKey"]["addresses"]
                     # value = x["vout"]
                 # It is a common transaction
@@ -245,14 +245,12 @@ def retrieve_all_raw_transactions(timestamp):
         try:
             all_transaction = [tx
                                for tx in
-                               get_new_rpc_connection(timeout=timeout).
-                                   listtransactions("*",
-                                                    100000000,
-                                                    0,
-                                                    True)
-                               if tx["time"] < timestamp and
-                               "txid" in tx
-                               ]
+                               (get_new_rpc_connection(timeout=timeout).
+                                listtransactions("*",
+                                                 100000000,
+                                                 0,
+                                                 True))
+                               if tx["time"] < timestamp and "txid" in tx]
             break
         except socket.timeout:
             sleep(2)  # Sleep and retry
@@ -299,12 +297,12 @@ def main():
     new_sibling = set(wallets)
     processed = set([])
 
-    myLogger.debug("Start main loop")
+    MY_LOGGER.debug("Start main loop")
 
     it = 0
-    while len(new_sibling) > 0:
+    while new_sibling:
 
-        myLogger.info("Iteration %d. I'll process %d", it, len(new_sibling))
+        MY_LOGGER.info("Iteration %d. I'll process %d", it, len(new_sibling))
 
         print("Stopping server")
         stop_server()
@@ -321,9 +319,9 @@ def main():
         for w in tqdm(new_sibling):
             get_new_rpc_connection().importaddress(w.address, w.address, False)
 
-        myLogger.debug("Loaded all siebling in litecoind")
+        MY_LOGGER.debug("Loaded all siebling in litecoind")
         stop_server()
-        myLogger.debug("Stopped server")
+        MY_LOGGER.debug("Stopped server")
         start_server(rescan=True)
         old_sibling = new_sibling
         new_sibling = set([])
@@ -332,22 +330,25 @@ def main():
         percentage = 0
 
         all_transaction = retrieve_all_raw_transactions(timestamp)
-        
-        logging.debug("all_transaction length Before " + str(len(all_transaction)))
 
-        all_transaction = list({tx["txid"]: tx for tx in all_transaction}.values())
+        logging.debug("all_transaction length Before "
+                      + str(len(all_transaction)))
 
-        logging.debug("all_transaction length After " + str(len(all_transaction)))
+        all_transaction = list({tx["txid"]: tx
+                                for tx in all_transaction}.values())
+
+        logging.debug("all_transaction length After "
+                      + str(len(all_transaction)))
 
         all_transaction = pre_elaborate(all_transaction)
         # print(all_transaction)
 
         for w in old_sibling:
-            assert(w in wallet2cluster)
+            assert w in wallet2cluster
 
         for w in old_sibling:
 
-            myLogger.debug("%0.3f %c of total %d", percentage, '%', len(old_sibling))
+            MY_LOGGER.debug("%0.3f %c of total %d", percentage, '%', len(old_sibling))
 
             percentage += percentage_step
 
@@ -370,8 +371,8 @@ def main():
                     else:
                         wallet2cluster[w].add_inferred_address(sw)
                         wallet2cluster[sw] = wallet2cluster[w]
-                        myLogger.debug("Add " + sw.address + " to cluster of "
-                                       + w.address)
+                        MY_LOGGER.debug("Add " + sw.address + " to cluster of "
+                                        + w.address)
 
                     tmp_new_siebling.add(sw)
 
@@ -401,7 +402,7 @@ def main():
         it += 1
         new_sibling = new_sibling.difference(old_sibling)
 
-    myLogger.info("Exiting normally...")
+    MY_LOGGER.info("Exiting normally...")
     clusters = list(set([wallet2cluster[w] for w in wallet2cluster]))
     db.insert_clusters(clusters)
     db.save_changes()

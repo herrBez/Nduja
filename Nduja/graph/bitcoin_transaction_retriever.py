@@ -1,15 +1,15 @@
-
+"""Module of bitcoin transaction retriever class"""
 # N.B. In the bitcoin.info there are transactions that contains errors,
 # therefore we should treat this kind of errors in the main loop
 #
 # https://blockchain.info/tx/
 # d553e3f89eec8915c294bed72126c7f432811eb821ebee9c4beaae249499058d
+from typing import Dict, Optional, List, Any, Tuple
+
+import json
 import logging
 from time import sleep
-from typing import Dict, Optional, List, Any, Tuple
-import time
-import json
-import requests
+
 from graph.abs_transaction_retriever import AbsTransactionRetriever
 from utility.print_utility import escape_utf8
 from utility.safe_requests import safe_requests_get
@@ -93,26 +93,26 @@ class BtcTransactionRetriever(AbsTransactionRetriever):
 
     def get_input_output_addresses(self, address: str,
                                    timestamp: Optional[int] = None) -> \
-            Tuple[Dict[str, int],  Dict[str, int], Dict[str, int]]:
+            Tuple[Dict[str, int], Dict[str, int], Dict[str, int]]:
         """Given an address it returns ALL transactions performed
         by the address"""
 
         timestamp = AbsTransactionRetriever.timestamp_class \
             if timestamp is None else timestamp
 
-        query=BtcTransactionRetriever.BITCOININFO + address
-        r = safe_requests_get(query=query,
-                              token=None)
+        query = BtcTransactionRetriever.BITCOININFO + address
+        response = safe_requests_get(query=query,
+                                     token=None)
 
         inputs_dict = {}  # type: Dict[str, int]
         outputs_dict = {}  # type: Dict[str, int]
         connected_dict = {}  # type: Dict[str, int]
 
-        if r is None:
-            logging.warning("BTCTransactionRetriever " + query + " failed")
+        if response is None:
+            logging.warning('BTCTransactionRetriever %s failed', query)
         else:
 
-            raw_response = r.text
+            raw_response = response.text
 
             try:
                 resp = json.loads(raw_response)  # type: Dict[str, Any]
@@ -121,7 +121,7 @@ class BtcTransactionRetriever(AbsTransactionRetriever):
                 with open('invalid_json.txt', 'a') as the_file:
                     the_file.write(query + "\n")
 
-                print(escape_utf8(r.text))
+                print(escape_utf8(response.text))
                 sleep(1)
                 return inputs_dict, outputs_dict, connected_dict
 
@@ -129,62 +129,61 @@ class BtcTransactionRetriever(AbsTransactionRetriever):
 
             txs = [t for t in txs if t["time"] < timestamp]
 
-            for t in txs:
+            for tr_ in txs:
                 out_addr = {}  # type: Dict[str, int]
                 in_addr = {}  # type: Dict[str, int]
 
                 tmp_inputs_list = []
                 tmp_outputs_list = []
 
-
-                for o in t["out"]:
+                for out in tr_["out"]:
                     try:
-                        e = o["addr"]
-                        tmp_outputs_list.append(e)
-                        out_addr[e] = 1
+                        addr = out["addr"]
+                        tmp_outputs_list.append(addr)
+                        out_addr[addr] = 1
                     except KeyError:
                         logging.error("Corrupted content in bitcoin api:"
                                       + "One output address in transaction: "
-                                      + t["hash"]
-                                      + " is not valid. Skip this output")
+                                      + "%s is not valid. Skip this output",
+                                      tr_["hash"])
 
-                for i in t["inputs"]:
+                for inp in tr_["inputs"]:
                     try:
-                        e = i["prev_out"]["addr"]
-                        tmp_inputs_list.append(e)
-                        in_addr[e] = 1
+                        addr = inp["prev_out"]["addr"]
+                        tmp_inputs_list.append(addr)
+                        in_addr[addr] = 1
                     except KeyError:
                         logging.error("Corrupted content in bitcoin api:"
                                       + "One input address in transaction: "
-                                      + t["hash"]
-                                      + " is not valid. Skip this input")
+                                      + "%s is not valid. Skip this input",
+                                      tr_["hash"])
 
                 if set(tmp_outputs_list).intersection(set(tmp_inputs_list)):
                     with open("suspect_transactions.txt", "a") as myfile:
                         myfile.write("===\n")
-                        myfile.write(t["hash"] + "\n")
+                        myfile.write(tr_["hash"] + "\n")
                         myfile.write("===\n")
 
                 if address in tmp_outputs_list:
-                    for a in in_addr:
-                        if a in inputs_dict:
-                            inputs_dict[a] += 1
+                    for addr in in_addr:
+                        if addr in inputs_dict:
+                            inputs_dict[addr] += 1
                         else:
-                            inputs_dict[a] = 1
+                            inputs_dict[addr] = 1
 
                 if address in tmp_inputs_list:
-                    for a in out_addr:
-                        if a in outputs_dict:
-                            outputs_dict[a] += 1
+                    for addr in out_addr:
+                        if addr in outputs_dict:
+                            outputs_dict[addr] += 1
                         else:
-                            outputs_dict[a] = 1
+                            outputs_dict[addr] = 1
 
                 if address in tmp_inputs_list:
-                    for a in tmp_inputs_list:
-                        if a != address:
-                            if a in connected_dict:
-                                connected_dict[a] += 1
+                    for addr in tmp_inputs_list:
+                        if addr != address:
+                            if addr in connected_dict:
+                                connected_dict[addr] += 1
                             else:
-                                connected_dict[a] = 1
+                                connected_dict[addr] = 1
 
         return inputs_dict, outputs_dict, connected_dict

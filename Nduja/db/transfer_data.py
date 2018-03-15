@@ -1,14 +1,16 @@
+"""Script to transfer data from a database to another one"""
+import sys
 import ast
 import json
-import os
-import sqlite3
 import traceback
+import sqlite3
 from sqlite3 import Error
-from sqlite3 import Cursor
+
 from db.db_initializer import DbInitializer
 
 
 def transfer_data(old_db: str, new_db: str, config_file: str) -> None:
+    """Old transfer data - Not preserve singularity of information"""
     DbInitializer().init_db(new_db, config_file)
     old = sqlite3.connect(old_db)
     new = sqlite3.connect(new_db)
@@ -27,7 +29,7 @@ def transfer_data(old_db: str, new_db: str, config_file: str) -> None:
     id_account = {}
     for row in c_old:
         c_new.execute("SELECT _id FROM Account WHERE Host = ? AND Username = ?",
-                     (row[1], row[2],))
+                      (row[1], row[2],))
         data = c_new.fetchone()
         if data is None:
             new_id = None
@@ -51,7 +53,7 @@ def transfer_data(old_db: str, new_db: str, config_file: str) -> None:
             if data is None:
                 c_new.execute('''INSERT INTO AccountWallet(Account, Wallet,
                                  RawURL) VALUES (?,?,?)''',
-                             (str(id_account[row[1]]), row[2], row[3],))
+                              (str(id_account[row[1]]), row[2], row[3],))
         except Error:
             traceback.print_exc()
     new.commit()
@@ -70,7 +72,7 @@ def transfer_data(old_db: str, new_db: str, config_file: str) -> None:
     c_old.execute("SELECT * FROM AccountRelated")
     for row in c_old:
         try:
-            c_new.execute('''INSERT INTO AccountRelated(Account1, Account2) 
+            c_new.execute('''INSERT INTO AccountRelated(Account1, Account2)
                              VALUES (?,?)''',
                           (row[0], row[1],))
         except Error:
@@ -83,8 +85,8 @@ def transfer_data(old_db: str, new_db: str, config_file: str) -> None:
 ## WARNING: no idempotent
 def to_json(db_path: str):
     """This function convert a string with ' in json """
-    with sqlite3.connect(db_path) as db:
-        cursor = db.cursor()
+    with sqlite3.connect(db_path) as database:
+        cursor = database.cursor()
         cursor.execute('''SELECT _id, Json FROM Information''')
         raw_res = cursor.fetchall()
         for res in raw_res:
@@ -101,30 +103,30 @@ def to_json(db_path: str):
                     myjson = res[1]
 
             # print(myjson)
-            cursor.execute('''UPDATE Information set Json=(?) WHERE 
-                    _id=(?)''', (
-            myjson, myid,))
-        db.commit()
+            cursor.execute('''UPDATE Information set Json=(?) WHERE
+                              _id=(?)''', (myjson, myid,))
+        database.commit()
 
 
 def json_to_list_json(db_path: str):
-    with sqlite3.connect(db_path) as db:
-        cursor = db.cursor()
+    """transform a json list to a json object"""
+    with sqlite3.connect(db_path) as database:
+        cursor = database.cursor()
         cursor.execute('''SELECT _id, Json FROM Information''')
         raw_res = cursor.fetchall()
         for res in raw_res:
             myid = res[0]
             myjson = json.loads(res[1])
-            if type(myjson) != list:
+            if not isinstance(myjson, list):
                 myjson = [myjson]
-
-            cursor.execute('''UPDATE Information set Json=(?) WHERE 
-            _id=(?)''', (json.dumps(myjson), myid, ))
-        db.commit()
+            cursor.execute('''UPDATE Information set Json=(?) WHERE
+                              _id=(?)''', (json.dumps(myjson), myid,))
+        database.commit()
 
 
 
 def transfer_data2(old_db: str, new_db: str) -> None:
+    """New transfer data - Preserve information singularity"""
     old = sqlite3.connect(old_db)
     new = sqlite3.connect(new_db)
     c_new = new.cursor()
@@ -141,12 +143,13 @@ def transfer_data2(old_db: str, new_db: str) -> None:
         old_host = row[1]
         old_username = row[2]
         old_info = row[3]
-        c_new.execute('''SELECT * 
-        FROM Account 
-        WHERE host=(?) AND username=(?)''', (old_host, old_username, ))
+        c_new.execute('''SELECT *
+                         FROM Account 
+                         WHERE host=(?) AND username=(?)''',
+                      (old_host, old_username, ))
         res = c_new.fetchall()
         print("List length " + str(len(res)))
-        if len(res) == 0:  # the account does not exist in the new db
+        if res:  # the account does not exist in the new db
             if old_info is not None:
                 c_old.execute('''SELECT * FROM Information WHERE _id=(?)''',
                               (old_info,))
@@ -180,9 +183,6 @@ def transfer_data2(old_db: str, new_db: str) -> None:
 
             if old_info is not None:
                 # info exists in old db
-
-                new_host = res[0][1]
-                new_username = res[0][2]
                 new_info = res[0][3]
                 if new_info is not None:
                     # both are present in the db
@@ -202,33 +202,19 @@ def transfer_data2(old_db: str, new_db: str) -> None:
                     new_website = new_info_object[2].split(",")
                     websites = list(set(old_website + new_website))
 
-
-
-
-                    a = json.loads(old_info_object[4]) + json.loads(new_info_object[4])
-                    a1 = list(set([json.dumps(s) for s in a]))
-                    myjson = [json.loads(s) for s in a1]
-
-
-
-                    #
-                    # myjson = list(set(
-                    #     [s1.strip()[1:-1]
-                    #      for s1 in old_info_object[4].strip()[1:-1].split(",")]
-                    #     +
-                    #     [s1.strip()[1:-1]
-                    #      for s1 in new_info_object[4].strip()[1:-1].split(",")]
-                    #     )
-                    # )
-
-                    c_new.execute('''UPDATE Information set 
-                    Website=(?), Email=(?), Json=(?) WHERE
-                    _id = (?)''', ((','.join(websites) if len(websites) > 0
-                                                                      else ''),
-                                   ','.join(emails) if len(emails) > 0 else '',
+                    json_concatenation = json.loads(old_info_object[4]) +\
+                                         json.loads(new_info_object[4])
+                    json_concat_no_rep = list(set([json.dumps(s)
+                                                   for s
+                                                   in json_concatenation]))
+                    myjson = [json.loads(s) for s in json_concat_no_rep]
+                    c_new.execute('''UPDATE Information set
+                                     Website=(?), Email=(?), Json=(?) WHERE
+                                     _id = (?)''',
+                                  ((','.join(websites) if websites else ''),
+                                   ','.join(emails) if emails else '',
                                    json.dumps(myjson),
-                                   new_info_object[0]
-                                   ))
+                                   new_info_object[0]))
 
         del old_account_id
         del old_host
@@ -249,15 +235,15 @@ def transfer_data2(old_db: str, new_db: str) -> None:
 
         new_account = old_account_to_new_map[old_account]
 
-        c_new.execute('''SELECT * FROM AccountWallet WHERE Account = (?) 
-        AND Wallet = (?)''', (new_account, old_wallet))
+        c_new.execute('''SELECT * FROM AccountWallet WHERE Account = (?)
+                         AND Wallet = (?)''', (new_account, old_wallet))
 
         res = c_new.fetchall()
-        if len(res) == 0:  # the AccountWallet is not present
+        if res:  # the AccountWallet is not present
             c_new.execute('''SELECT * FROM Wallet WHERE Address=(?)''',
                           (old_wallet,))
             wallet_obj = c_new.fetchall()
-            if len(wallet_obj) == 0:  # Wallet does not exist in new db
+            if wallet_obj:  # Wallet does not exist in new db
                 c_old.execute('''SELECT * FROM Wallet WHERE Address=(?)''',
                               (old_wallet, ))
                 res = c_old.fetchone()
@@ -266,9 +252,10 @@ def transfer_data2(old_db: str, new_db: str) -> None:
                     Inferred) VALUES (?, ?, ?, ?)''', res)
                 except sqlite3.IntegrityError:
                     pass
-            c_new.execute('''INSERT INTO 
-            AccountWallet(Account,Wallet,RawUrl) VALUES
-            (?,?,?)''', (new_account, old_wallet, old_raw_url,))
+            c_new.execute('''INSERT INTO
+                             AccountWallet(Account,Wallet,RawUrl) VALUES
+                             (?,?,?)''',
+                          (new_account, old_wallet, old_raw_url,))
 
         else:  # Wallet exists in new db
             new_raw_url = [res[0][3].strip()]
@@ -285,7 +272,7 @@ def transfer_data2(old_db: str, new_db: str) -> None:
         c_old.execute("SELECT * FROM AccountRelated")
         for row in c_old:
             try:
-                c_new.execute('''INSERT INTO AccountRelated(Account1, Account2) 
+                c_new.execute('''INSERT INTO AccountRelated(Account1, Account2)
                                  VALUES (?,?)''',
                               (old_account_to_new_map[row[0]],
                                old_account_to_new_map[row[1]]))
@@ -298,8 +285,6 @@ def transfer_data2(old_db: str, new_db: str) -> None:
     new.close()
     old.close()
 
-
-import sys
 
 if __name__ == "__main__":
     to_json(sys.argv[1]) # No idempotent

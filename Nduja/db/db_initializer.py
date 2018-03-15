@@ -1,39 +1,43 @@
-import json
-import sqlite3
-import traceback
-from sqlite3 import Error
+"""Module for initialize the database"""
 import os
+import json
+import traceback
+import sqlite3
+from sqlite3 import Error
 
 
 class DbInitializer:
+    """Class that performs the initialization of the databas"""
+
     def init_db(self, db_name: str, format_file: str) -> None:
+        """Method to initialize the database"""
         conn = sqlite3.connect(db_name)
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS Currency(
+        db_conn = conn.cursor()
+        db_conn.execute('''CREATE TABLE IF NOT EXISTS Currency(
                     Name VARCHAR(4) PRIMARY KEY
                 )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS Wallet(
+        db_conn.execute('''CREATE TABLE IF NOT EXISTS Wallet(
                     Address VARCHAR(128) PRIMARY KEY,
                     Currency VARCHAR(4),
                     Status NUMERIC,
                     Inferred NUMERIC,
                     FOREIGN KEY (Currency) REFERENCES Currency(Name)
                 )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS Information(
+        db_conn.execute('''CREATE TABLE IF NOT EXISTS Information(
                     _id INTEGER PRIMARY KEY,
                     Name TEXT,
                     Website TEXT,
                     Email TEXT,
                     Json LONGTEXT
                 )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS Account(
+        db_conn.execute('''CREATE TABLE IF NOT EXISTS Account(
                     _id INTEGER PRIMARY KEY,
                     Host VARCHAR(255),
                     Username VARCHAR(255),
                     Info INT,
                     FOREIGN KEY (Info) REFERENCES Information(ID)
                 )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS AccountWallet(
+        db_conn.execute('''CREATE TABLE IF NOT EXISTS AccountWallet(
                     _id INTEGER PRIMARY KEY,
                     Account INT,
                     Wallet VARCHAR(128),
@@ -41,7 +45,7 @@ class DbInitializer:
                     FOREIGN KEY (Account) REFERENCES Account(ID),
                     FOREIGN KEY (Wallet) REFERENCES Wallet(Address)
                 )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS AccountRelated(
+        db_conn.execute('''CREATE TABLE IF NOT EXISTS AccountRelated(
                      Account1 INT,
                      Account2 INT,
                      UNIQUE(Account1, Account2),
@@ -49,23 +53,23 @@ class DbInitializer:
                      FOREIGN KEY (Account2) REFERENCES Account(_id)
                      )''')
         try:
-            with open(format_file, 'r') as format:
-                content = format.read()
+            with open(format_file, 'r') as file:
+                content = file.read()
                 content_json = json.loads(content)
                 for obj in content_json:
                     currency_symbol = obj["symbol"]
-                    c.execute('''INSERT INTO Currency VALUES (?)''',
-                              (currency_symbol,))
+                    db_conn.execute('''INSERT INTO Currency VALUES (?)''',
+                                    (currency_symbol,))
         except Error:
             traceback.print_exc()
 
         try:
             path = os.path.dirname(os.path.abspath(__file__))
             with open(path + '/known_addresses_btc', 'r') as btcwallets:
-                for w in btcwallets.readlines():
-                    c.execute('''INSERT INTO Wallet(Address, Currency, Status, 
-                                 Inferred) VALUES (?,?,?,?)''',
-                              (str(w).strip(), 'BTC', -1, 0,))
+                for wall in btcwallets.readlines():
+                    db_conn.execute('''INSERT INTO Wallet(Address, Currency,
+                                       Status, Inferred) VALUES (?,?,?,?)''',
+                                    (str(wall).strip(), 'BTC', -1, 0,))
         except Error:
             traceback.print_exc()
         conn.commit()
