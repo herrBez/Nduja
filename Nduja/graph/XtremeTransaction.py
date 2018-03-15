@@ -193,7 +193,7 @@ def pre_elaborate(all_transaction):
 # all_transactions SHOULD NOT CONTAIN DUPLICATES
 def get_sibling(wallet: str,
                 transactions: dict) -> Set[str]:
-    sibling = set([])
+    sibling = set([])  # type: Set[str]
 
     for k in tqdm(transactions):
         if wallet in transactions[k]:
@@ -207,7 +207,7 @@ def get_all_spent_transaction(wallet: str) -> None:
     # Sometimes we have multiple input transaction that have as input our
     # wallet --> we want to avoid to recollect the same trasactions multiple
     # times
-    processed_transaction = []
+    processed_transaction = []  # type: List[Any]
 
     for j in get_new_rpc_connection().listtransactions("*", 10000, 0, True):
         if j["txid"] not in processed_transaction:
@@ -215,7 +215,7 @@ def get_all_spent_transaction(wallet: str) -> None:
             x = get_transaction(get_new_rpc_connection(), j["txid"])
             value_spent = 0
             for t in x["vin"]:
-                addresses = []
+                addresses = []  # type: List[Any]
 
                 # it is a mining reward transaction (== creation of money)
                 if "coinbase" in t:
@@ -387,7 +387,7 @@ def main(currency):
 
             tmp_new_siebling = set([])
             sibling = [
-                Wallet(s, currency, 1, 1) for s in
+                Wallet(s, currency, "", 1, 1) for s in
                 get_sibling(w.address, all_transaction).difference([w.address for w in processed])]
 
             # Add to cluster containing w

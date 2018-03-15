@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 from typing import Iterable
 
 import json
 import sqlite3
 import traceback
-from sqlite3 import Error
+from sqlite3 import Error, Connection
 import os
 from dao.wallet import Wallet
 
@@ -12,7 +12,7 @@ from dao.wallet import Wallet
 class DbManager2:
 
     def __init__(self, db_name: str) -> None:
-        self.conn = None
+        self.conn = None  # type: Optional[Connection]
         self.db = db_name
         self.init_connection()
         self.init_db(db_name)
@@ -85,7 +85,7 @@ class DbManager2:
             traceback.print_exc()
         return wallets
 
-    def wallets_to_process(self) -> List[str]:
+    def wallets_to_process(self) -> List[Wallet]:
         c = self.conn.cursor()
         wallets = []
         try:
