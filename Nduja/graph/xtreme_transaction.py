@@ -471,6 +471,8 @@ def main(currency):
 
     MY_LOGGER.info("Exiting normally...")
 
+    for i in range(black_list_cluster.inferred_addresses):
+        black_list_cluster.inferred_addresses[i].status = -1
 
     clusters = list(set([wallet2cluster[w] for w in wallet2cluster]))
     db.insert_clusters(clusters)
