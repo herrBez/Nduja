@@ -327,32 +327,43 @@ def main(currency):
     DbManager.set_config_file("../format.json")
     db = DbManager.get_instance()
     db.init_connection()
-    # TODO take currency as input!
-    black_list = [w for w in db.get_all_known_wallets_by_currency(currency)]
-    black_list_cluster = Cluster(black_list, None, [], [99999])
 
-    # TODO comment if not testing
-    wallets = db.get_all_wallets_by_currency(currency)
-    # TODO decomment if not testing production
-    # wallets = db.get_all_wallets_by_currency(currency)
-
-    clusters = []
-    wallet2cluster = {}
-
-    for w in wallets:
-        if w not in black_list:
-            c = Cluster([w], None, [], db.find_accounts_by_wallet(w))
-            clusters.append(c)
-            wallet2cluster[w] = c
-        else:
-            wallet2cluster[w] = black_list_cluster
-
-    db_help = DbManager2("prova.sql")
+    db_help = DbManager2("prova.db")
     db_help.init_connection()
 
+    processed_wallets = set([w.address for w in db_help.wallets_processed()])
+    wallets = set(db.get_all_wallets_by_currency(currency))
+    clusters = db.retrieve_clusters_by_currency(currency)
+
+    wallet2cluster = {}
+
+    MY_LOGGER.debug("Building the wallet2cluster mapping ... ")
+    for c in tqdm(clusters):
+        for w in c.inferred_addresses:
+            wallet2cluster[w] = c
+    MY_LOGGER.debug("Built ... ")
+
+
+    # find the black list cluster and remove it
+    for c in clusters:
+        if 99999 in c.ids:
+            black_list_cluster = c
+            break
+    clusters.remove(c)
+    MY_LOGGER.debug("Find the black list cluster")
+
+    wallets_wo_processed = wallets.difference(processed_wallets)
+
+    total_to_process = len(wallets_wo_processed)
+
+    to_process = wallets_wo_processed[0:min(total_to_process, 100)]
+
+    MY_LOGGER.debug("We should process %d wallets. Let's go with the first %d",
+                    total_to_process,
+                    len(to_process))
 
     old_sibling = set([])
-    new_sibling = set(wallets)
+    new_sibling = set(to_process)
     processed = set([])
 
     MY_LOGGER.debug("Start main loop")
@@ -379,7 +390,6 @@ def main(currency):
         start_server(rescan=False)
         processed = processed.union(old_sibling)
         db_help.insert_processed(list(old_sibling))
-        db_help.remove_to_process_wallets(list(old_sibling))
         db_help.save_changes()
 
         for w in tqdm(new_sibling):
