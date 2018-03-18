@@ -38,29 +38,40 @@ MY_LOGGER.setLevel(logging.DEBUG)
 
 ERROR_FILE_PATH = "transaction_wo_adresses.json"
 
+def safe_rpc_call(func):
+    while True:
+        try:
+            ret = func()
+            break
+        except Exception:
+            sleep(0.1)
+    return ret
+
 
 def get_transaction(rpc_connection, txhash: str) -> Dict:
-    return rpc_connection.decoderawtransaction(
-        rpc_connection.getrawtransaction(txhash))
+    return safe_rpc_call(lambda: get_new_rpc_connection().decoderawtransaction(
+        rpc_connection.getrawtransaction(txhash)))
 
 
 def get_block_by_number(rpc_connection, blocknumber: int) -> Dict:
-    return rpc_connection.getblock(
-        rpc_connection.getblockhash(
-            blocknumber
-        )
+    return safe_rpc_call(lambda:
+                         rpc_connection.getblock(
+                             rpc_connection.getblockhash(
+                                 blocknumber
+                             )
+                         )
     )
 
 
 def get_block_by_hash(rpc_connection, blockhash):
-    return rpc_connection.getblock(blockhash)
+    return safe_rpc_call(lambda: rpc_connection.getblock(blockhash))
 
 
 def get_last_block_id(rpc_connection):
-    return rpc_connection.getblockcount()
+    return safe_rpc_call(lambda: rpc_connection.getblockcount())
 
 
-def get_new_rpc_connection(timeout: int = 30):
+def get_new_rpc_connection(timeout: int = 40):
     return AuthServiceProxy(
         "http://%s:%s@127.0.0.1:%d" % (
             RPC_USER,
@@ -72,15 +83,18 @@ def get_new_rpc_connection(timeout: int = 30):
 
 def wait_until_ready(rescan: bool = True) -> None:
     sleep_time = 10
+    timeout = 40
     if rescan:
         sleep_time = 60
     while True:
         try:
-            get_new_rpc_connection().getinfo()
+            get_new_rpc_connection(timeout=timeout).getinfo()
             break
         except JSONRPCException:
             MY_LOGGER.debug("waitUntilReady I'm waiting for litecoind")
             sleep(sleep_time)
+        except socket.timeout:
+            timeout += 20
         except ConnectionError:
             MY_LOGGER.debug("waitUntilReady Connection Refused (?)")
             sleep(sleep_time)
@@ -88,7 +102,7 @@ def wait_until_ready(rescan: bool = True) -> None:
 
 def is_running():
     for p in psutil.process_iter():
-        if "litecoind" in p.name():
+        if COMMAND in p.name():
             return True
     return False
 
@@ -122,7 +136,7 @@ def start_server(rescan=True):
 
     subprocess.call(cmdstart, stdout=subprocess.PIPE)
 
-    MY_LOGGER.debug("Qui")
+    MY_LOGGER.debug("Start server process started in background")
     sleep(2)
     while True:
         try:
@@ -249,19 +263,22 @@ def get_all_spent_transaction(wallet: str) -> None:
 def retrieve_all_raw_transactions_alt(timestamp):
     txs_processed = 0
     all_transaction = []
-    fixed_step = math.floor(100000000 / 1000)
-    while txs_processed < 100000000:
+    fixed_step = 1000000
+    new_transactions = [0]
+    while len(new_transactions) > 0:
         timeout = 60
         while True:
             try:
+                new_transactions = (get_new_rpc_connection(timeout=timeout).
+                                    listtransactions("*",
+                                                     txs_processed
+                                                     + fixed_step,
+                                                     txs_processed + 1,
+                                                     True))
+
                 all_transaction += [tx
                                     for tx in
-                                    (get_new_rpc_connection(timeout=timeout).
-                                        listtransactions("*",
-                                                         txs_processed
-                                                         + fixed_step,
-                                                         txs_processed + 1,
-                                                         True))
+                                    new_transactions
                                     if tx["time"] < timestamp and
                                     "txid" in tx]
                 break
@@ -272,6 +289,9 @@ def retrieve_all_raw_transactions_alt(timestamp):
                 timeout *= 2
                 if not is_running():
                     start_server(rescan=False)
+            except Exception as e:
+                MY_LOGGER.debug(type(e))
+                sleep(1)
         txs_processed += fixed_step
     return all_transaction
 
@@ -312,7 +332,7 @@ def main(currency):
     black_list_cluster = Cluster(black_list, None, [], [99999])
 
     # TODO comment if not testing
-    wallets = db.get_all_wallets_by_currency(currency)[0:10]
+    wallets = db.get_all_wallets_by_currency(currency)
     # TODO decomment if not testing production
     # wallets = db.get_all_wallets_by_currency(currency)
 
@@ -338,6 +358,8 @@ def main(currency):
     MY_LOGGER.debug("Start main loop")
 
     it = 0
+
+
     while new_sibling:
 
         MY_LOGGER.info("Iteration %d. I'll process %d", it, len(new_sibling))
@@ -347,6 +369,11 @@ def main(currency):
         stop_server()
         print("Server stopped")
 
+        # Altough the process is stopped, it is a good idea to wait some time,
+        # because otherwise we could have race conditions (or at least, it is
+        # my experience)
+
+        sleep(0.5)
         os.remove(WALLET_DAT_PATH)
         logging.debug("Removed %s", WALLET_DAT_PATH)
         start_server(rescan=False)
@@ -440,8 +467,11 @@ def main(currency):
             new_sibling = new_sibling.union(tmp_new_siebling)
         it += 1
         new_sibling = new_sibling.difference(old_sibling)
+        MY_LOGGER.debug("New Sibling Length = %d", len(new_sibling))
 
     MY_LOGGER.info("Exiting normally...")
+
+
     clusters = list(set([wallet2cluster[w] for w in wallet2cluster]))
     db.insert_clusters(clusters)
     db.save_changes()
