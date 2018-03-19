@@ -192,7 +192,7 @@ def pre_elaborate(all_transaction):
         for t in x["vin"]:
             # It is a coinbase transaction
             if "txid" not in t:
-                MY_LOGGER.debug("txid not in t")
+                # MY_LOGGER.debug("txid not in t")
                 continue
             t1 = get_transaction(get_new_rpc_connection(), t["txid"])
             try:
@@ -289,10 +289,15 @@ def retrieve_all_raw_transactions_alt(timestamp):
                 timeout *= 2
                 if not is_running():
                     start_server(rescan=False)
+            except ConnectionError:
+                if not is_running():
+                    # The server is probably not running
+                    start_server(rescan=False)
             except Exception as e:
                 MY_LOGGER.debug(type(e))
                 sleep(1)
         txs_processed += fixed_step
+    MY_LOGGER.debug("Transactions fetched = %d\n", len(all_transaction))
     return all_transaction
 
 
@@ -323,7 +328,7 @@ def main(currency):
     with open(ERROR_FILE_PATH, "a") as f:
         f.write("Run of " + str(time.time()) + "\n")
     timestamp = time.time()  # TODO set the right time (1fst march??)
-    DbManager.set_db_file_name("./db/nduja_cleaned_wc_no_invalid.db")
+    DbManager.set_db_file_name("./db/nduja_cleaned_wc_no_invalid_cp.db")
     DbManager.set_config_file("../format.json")
     db = DbManager.get_instance()
     db.init_connection()
@@ -331,10 +336,10 @@ def main(currency):
     db_help = DbManager2("prova.db")
     db_help.init_connection()
 
-    processed_wallets = set([w.address for w in db_help.wallets_processed()])
+    processed_wallets = set([w for w in db_help.wallets_processed()])
     wallets = set(db.get_all_wallets_by_currency(currency))
     clusters = db.retrieve_clusters_by_currency(currency)
-
+    logging.debug("LENGHT= %d\n", len(clusters))
     wallet2cluster = {}
 
     MY_LOGGER.debug("Building the wallet2cluster mapping ... ")
@@ -347,33 +352,39 @@ def main(currency):
     # find the black list cluster and remove it
     for c in clusters:
         if 99999 in c.ids:
+            MY_LOGGER.debug(c.ids)
             black_list_cluster = c
             break
-    clusters.remove(c)
-    MY_LOGGER.debug("Find the black list cluster")
+    clusters.remove(black_list_cluster)
+    MY_LOGGER.debug("Found the black list cluster")
 
-    wallets_wo_processed = wallets.difference(processed_wallets)
+    wallets_wo_processed = list(wallets.difference(processed_wallets))
 
     total_to_process = len(wallets_wo_processed)
 
-    to_process = wallets_wo_processed[0:min(total_to_process, 100)]
+    to_process = set(wallets_wo_processed)
 
     MY_LOGGER.debug("We should process %d wallets. Let's go with the first %d",
                     total_to_process,
                     len(to_process))
 
-    old_sibling = set([])
-    new_sibling = set(to_process)
-    processed = set([])
+    processed = set(processed_wallets)
 
     MY_LOGGER.debug("Start main loop")
 
     it = 0
 
+    old_sibling = set([])
 
-    while new_sibling:
+    while to_process:
+        list_to_process = list(to_process)
 
-        MY_LOGGER.info("Iteration %d. I'll process %d", it, len(new_sibling))
+        new_sibling = list_to_process[0:min(15000, len(to_process))]
+
+        to_process = to_process.difference(set(new_sibling))
+
+        MY_LOGGER.info("Iteration %d. I'll process %d. Remaining %d",
+                       it, len(new_sibling), to_process)
 
         print("Stopping server")
         print(is_running())
@@ -384,8 +395,11 @@ def main(currency):
         # because otherwise we could have race conditions (or at least, it is
         # my experience)
 
-        sleep(0.5)
-        os.remove(WALLET_DAT_PATH)
+        sleep(1)
+        try:
+            os.remove(WALLET_DAT_PATH)
+        except FileNotFoundError:
+            pass # the file does not exists
         logging.debug("Removed %s", WALLET_DAT_PATH)
         start_server(rescan=False)
         processed = processed.union(old_sibling)
@@ -407,17 +421,18 @@ def main(currency):
 
         all_transaction = retrieve_all_raw_transactions_alt(timestamp)
 
-        logging.debug("all_transaction length Before "
+        MY_LOGGER.debug("all_transaction length Before "
                       + str(len(all_transaction)))
 
         all_transaction = list({tx["txid"]: tx
                                 for tx in all_transaction}.values())
 
-        logging.debug("all_transaction length After "
+        MY_LOGGER.debug("all_transaction length After "
                       + str(len(all_transaction)))
 
+        MY_LOGGER.debug("Start pre-elaboration")
         all_transaction = pre_elaborate(all_transaction)
-        # print(all_transaction)
+        MY_LOGGER.debug("End pre-elaboration")
 
         for w in old_sibling:
             assert w in wallet2cluster
@@ -478,11 +493,12 @@ def main(currency):
         it += 1
         new_sibling = new_sibling.difference(old_sibling)
         MY_LOGGER.debug("New Sibling Length = %d", len(new_sibling))
+        to_process = to_process.union(new_sibling)
 
     MY_LOGGER.info("Exiting normally...")
 
-    for i in range(black_list_cluster.inferred_addresses):
-        black_list_cluster.inferred_addresses[i].status = -1
+    for c in black_list_cluster.inferred_addresses:
+        c.status = -1
 
     clusters = list(set([wallet2cluster[w] for w in wallet2cluster]))
     db.insert_clusters(clusters)
