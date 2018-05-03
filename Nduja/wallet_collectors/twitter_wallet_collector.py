@@ -3,6 +3,7 @@ from typing import List, Optional, Iterable, Dict, Any
 
 import logging
 from furl import furl
+from tqdm import tqdm
 from twython import Twython
 
 from utility.twython_utility import twitter_safe_call
@@ -25,8 +26,8 @@ class TwitterWalletCollector(AbsWalletCollector):
                 tokens_dictionary["twitter_oauth_token_secret"][i]
             ))
             self.api_call_count.append(0)
-        self.max_pages = 2
-        self.max_count = 100
+        self.max_pages = 5
+        self.max_count = 10
 
     def get_twython(self):
         """Return twython object with different API key"""
@@ -48,17 +49,17 @@ class TwitterWalletCollector(AbsWalletCollector):
                                    result_type=kargs["rt"],
                                    tweet_mode="extended")
 
-        logging.info("===")
         if not result:  # The result is empty
             return []
 
         statuses = result["statuses"]
 
-        logging.info(str(len(result["statuses"])))
         statuses = statuses + result["statuses"]
-
+        counter = 1
         # When you no longer receive new results --> stop
-        while "next_results" in result["search_metadata"]:
+        while "next_results" in result["search_metadata"]\
+            and counter < self.max_pages:
+            counter += 1
             furl_ = furl(result["search_metadata"]["next_results"])
             my_twitter = self.twitters[self.get_twython()]
             result = twitter_safe_call(my_twitter.search,
@@ -70,24 +71,20 @@ class TwitterWalletCollector(AbsWalletCollector):
                                        max_id=furl_.args["max_id"])
             if not result:
                 break
-            logging.info(str(len(result["statuses"])))
             statuses = statuses + result["statuses"]
 
-        logging.info("===")
         return statuses
 
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
         statuses = []  # type: List[Dict[Any, Any]]
         rt_ = "mixed"
-        logging.info("How many queries? %s", str(len(queries)))
 
-        for query in queries:
+        for query in tqdm(queries):
             statuses = statuses + self.twitter_fetch_all_requests(query,
                                                                   rt=rt_)
 
         screen_names = list(set([s["user"]["screen_name"] for s in statuses]))
 
-        print("Fetch " + str(len(screen_names)))
         logging.debug("Fetched " + str(len(screen_names))
                       + "screen_names = " + str(screen_names))
 
