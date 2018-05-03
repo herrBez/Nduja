@@ -5,6 +5,7 @@ import json
 import logging
 
 from requests import Response
+from tqdm import tqdm
 
 from utility.github_utility import perform_github_request
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
@@ -15,8 +16,8 @@ class GithubWalletCollector(AbsWalletCollector):
     def __init__(self, format_file, tokens) -> None:
         super().__init__(format_file)
         self.format_object = json.load(open(format_file))
-        self.max_page = 10
-        self.per_page = 100
+        self.max_page = 1
+        self.per_page = 5
         self.current_token = 0
         self.tokens = tokens
 
@@ -31,7 +32,7 @@ class GithubWalletCollector(AbsWalletCollector):
 
         # We proceed sequentially to avoid to be blocked for abuses of
         # api.
-        for query in queries:
+        for query in tqdm(queries):
             response = perform_github_request(query, self.get_next_token())
             if response is None:
                 with open("none_github_response.txt", "a") as out:
@@ -75,7 +76,7 @@ class GithubWalletCollector(AbsWalletCollector):
                      "contribution", "contribute", "contributing"]
         string_to_search = [p.name for p in self.patterns] + \
                            [p.symbol for p in self.patterns]
-        return [
+        l = [
             "https://api.github.com/search/code?"
             + "q="
             + s
@@ -89,6 +90,12 @@ class GithubWalletCollector(AbsWalletCollector):
             for s in string_to_search
             for page in range(1, self.max_page+1)
         ]
+
+        with open("foo.txt", "w") as cazzo:
+            cazzo.write(str(len(l)))
+            cazzo.write(str(l))
+
+        return l
 
     def extract_content(self, response: List[Any]) -> List[str]:
         logging.debug("Entering extract Content")
