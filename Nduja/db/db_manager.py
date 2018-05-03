@@ -153,7 +153,7 @@ class DbManager:
         """Method to search an account into the database, if found returns the
         id, -1 otherwise"""
         db_conn = self.conn.cursor()
-        db_conn.execute("SELECT _id FROM Account WHERE Host = ? AND"
+        db_conn.execute("SELECT _id FROM Account WHERE Host = ? AND "
                         "Username = ?", (host, username,))
         data = db_conn.fetchone()
         if data is None:
