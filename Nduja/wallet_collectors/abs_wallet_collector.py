@@ -32,7 +32,8 @@ class AbsWalletCollector:
     """Abstract base class for the Address Collector"""
     __metaclass__ = ABCMeta
 
-    def __init__(self, format_file: str) -> None:
+    def __init__(self, format_file: str,  progress_bar_position: int) -> None:
+        self.progress_bar_position = progress_bar_position
         self._format_object = json.loads(open(format_file).read())
         self._patterns = [Pattern(f) for f in self._format_object]
 

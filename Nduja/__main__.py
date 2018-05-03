@@ -19,28 +19,29 @@ from wallet_collectors.twitter_wallet_collector import TwitterWalletCollector
 from user_info_retriever.info_retriever import InfoRetriever
 
 
-def search_searchcode(formatfile):
-    logging.info("Search Code")
-    results = (SearchcodeWalletCollector(formatfile)
+def search_searchcode(formatfile, n):
+    logging.debug("Search Code")
+    results = (SearchcodeWalletCollector(formatfile, n)
                .collect_address())
     return results
 
 
-def search_github(formatfile, tokens):
-    logging.info("Search Github")
+def search_github(formatfile, tokens, n):
+    logging.debug("Search Github")
     results = (GithubWalletCollector(formatfile,
-                                     tokens
+                                     tokens,
+                                     n
                                      )
                .collect_address())
     return results
 
 
-def search_twitter(formatfile, tokens):
+def search_twitter(formatfile, tokens, n):
+    logging.debug("Search Twitter")
     results = (TwitterWalletCollector(formatfile,
-                                      tokens)
+                                      tokens,
+                                      n)
                .collect_address())
-
-
     return results
 
 
@@ -78,7 +79,7 @@ def main(argv: List[str]) -> int:
                 logging_level = logging.DEBUG
     print('Tasks is  ', tasks)
     print('Config is ', configfile)
-    print('Logging is ', logging_level)
+    print('Debug ? ', logging_level == logging.DEBUG)
     logging.basicConfig(level=logging_level)
     try:
         config = json.load(open(configfile))
@@ -94,21 +95,20 @@ def main(argv: List[str]) -> int:
 
         with ThreadPoolExecutor(max_workers=4) as executor:
             f1 = executor.submit(search_github, config["format"],
-                                 config["tokens"]["github"])
+                                 config["tokens"]["github"], 0)
 
-            f2 = executor.submit(search_searchcode, config["format"])
+            f2 = executor.submit(search_searchcode, config["format"], 1)
 
             f3 = executor.submit(search_twitter, config["format"],
-                                 config["tokens"])
+                                 config["tokens"], 2)
 
-        logging.info("Let's wait")
+        results_1 = f1.result()
+        results_2 = f2.result()
+        results_3 = f3.result()
 
+        Parser().parse_string(results_1 + results_2 + results_3)
 
-        Parser().parse_string(f1.result())
-        Parser().parse_string(f2.result())
-        Parser().parse_string(f3.result())
-
-
+    print("\n"*5, file=sys.stderr)
 
     if tasks in (0, 2):
         try:

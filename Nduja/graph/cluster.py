@@ -91,7 +91,7 @@ class Cluster:
             tmp_black_list = []
             for saddr in self.inferred_addresses:
                 stack.add(saddr)
-            while len(stack) > 0 and len(self.inferred_addresses) < 30:
+            while len(stack) > 0 and len(self.inferred_addresses) < 3:
                 elem = stack.pop()
                 self.add_inferred_address(elem)
 

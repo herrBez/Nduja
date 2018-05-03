@@ -64,5 +64,5 @@ class InfoRetriever:
             if info is not None:
                 info_id = (database.insert_information(info.name, info.website,
                                                        info.email, info.json))
-                database.add_info_to_account(account.ID, info_id)
+                database.add_info_to_account(account.account_id, info_id)
         database.save_changes()

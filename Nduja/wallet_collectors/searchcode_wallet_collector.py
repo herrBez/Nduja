@@ -4,6 +4,7 @@ from typing import Dict, Optional, Any, List
 import re
 import logging
 
+from tqdm import tqdm
 from utility.safe_requests import safe_requests_get
 from wallet_collectors.abs_wallet_collector import flatten
 from wallet_collectors.abs_wallet_collector import AbsWalletCollector
@@ -16,9 +17,9 @@ def exception_handler(request, exception):
 
 class SearchcodeWalletCollector(AbsWalletCollector):
     """Class for retrieving addresses from SearchCode"""
-    def __init__(self, format_file):
-        super().__init__(format_file)
-        self.max_page = 50
+    def __init__(self, format_file: str, progress_bar_position: int) -> None:
+        super().__init__(format_file, progress_bar_position)
+        self.max_page = 20
         self.per_page = 20
         # Although the api documentation states that the maximum limit is 100
         # the real limit is 20
@@ -26,7 +27,10 @@ class SearchcodeWalletCollector(AbsWalletCollector):
     def collect_raw_result(self, queries: List[str]) -> List[Any]:
         raw_results = []
 
-        for query in queries:
+        for query in tqdm(queries,
+                          desc="searchcode" + " "*(15-len("searchcode")),
+                          position=self.progress_bar_position,
+                          leave=True):
             response = safe_requests_get(query)
             if response is not None:
                 try:

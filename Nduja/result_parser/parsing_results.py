@@ -5,6 +5,7 @@ import json
 
 from db.db_manager import DbManager
 from address_checkers.abs_address_checker import AbsAddressChecker
+from tqdm import tqdm
 
 
 class Parser:
@@ -34,12 +35,14 @@ class Parser:
     @staticmethod
     def parse(results: Dict[str, Any]) -> None:
         """Method to parse search results"""
-        for res in results[Parser.RESULTS]:
+        for res in tqdm(results[Parser.RESULTS],
+                        desc="Check Status",
+                        leave=True):
             symbols = res[Parser.SYMBOLS]
             wallets = res[Parser.WALLETS]
             account_id = None
             Parser.dbManager.init_connection()
-            for i in range(0, len(symbols)):
+            for i in range(len(symbols)):
                 sym = symbols[i]
                 wal = wallets[i]
                 checker = Parser.retrieve_checker(sym)

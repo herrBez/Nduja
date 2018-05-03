@@ -92,7 +92,7 @@ class EthAddressChecker(AbsAddressChecker):
 
     def address_valid(self, address: str) -> bool:
         """Check locally if the address has a valid format"""
-        return Web3.isAddress(address)
+        return Web3.isChecksumAddress(address)
 
     def address_check(self, address: str) -> bool:
         """Check if addr is a valid Ethereum address using web3"""

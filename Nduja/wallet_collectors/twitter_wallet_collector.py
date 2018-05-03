@@ -12,8 +12,9 @@ from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 
 class TwitterWalletCollector(AbsWalletCollector):
     """Class for retrieving addresses from Twitter"""
-    def __init__(self, format_file: str, tokens_dictionary: Dict) -> None:
-        super().__init__(format_file)
+    def __init__(self, format_file: str, tokens_dictionary: Dict,
+                 progress_bar_position : int) -> None:
+        super().__init__(format_file, progress_bar_position)
         self.twitter_index = 0
         self.api_call_count = []  # type: List[int]
         self.twitters = []  # type: List[Twython]
@@ -26,8 +27,8 @@ class TwitterWalletCollector(AbsWalletCollector):
                 tokens_dictionary["twitter_oauth_token_secret"][i]
             ))
             self.api_call_count.append(0)
-        self.max_pages = 5
-        self.max_count = 10
+        self.max_pages = 10
+        self.max_count = 30
 
     def get_twython(self):
         """Return twython object with different API key"""
@@ -79,7 +80,10 @@ class TwitterWalletCollector(AbsWalletCollector):
         statuses = []  # type: List[Dict[Any, Any]]
         rt_ = "mixed"
 
-        for query in tqdm(queries):
+        for query in tqdm(queries,
+                          desc="twitter" + " " * (15 - len("twitter")),
+                          position=self.progress_bar_position,
+                          leave=True):
             statuses = statuses + self.twitter_fetch_all_requests(query,
                                                                   rt=rt_)
 
@@ -87,13 +91,15 @@ class TwitterWalletCollector(AbsWalletCollector):
 
         logging.debug("Fetched " + str(len(screen_names))
                       + "screen_names = " + str(screen_names))
-
-        for sn_ in screen_names:
+        for sn_ in tqdm(screen_names,
+                        desc="twitter replies" +
+                             " " * (15 - len("twitter replies")),
+                        position=self.progress_bar_position+1,
+                        leave=True):
             query = "to:" + sn_
 
             statuses = statuses + self.twitter_fetch_all_requests(query,
                                                                   rt=rt_)
-
         return statuses
 
     def construct_queries(self) -> List[str]:

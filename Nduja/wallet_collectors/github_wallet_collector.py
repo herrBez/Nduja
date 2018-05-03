@@ -13,8 +13,8 @@ from wallet_collectors.abs_wallet_collector import AbsWalletCollector
 
 class GithubWalletCollector(AbsWalletCollector):
     """Class for retrieving addresses from Github"""
-    def __init__(self, format_file, tokens) -> None:
-        super().__init__(format_file)
+    def __init__(self, format_file, tokens, progress_bar_postion : int) -> None:
+        super().__init__(format_file, progress_bar_postion)
         self.format_object = json.load(open(format_file))
         self.max_page = 1
         self.per_page = 5
@@ -32,7 +32,9 @@ class GithubWalletCollector(AbsWalletCollector):
 
         # We proceed sequentially to avoid to be blocked for abuses of
         # api.
-        for query in tqdm(queries):
+        for query in tqdm(queries, desc="github" + " "*(15-len("github")),
+                          position=self.progress_bar_position,
+                          leave=True):
             response = perform_github_request(query, self.get_next_token())
             if response is None:
                 with open("none_github_response.txt", "a") as out:
@@ -68,7 +70,6 @@ class GithubWalletCollector(AbsWalletCollector):
                 else:
                     logging.warning("%s res_url is None", str(i))
 
-        logging.info("Finish Collection of Raw Results")
         return raw_results_with_url
 
     def construct_queries(self) -> list:
@@ -90,10 +91,6 @@ class GithubWalletCollector(AbsWalletCollector):
             for s in string_to_search
             for page in range(1, self.max_page+1)
         ]
-
-        with open("foo.txt", "w") as cazzo:
-            cazzo.write(str(len(l)))
-            cazzo.write(str(l))
 
         return l
 
