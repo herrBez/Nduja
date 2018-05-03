@@ -109,13 +109,9 @@ def main2(argv: List[str]) -> None:
     length = len(clusters)
 
     times = 0
-    for cluster in clusters:
-        logging.error("Percentage: %.2f", times*100/length)
+    for cluster in tqdm(clusters):
         cluster.fill_cluster(black_list_cluster)
-        times += 1
-        # print(list(cluster.inferred_addresses))
-    print("Filled")
-    del times
+
 
     clusters = [cluster for cluster in clusters
                 if not cluster.belongs_to_black_list]
