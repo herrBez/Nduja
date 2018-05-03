@@ -1,7 +1,7 @@
 version: '3'
 services:
   
-  nuja:
+  nduja:
     build: ./
     volumes:
       - ./:/project
