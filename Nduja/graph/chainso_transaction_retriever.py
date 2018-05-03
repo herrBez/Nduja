@@ -62,7 +62,7 @@ class ChainSoTransactionRetriever(AbsTransactionRetriever):
         resp = ChainSoTransactionRetriever.manage_response(query, response)
         if resp is None:
             return None
-        logging.info("%s", query)
+        logging.debug("%s", query)
         try:
             txs = resp["data"]["txs"]  # type: Any
             txid_set = set(
