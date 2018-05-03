@@ -1,0 +1,9 @@
+[
+    {
+        "name": "litecoin",
+        "symbol": "LTC",
+        "alternative_symbol": " ",
+        "wallet_regexp": "\\b([LM][0-9A-Za-z]{24,35})\\b",
+        "group": "1"
+    }
+]
