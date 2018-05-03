@@ -83,7 +83,7 @@ class AbsWalletCollector:
         '''Build the answer json using the response as given by the
         server and the list of symbol_list and wallet_list'''
 
-    def collect_address(self) -> str:
+    def collect_address(self) -> List[Dict[str, Any]]:
         """Method to collect addresses"""
         final_result = []
 
@@ -139,4 +139,4 @@ class AbsWalletCollector:
 
             logging.debug("%d/%d elements processed", i+1, len(contents))
 
-        return '{"results" : ' + str(json.dumps(final_result)) + '}'
+        return final_result

@@ -33,9 +33,9 @@ class Parser:
         return Parser.parse(json.load(open(path)))
 
     @staticmethod
-    def parse(results: Dict[str, Any]) -> None:
+    def parse(results: List[Dict[str, Any]]) -> None:
         """Method to parse search results"""
-        for res in tqdm(results[Parser.RESULTS],
+        for res in tqdm(results,
                         desc="Check Status",
                         leave=True):
             symbols = res[Parser.SYMBOLS]

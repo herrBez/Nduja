@@ -106,7 +106,7 @@ def main(argv: List[str]) -> int:
         results_2 = f2.result()
         results_3 = f3.result()
 
-        Parser().parse_string(results_1 + results_2 + results_3)
+        Parser().parse(results_1 + results_2 + results_3)
 
     print("\n"*5, file=sys.stderr)
 
