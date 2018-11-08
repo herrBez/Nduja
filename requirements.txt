@@ -1,5 +1,5 @@
 grequests==0.3.0
-requests==2.18.4
+requests==2.20.0
 twython==3.6.0
 matplotlib==2.1.2
 furl==1.0.1
