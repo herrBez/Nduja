@@ -1,0 +1,14 @@
+{
+  "dbname": "nduja.db",
+  "format": "format.json",
+  "tokens": {
+    "github":["your github key"],
+    "twitter_app_key":["your twitter app key"],
+    "twitter_app_secret":["your twitter app secret"],
+    "twitter_oauth_token":["your twitter oaut  token"],
+    "twitter_oauth_token_secret":["your twitter oauth token"],
+    "etherscan": ["your etherscan key"],
+    "gitlab": ["your gitlab key"]
+  }
+}
+

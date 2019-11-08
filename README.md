@@ -2,7 +2,7 @@
 
 Nduja is a software that de-anonymize crypto-currencies' addresses.
 
-The theory behind Nduja are explained [in this repository](https://github.com/mzanella/CNSProject)
+The theory behind Nduja are explained [in this repository](https://github.com/mzanella/CNSProject).
 
 ## Getting Started
 
@@ -17,14 +17,26 @@ docker.
 3. Install the python graph-tool, following [these instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions)
 4. Clone or download the repository
 5. Go in the project main directory
-6. Install the python dependencies `pip install -r requirements` 
-7. Run nduja: `python3.x Nduja`
+6. Install the python dependencies `pip install -r requirements`
+7. Setup the configuration file:
+   - `cp conf_reference.json Nduja/conf.json`
+   - Fill `Nduja/conf.json` with your API keys 
+8. Setup the format file:
+   - `cp format_reference.json Nduja/format.json`
+   - Modify the `Nduja/format.json` to contain only the cryptocurrencies you are interested in.
+9. Run nduja: `python3.x Nduja`
 
 ### The Docker Way
 
 1. Install docker and docker-compose
 2. Clone or download the repository
 3. Go in the project main directory
+7. Setup the configuration file:
+   - `cp conf_reference.json Nduja/conf.json`
+   - Fill `Nduja/conf.json` with your API keys 
+8. Setup the format file:
+   - `cp format_reference.json Nduja/format.json`
+   - Modify the `Nduja/format.json` to contain only the cryptocurrencies you are interested in.
 4. `docker-compose up --build`
 
 ## Running the tests
