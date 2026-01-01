@@ -1,5 +1,7 @@
 # Nduja
 
+> ⚠️ This repository is archived and no longer maintained.
+
 Nduja is a software that de-anonymize crypto-currencies' addresses.
 
 The theory behind Nduja are explained [in this repository](https://github.com/mzanella/CNSProject).
